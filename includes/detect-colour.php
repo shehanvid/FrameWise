@@ -1,0 +1,67 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
+    exit;
+}
+
+$data   = json_decode(file_get_contents('php://input'), true);
+$base64 = $data['base64'] ?? '';
+$mime   = $data['mime']   ?? 'image/jpeg';
+
+if (!$base64) {
+    http_response_code(400);
+    echo json_encode(['error' => 'No image data']);
+    exit;
+}
+
+$apiKey = 'AIzaSyAx8DOuaqDY6ijjFDZm9kPxXNVjnAEdZv8';
+
+$payload = json_encode([
+    'contents' => [[
+        'parts' => [
+            [
+                'inline_data' => [
+                    'mime_type' => $mime,
+                    'data'      => $base64
+                ]
+            ],
+            [
+                'text' => 'Look at this clothing item. Reply with ONLY the dominant colour name in 1-3 words (e.g. "forest green", "navy blue", "cream", "burgundy red"). No punctuation, no explanation, nothing else.'
+            ]
+        ]
+    ]]
+]);
+
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey;
+
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_POSTFIELDS     => $payload,
+    CURLOPT_HTTPHEADER     => [
+        'Content-Type: application/json'
+    ]
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
+curl_close($ch);
+
+if ($curlError) {
+    http_response_code(500);
+    echo json_encode(['error' => $curlError]);
+    exit;
+}
+
+// Parse Gemini response and return in a simple format
+$decoded = json_decode($response, true);
+$text = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? 'unknown';
+$text = strtolower(trim($text));
+
+echo json_encode(['colour' => $text]);

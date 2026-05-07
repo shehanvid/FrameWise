@@ -2,16 +2,14 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'DM Sans', sans-serif;
-  background: #0a0a0a;
-  min-height: 100vh;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 2rem 1rem;
-  color: #d0ccc5;
+  color: #ffffff;
 }
 
-/* ── Layout ──────────────────────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;        /* ← this is the key centering fix */
+}
 .container { width: 100%; max-width: 580px; }
 
 .card {
@@ -89,7 +87,7 @@ label {
   top: 50%;
   transform: translateY(-50%);
   width: 15px; height: 15px;
-  color: #d1d5db;
+  color: #ffffff;
   pointer-events: none;
 }
 
@@ -100,7 +98,7 @@ select {
   background: #0d0d0d;
   border: 0.5px solid #222;
   border-radius: 10px;
-  color: #d0ccc5;
+  color: #ffffff;
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 300;
@@ -125,7 +123,7 @@ select option { background: #111; }
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  color: #d1d5db;
+  color: #ffffff;
 }
 
 /* ── Mood grid ───────────────────────────────────────────────────────────── */
@@ -136,7 +134,7 @@ select option { background: #111; }
   border: 0.5px solid #222;
   border-radius: 10px;
   padding: 10px 8px;
-  color: #d1d5db;
+  color: #ffffff;
   font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   cursor: pointer;
@@ -194,10 +192,93 @@ select option { background: #111; }
 .upload-icon { width: 32px; height: 32px; margin: 0 auto 8px; color: #6b7280; display: block; }
 .upload-area.has-file .upload-icon { color: #3b82f6   ; }
 
-.upload-text { font-size: 12px; color: #d1d5db; font-weight: 300; }
+.upload-text { font-size: 12px; color: #ffffff; font-weight: 300; }
 .upload-area.has-file .upload-text { color: #3b82f6   ; }
 
 .upload-sub { font-size: 11px; color: #6b7280; margin-top: 3px; }
+
+/* ── Dress auto-detect ───────────────────────────────────────────────────── */
+.dress-upload-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.dress-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #161616;
+  border: 0.5px solid #2e2e2e;
+  border-radius: 10px;
+  padding: 9px 13px;
+  color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  width: auto;
+  height: auto;
+}
+
+.dress-upload-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #0f1520;
+  transform: none;
+}
+
+.dress-upload-btn.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.dress-upload-btn.success {
+  border-color: #22c55e;
+  color: #22c55e;
+  background: #0a1f0f;
+}
+
+.dress-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #2e2e2e;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.dress-preview {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 0.5px solid #2e2e2e;
+  flex-shrink: 0;
+}
+
+.dress-result-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  background: #0d1f0d;
+  border: 0.5px solid #22c55e44;
+  border-radius: 100px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #22c55e;
+  letter-spacing: .04em;
+}
+
+.dress-result-tag svg { color: #22c55e; flex-shrink: 0; }
 
 /* ── Divider ─────────────────────────────────────────────────────────────── */
 .divider { height: 0.5px; background: #1a1a1a; }

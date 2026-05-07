@@ -303,7 +303,24 @@ function selected(string $field, string $value): string {
             </svg>
             <input type="text" id="outfit" name="outfit" placeholder="e.g. cream, forest green…" value="<?= old('outfit') ?>">
           </div>
+
+          <!-- 👗 Dress image picker button -->
+          <div class="dress-upload-wrap" title="Upload dress to auto-detect colour">
+            <input type="file" id="dress-image-input" accept="image/*" style="display:none">
+            <button type="button" class="dress-upload-btn" id="dress-upload-btn" onclick="document.getElementById('dress-image-input').click()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+              </svg>
+              <span id="dress-btn-label">Auto-detect</span>
+            </button>
+            <!-- Spinner -->
+            <div id="dress-spinner" style="display:none" class="dress-spinner"></div>
+            <!-- Tiny preview -->
+            <img id="dress-preview" src="" alt="" class="dress-preview" style="display:none">
+          </div>
         </div>
+
         <div class="color-swatches">
           <?php
           $swatches = [
@@ -326,6 +343,14 @@ function selected(string $field, string $value): string {
             onclick="pickSwatch(this,'<?= $s['color'] ?>')"
           ></div>
           <?php endforeach; ?>
+        </div>
+
+        <!-- AI result tag -->
+        <div id="dress-result-tag" class="dress-result-tag" style="display:none">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+          </svg>
+          <span id="dress-result-text">Detected: —</span>
         </div>
       </div>
 
@@ -384,6 +409,101 @@ function handleFile(input) {
   }
   updateProgress();
 }
+
+// ── Dress colour auto-detect ───────────────────────────────────────────────
+document.getElementById('dress-image-input').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+
+  const btn     = document.getElementById('dress-upload-btn');
+  const spinner = document.getElementById('dress-spinner');
+  const label   = document.getElementById('dress-btn-label');
+  const preview = document.getElementById('dress-preview');
+  const tag     = document.getElementById('dress-result-tag');
+  const tagText = document.getElementById('dress-result-text');
+
+  // Show preview thumbnail
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  // Loading state
+  btn.classList.add('loading');
+  label.textContent = 'Detecting…';
+  spinner.style.display = 'block';
+  tag.style.display = 'none';
+
+  try {
+    // Convert image to base64
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload  = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    const mime = file.type || 'image/jpeg';
+
+    // Call Claude Vision API
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 100,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mime, data: base64 }
+            },
+            {
+              type: 'text',
+              text: 'Look at this clothing item. Reply with ONLY the dominant colour name in 1-3 words (e.g. "forest green", "navy blue", "cream", "burgundy red"). No punctuation, no explanation.'
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    const detected = data.content?.[0]?.text?.trim().toLowerCase() ?? 'unknown';
+
+    // Fill in the outfit input
+    document.getElementById('outfit').value = detected;
+    updateProgress();
+
+    // Try to highlight a matching swatch
+    const swatches = document.querySelectorAll('.swatch');
+    swatches.forEach(s => {
+      s.classList.remove('selected');
+      if (detected.includes(s.dataset.color)) s.classList.add('selected');
+    });
+
+    // Show result tag
+    tagText.textContent = 'Detected: ' + detected;
+    tag.style.display = 'inline-flex';
+
+    // Success state on button
+    btn.classList.remove('loading');
+    btn.classList.add('success');
+    label.textContent = 'Re-detect';
+
+  } catch (err) {
+    console.error('Colour detection failed:', err);
+    btn.classList.remove('loading');
+    label.textContent = 'Auto-detect';
+    tagText.textContent = 'Detection failed — try again';
+    tagText.style.color = '#e87070';
+    tag.style.display = 'inline-flex';
+  } finally {
+    spinner.style.display = 'none';
+  }
+});
 
 // ── Progress bar ───────────────────────────────────────────────────────────
 function updateProgress() {
