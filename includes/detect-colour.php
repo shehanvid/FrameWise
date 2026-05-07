@@ -30,7 +30,23 @@ $payload = json_encode([
                 ]
             ],
             [
-                'text' => 'Look at this clothing item. Reply with ONLY the dominant colour name in 1-3 words (e.g. "forest green", "navy blue", "cream", "burgundy red"). No punctuation, no explanation, nothing else.'
+                'text' => 'You are a colour detection system. Your ONLY job is to output the dominant colour of the clothing item in the image.
+
+                            STRICT RULES:
+                            - Output ONLY the colour name. Nothing else. No sentences. No explanation. No punctuation. No quotes.
+                            - Use 1 to 3 words maximum (e.g. forest green, navy blue, cream, burgundy red, olive green, dusty rose, charcoal grey)
+                            - If the item has a pattern (e.g. plaid, floral), name the dominant background colour
+                            - You MUST always give a colour. Even if unsure, give your closest guess (e.g. "dark blue" instead of "unknown")
+                            - Only output "unknown" if the image contains absolutely no clothing item at all
+                            - Never say things like "I cannot", "the colour is", "it appears", "approximately" — just the colour name
+
+                            Examples of correct output:
+                            cream
+                            forest green
+                            navy blue
+                            dusty rose
+                            charcoal grey
+                            burnt orange'
             ]
         ]
     ]]

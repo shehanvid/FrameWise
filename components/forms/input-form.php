@@ -221,6 +221,7 @@ function selected(string $field, string $value): string {
       <!-- Location + DateTime -->
       <div class="field-row">
         <div class="field">
+          <div class="field">
           <label for="location">Location</label>
           <div class="input-wrap">
             <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -229,6 +230,31 @@ function selected(string $field, string $value): string {
             </svg>
             <input type="text" id="location" name="location" placeholder="Studio / Outdoor…" value="<?= old('location') ?>" required>
           </div>
+          <!-- Map picker button -->
+          <button type="button" id="map-pick-btn" onclick="openMapModal()" style="
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #0d0d0d;
+            border: 0.5px solid #2e2e2e;
+            border-radius: 10px;
+            padding: 7px 13px;
+            color: #9ca3af;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+          "
+          onmouseover="this.style.borderColor='#3b82f6';this.style.color='#3b82f6'"
+          onmouseout="this.style.borderColor='#2e2e2e';this.style.color='#9ca3af'"
+          >
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.159.69.159 1.006 0z"/>
+            </svg>
+            Pick on Map
+          </button>
+        </div>
         </div>
         <div class="field">
           <label for="datetime">Date &amp; Time</label>
@@ -298,9 +324,6 @@ function selected(string $field, string $value): string {
         <label for="outfit">Outfit Colour</label>
         <div class="swatch-row">
           <div class="input-wrap" style="flex:1">
-            <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"/>
-            </svg>
             <input type="text" id="outfit" name="outfit" placeholder="e.g. cream, forest green…" value="<?= old('outfit') ?>">
           </div>
 
@@ -316,12 +339,28 @@ function selected(string $field, string $value): string {
             </button>
             <!-- Spinner -->
             <div id="dress-spinner" style="display:none" class="dress-spinner"></div>
-            <!-- Tiny preview -->
-            <img id="dress-preview" src="" alt="" class="dress-preview" style="display:none">
+            <!-- Tiny preview with X button -->
+            <div id="dress-preview-wrap" style="display:none; position:relative; flex-shrink:0;">
+              <img id="dress-preview" src="" alt="" class="dress-preview" style="display:block;">
+              <button
+                type="button"
+                id="dress-clear-btn"
+                title="Remove image"
+                style="
+                  position:absolute; top:-6px; right:-6px;
+                  width:18px; height:18px;
+                  background:#e87070; border:none; border-radius:50%;
+                  color:#fff; font-size:11px; line-height:1;
+                  cursor:pointer; display:none;
+                  align-items:center; justify-content:center;
+                  z-index:10; padding:0;
+                "
+              >&times;</button>
+            </div>
           </div>
         </div>
 
-        <div class="color-swatches">
+        <div class="color-swatches" id="swatch-wrap">
           <?php
           $swatches = [
             ['color'=>'white',  'bg'=>'#f5f5f0'],
@@ -352,7 +391,6 @@ function selected(string $field, string $value): string {
           </svg>
           <span id="dress-result-text">Detected: —</span>
         </div>
-      </div>
 
       <div class="divider"></div>
 
@@ -381,6 +419,117 @@ function selected(string $field, string $value): string {
   <?php endif; ?>
 
 </div><!-- /container -->
+
+<!-- ── Map Modal ──────────────────────────────────────────────────────────── -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<div id="map-modal" style="
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.75);
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: #111;
+    border: 0.5px solid #2a2a2a;
+    border-radius: 20px;
+    overflow: hidden;
+    width: min(620px, 95vw);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+  ">
+    <!-- Modal header -->
+    <div style="
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border-bottom: 0.5px solid #1e1e1e;
+      flex-shrink: 0;
+    ">
+      <div>
+        <div style="font-family:'Syne',sans-serif; font-size:15px; font-weight:700; color:#f0ede8;">Pick a Location</div>
+        <div style="font-size:11px; color:#6b7280; margin-top:2px;">Click anywhere on the map or search below</div>
+      </div>
+      <button type="button" onclick="closeMapModal()" style="
+        background: none;
+        border: none;
+        color: #6b7280;
+        font-size: 22px;
+        cursor: pointer;
+        line-height: 1;
+        padding: 4px;
+      ">&times;</button>
+    </div>
+
+    <!-- Search bar -->
+    <div style="padding: 0.75rem 1.25rem; border-bottom: 0.5px solid #1e1e1e; flex-shrink:0; display:flex; gap:8px;">
+      <div style="position:relative; flex:1;">
+        <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#6b7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803 7.5 7.5 0 0015.803 15.803z"/>
+        </svg>
+        <input
+          type="text"
+          id="map-search-input"
+          placeholder="Search a place…"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();searchMapLocation();}"
+          style="
+            width:100%; background:#0d0d0d; border:0.5px solid #222;
+            border-radius:10px; color:#fff; font-family:'DM Sans',sans-serif;
+            font-size:13px; padding:9px 12px 9px 32px; outline:none;
+            box-sizing:border-box;
+          "
+        >
+      </div>
+      <button type="button" onclick="searchMapLocation()" style="
+        background:#3b82f6; border:none; border-radius:10px;
+        color:#fff; font-size:12px; font-family:'DM Sans',sans-serif;
+        padding:9px 14px; cursor:pointer; white-space:nowrap;
+      ">Search</button>
+      <button type="button" onclick="locateMe()" title="Use my location" style="
+        background:#0d0d0d; border:0.5px solid #2e2e2e; border-radius:10px;
+        color:#9ca3af; font-size:12px; padding:9px 12px; cursor:pointer;
+        display:flex; align-items:center; gap:5px;
+      ">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+        </svg>
+        Me
+      </button>
+    </div>
+
+    <!-- Map -->
+    <div id="leaflet-map" style="flex:1; min-height:340px;"></div>
+
+    <!-- Selected location bar -->
+    <div style="
+      padding: 0.75rem 1.25rem;
+      border-top: 0.5px solid #1e1e1e;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-shrink:0;
+    ">
+      <div style="flex:1; overflow:hidden;">
+        <div style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px;">Selected location</div>
+        <div id="map-selected-label" style="font-size:13px; color:#e5e7eb; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">None — click the map to pick</div>
+      </div>
+      <button type="button" id="map-confirm-btn" onclick="confirmMapLocation()" disabled style="
+        background:#3b82f6; border:none; border-radius:10px;
+        color:#0a0a0a; font-family:'Syne',sans-serif; font-size:13px;
+        font-weight:700; padding:10px 18px; cursor:not-allowed;
+        opacity:0.4; white-space:nowrap; transition:all .2s;
+      ">Use this location</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Mood toggle ────────────────────────────────────────────────────────────
@@ -411,33 +560,101 @@ function handleFile(input) {
 }
 
 // ── Dress colour auto-detect ───────────────────────────────────────────────
+function lockOutfitField(lock) {
+  const outfitInput  = document.getElementById('outfit');
+  const swatchWrap   = document.getElementById('swatch-wrap');
+  const swatches     = document.querySelectorAll('.swatch');
+
+  if (lock) {
+    // Disable text input
+    outfitInput.setAttribute('readonly', true);
+    outfitInput.style.opacity = '0.5';
+    outfitInput.style.cursor  = 'not-allowed';
+    // Disable swatches
+    swatchWrap.style.opacity       = '0.4';
+    swatchWrap.style.pointerEvents = 'none';
+  } else {
+    // Re-enable text input
+    outfitInput.removeAttribute('readonly');
+    outfitInput.style.opacity = '';
+    outfitInput.style.cursor  = '';
+    // Re-enable swatches
+    swatchWrap.style.opacity       = '';
+    swatchWrap.style.pointerEvents = '';
+  }
+}
+
+function clearDressDetection() {
+  // Clear input & swatches
+  document.getElementById('outfit').value = '';
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+
+  // Hide preview & clear btn
+  const wrap    = document.getElementById('dress-preview-wrap');
+  const preview = document.getElementById('dress-preview');
+  const clearBtn = document.getElementById('dress-clear-btn');
+  wrap.style.display     = 'none';
+  preview.src            = '';
+  clearBtn.style.display = 'none';
+
+  // Hide result tag
+  const tag = document.getElementById('dress-result-tag');
+  tag.style.display = 'none';
+
+  // Reset button
+  const btn   = document.getElementById('dress-upload-btn');
+  const label = document.getElementById('dress-btn-label');
+  btn.classList.remove('success', 'loading');
+  label.textContent = 'Auto-detect';
+
+  // Reset file input so same file can be re-picked
+  document.getElementById('dress-image-input').value = '';
+
+  // Unlock outfit field
+  lockOutfitField(false);
+
+  updateProgress();
+}
+
+// X button click
+document.getElementById('dress-clear-btn').addEventListener('click', clearDressDetection);
+
+// Show/hide X on hover over preview wrap
+const previewWrap = document.getElementById('dress-preview-wrap');
+previewWrap.addEventListener('mouseenter', () => {
+  document.getElementById('dress-clear-btn').style.display = 'flex';
+});
+previewWrap.addEventListener('mouseleave', () => {
+  document.getElementById('dress-clear-btn').style.display = 'none';
+});
+
 document.getElementById('dress-image-input').addEventListener('change', async function () {
   const file = this.files[0];
   if (!file) return;
 
-  const btn     = document.getElementById('dress-upload-btn');
-  const spinner = document.getElementById('dress-spinner');
-  const label   = document.getElementById('dress-btn-label');
-  const preview = document.getElementById('dress-preview');
-  const tag     = document.getElementById('dress-result-tag');
-  const tagText = document.getElementById('dress-result-text');
+  const btn      = document.getElementById('dress-upload-btn');
+  const spinner  = document.getElementById('dress-spinner');
+  const label    = document.getElementById('dress-btn-label');
+  const wrap     = document.getElementById('dress-preview-wrap');
+  const preview  = document.getElementById('dress-preview');
+  const tag      = document.getElementById('dress-result-tag');
+  const tagText  = document.getElementById('dress-result-text');
 
   // Show preview thumbnail
   const reader = new FileReader();
   reader.onload = e => {
-    preview.src = e.target.result;
-    preview.style.display = 'block';
+    preview.src        = e.target.result;
+    wrap.style.display = 'flex';
   };
   reader.readAsDataURL(file);
 
   // Loading state
   btn.classList.add('loading');
-  label.textContent = 'Detecting…';
+  label.textContent     = 'Detecting…';
   spinner.style.display = 'block';
-  tag.style.display = 'none';
+  tag.style.display     = 'none';
 
   try {
-    // Convert image to base64
     const base64 = await new Promise((res, rej) => {
       const r = new FileReader();
       r.onload  = () => res(r.result.split(',')[1]);
@@ -447,48 +664,42 @@ document.getElementById('dress-image-input').addEventListener('change', async fu
 
     const mime = file.type || 'image/jpeg';
 
-    // Call Claude Vision API
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('includes/detect-colour.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 100,
-        messages: [{
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mime, data: base64 }
-            },
-            {
-              type: 'text',
-              text: 'Look at this clothing item. Reply with ONLY the dominant colour name in 1-3 words (e.g. "forest green", "navy blue", "cream", "burgundy red"). No punctuation, no explanation.'
-            }
-          ]
-        }]
-      })
+      body: JSON.stringify({ base64, mime })
     });
 
-    const data = await response.json();
-    const detected = data.content?.[0]?.text?.trim().toLowerCase() ?? 'unknown';
+    const data     = await response.json();
+    const detected = (data.colour && data.colour !== 'unknown')
+      ? data.colour.trim().toLowerCase()
+      : null;
 
-    // Fill in the outfit input
+    if (!detected) {
+      btn.classList.remove('loading');
+      label.textContent       = 'Auto-detect';
+      tagText.textContent     = 'Could not detect — type it manually';
+      tagText.style.color     = '#f59e0b';
+      tag.style.display       = 'inline-flex';
+      spinner.style.display   = 'none';
+      // Don't lock if detection failed
+      return;
+    }
+
+    // Fill outfit input & lock field
     document.getElementById('outfit').value = detected;
+    lockOutfitField(true);
     updateProgress();
 
-    // Try to highlight a matching swatch
-    const swatches = document.querySelectorAll('.swatch');
-    swatches.forEach(s => {
-      s.classList.remove('selected');
-      if (detected.includes(s.dataset.color)) s.classList.add('selected');
-    });
+    // Clear any swatch selection
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
 
     // Show result tag
     tagText.textContent = 'Detected: ' + detected;
-    tag.style.display = 'inline-flex';
+    tagText.style.color = '';
+    tag.style.display   = 'inline-flex';
 
-    // Success state on button
+    // Success state
     btn.classList.remove('loading');
     btn.classList.add('success');
     label.textContent = 'Re-detect';
@@ -496,10 +707,10 @@ document.getElementById('dress-image-input').addEventListener('change', async fu
   } catch (err) {
     console.error('Colour detection failed:', err);
     btn.classList.remove('loading');
-    label.textContent = 'Auto-detect';
-    tagText.textContent = 'Detection failed — try again';
-    tagText.style.color = '#e87070';
-    tag.style.display = 'inline-flex';
+    label.textContent     = 'Auto-detect';
+    tagText.textContent   = 'Detection failed — try again';
+    tagText.style.color   = '#e87070';
+    tag.style.display     = 'inline-flex';
   } finally {
     spinner.style.display = 'none';
   }
@@ -529,4 +740,156 @@ function updateProgress() {
 });
 
 updateProgress();
+</script>
+
+<script>
+// ── Map Modal ──────────────────────────────────────────────────────────────
+let mapInstance   = null;
+let mapMarker     = null;
+let selectedLatLng = null;
+let selectedLabel  = '';
+
+function openMapModal() {
+  const modal = document.getElementById('map-modal');
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  // Init map only once
+  if (!mapInstance) {
+    mapInstance = L.map('leaflet-map', { zoomControl: true }).setView([20, 0], 2);
+
+    // Dark tile layer (CartoDB Dark Matter — free, no key)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(mapInstance);
+
+    mapInstance.on('click', function (e) {
+      placeMarker(e.latlng.lat, e.latlng.lng);
+    });
+  }
+
+  // Fix Leaflet tile rendering after display:none → flex
+  setTimeout(() => mapInstance.invalidateSize(), 50);
+}
+
+function closeMapModal() {
+  document.getElementById('map-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// Close on backdrop click
+document.getElementById('map-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeMapModal();
+});
+
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('map-modal');
+    if (modal.style.display === 'flex') closeMapModal();
+  }
+});
+
+function placeMarker(lat, lng) {
+  if (mapMarker) mapMarker.remove();
+
+  mapMarker = L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="
+        width:18px; height:18px; background:#3b82f6;
+        border:3px solid #fff; border-radius:50%;
+        box-shadow:0 0 0 3px rgba(59,130,246,0.35);
+      "></div>`,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
+    })
+  }).addTo(mapInstance);
+
+  selectedLatLng = { lat, lng };
+
+  // Set label as coords while reverse geocoding
+  setSelectedLabel('Fetching address…', false);
+
+  // Reverse geocode with Nominatim (free, no key)
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+    .then(r => r.json())
+    .then(data => {
+      const addr = data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      selectedLabel = addr;
+      setSelectedLabel(addr, true);
+    })
+    .catch(() => {
+      selectedLabel = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      setSelectedLabel(selectedLabel, true);
+    });
+}
+
+function setSelectedLabel(text, enableBtn) {
+  document.getElementById('map-selected-label').textContent = text;
+  const btn = document.getElementById('map-confirm-btn');
+  btn.disabled = !enableBtn;
+  btn.style.opacity = enableBtn ? '1' : '0.4';
+  btn.style.cursor  = enableBtn ? 'pointer' : 'not-allowed';
+}
+
+function confirmMapLocation() {
+  if (!selectedLabel) return;
+
+  // Use a shorter readable version — city + country
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${selectedLatLng.lat}&lon=${selectedLatLng.lng}&format=json&zoom=10`)
+    .then(r => r.json())
+    .then(data => {
+      const a = data.address || {};
+      const short = [
+        a.suburb || a.neighbourhood || a.village || a.town || a.city_district,
+        a.city   || a.town || a.county,
+        a.country
+      ].filter(Boolean).join(', ');
+
+      document.getElementById('location').value = short || selectedLabel;
+      updateProgress();
+      closeMapModal();
+    })
+    .catch(() => {
+      document.getElementById('location').value = selectedLabel;
+      updateProgress();
+      closeMapModal();
+    });
+}
+
+function searchMapLocation() {
+  const query = document.getElementById('map-search-input').value.trim();
+  if (!query) return;
+
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`)
+    .then(r => r.json())
+    .then(results => {
+      if (!results.length) {
+        alert('No results found. Try a different search.');
+        return;
+      }
+      const { lat, lon } = results[0];
+      mapInstance.setView([+lat, +lon], 13);
+      placeMarker(+lat, +lon);
+    })
+    .catch(() => alert('Search failed. Check your connection.'));
+}
+
+function locateMe() {
+  if (!navigator.geolocation) {
+    alert('Geolocation is not supported by your browser.');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      mapInstance.setView([lat, lng], 14);
+      placeMarker(lat, lng);
+    },
+    () => alert('Could not get your location. Please allow location access.')
+  );
+}
 </script>
