@@ -3,7 +3,7 @@ session_start();
 include 'includes/header.php';
 ?>
 
-<div class="w-full flex justify-center px-4 pt-20 pb-10">
+<div class="w-full px-4 pt-20 pb-10">
 
 <?php
 if ((isset($_SESSION["username"])) && ($_SESSION["isAdmin"] == 1)) {

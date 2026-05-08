@@ -8,7 +8,7 @@ function selectedAdv(string $field, string $value): string {
 ?>
 
 <div class="card" id="advanced-details-card" style="margin-top: 0;">
-  <div class="card-header" style="cursor:pointer;" onclick="toggleAdvanced()">
+  <div class="card-header">
     <div style="display:flex; align-items:center; justify-content:space-between;">
       <div>
         <div class="header-badge">
@@ -18,10 +18,6 @@ function selectedAdv(string $field, string $value): string {
         <h1 style="font-size:20px; margin-top:8px;">Advanced Details</h1>
         <p>Gear, environment & mood board for a richer plan</p>
       </div>
-      <svg id="adv-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"
-        style="width:20px;height:20px;color:#6b7280;transition:transform .3s;flex-shrink:0;">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-      </svg>
     </div>
   </div>
 
@@ -150,14 +146,6 @@ function selectedAdv(string $field, string $value): string {
 </div>
 
 <script>
-// ── Collapse toggle ────────────────────────────────────────────────────────
-function toggleAdvanced() {
-  const body    = document.getElementById('adv-body');
-  const chevron = document.getElementById('adv-chevron');
-  const open    = body.style.display === 'block';
-  body.style.display    = open ? 'none' : 'block';
-  chevron.style.transform = open ? '' : 'rotate(180deg)';
-}
 
 // ── Pill toggle (environment) ──────────────────────────────────────────────
 function pickPill(btn, hiddenId, pillClass) {
