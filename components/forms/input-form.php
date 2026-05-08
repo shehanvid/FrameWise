@@ -9,10 +9,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // ── Sanitise & validate ──────────────────────────────────────────────
     $location   = trim($_POST['location']   ?? '');
+    $location_lat = trim($_POST['location_lat'] ?? '');
+    $location_lng = trim($_POST['location_lng'] ?? '');
     $datetime   = trim($_POST['datetime']   ?? '');
     $shoot_type = trim($_POST['shoot_type'] ?? '');
     $mood       = trim($_POST['mood']       ?? '');
     $outfit     = trim($_POST['outfit']     ?? '');
+    $gear        = trim($_POST['gear']        ?? '');
+    $environment = trim($_POST['environment'] ?? 'outdoor');
+    $backdrop    = trim($_POST['backdrop']    ?? '');
 
     if ($location   === '') $errors[] = 'Location is required.';
     if ($datetime   === '') $errors[] = 'Date & time is required.';
@@ -82,6 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $plan = [
             'location'    => htmlspecialchars($location),
+            'location_lat' => $location_lat,
+            'location_lng' => $location_lng,
             'datetime'    => $date_display,
             'shoot_type'  => ucfirst(htmlspecialchars($shoot_type)),
             'mood'        => ucfirst(htmlspecialchars($mood)),
@@ -90,6 +97,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'shot_list'   => $shot_lists[$shoot_type] ?? ['Custom shot 1', 'Custom shot 2', 'Custom shot 3'],
             'lighting'    => $lighting_map[$mood] ?? 'Set lighting to complement your chosen mood.',
             'palette'     => $palette_note,
+            'gear'        => $gear,
+            'environment' => $environment,
+            'backdrop'    => $backdrop,
         ];
     }
 }
@@ -221,40 +231,32 @@ function selected(string $field, string $value): string {
       <!-- Location + DateTime -->
       <div class="field-row">
         <div class="field">
-          <div class="field">
-          <label for="location">Location</label>
-          <div class="input-wrap">
-            <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
-            </svg>
-            <input type="text" id="location" name="location" placeholder="Studio / Outdoor…" value="<?= old('location') ?>" required>
-          </div>
-          <!-- Map picker button -->
+          <label>Location</label>
           <button type="button" id="map-pick-btn" onclick="openMapModal()" style="
-            margin-top: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: #0d0d0d;
-            border: 0.5px solid #2e2e2e;
-            border-radius: 10px;
-            padding: 7px 13px;
-            color: #9ca3af;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all .2s;
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #0d0d0d; border: 0.5px solid #2e2e2e; border-radius: 10px;
+            padding: 10px 13px; color: #9ca3af; font-family: 'DM Sans', sans-serif;
+            font-size: 13px; cursor: pointer; transition: all .2s; width: 100%;
           "
           onmouseover="this.style.borderColor='#3b82f6';this.style.color='#3b82f6'"
           onmouseout="this.style.borderColor='#2e2e2e';this.style.color='#9ca3af'"
           >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="15" height="15">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.159.69.159 1.006 0z"/>
             </svg>
             Pick on Map
           </button>
-        </div>
+
+          <!-- Hidden display box, shown after map selection -->
+          <div id="location-display" style="display:none; margin-top:8px; background:#0d0d0d; border:0.5px solid #3b82f6; border-radius:10px; padding:10px 12px; font-size:12px; color:#9ca3af;">
+            <div style="color:#e5e7eb; font-size:13px;" id="location-display-text">—</div>
+            <div style="margin-top:3px; font-size:11px; color:#6b7280;" id="location-coords-text">—</div>
+          </div>
+
+          <!-- Hidden inputs carrying both values to PHP -->
+          <input type="hidden" name="location" id="location" value="<?= old('location') ?>">
+          <input type="hidden" name="location_lat" id="location_lat" value="<?= old('location_lat') ?>">
+          <input type="hidden" name="location_lng" id="location_lng" value="<?= old('location_lng') ?>">
         </div>
         <div class="field">
           <label for="datetime">Date &amp; Time</label>
@@ -485,6 +487,17 @@ function selected(string $field, string $value): string {
             box-sizing:border-box;
           "
         >
+        <div id="map-suggestions" style="
+          position: absolute;
+          top: 100%;
+          left: 0; right: 0;
+          background: #111;
+          border: 0.5px solid #2a2a2a;
+          border-radius: 0 0 10px 10px;
+          z-index: 9999;
+          max-height: 220px;
+          overflow-y: auto;
+        "></div>
       </div>
       <button type="button" onclick="searchMapLocation()" style="
         background:#3b82f6; border:none; border-radius:10px;
@@ -757,12 +770,12 @@ function openMapModal() {
   // Init map only once
   if (!mapInstance) {
     mapInstance = L.map('leaflet-map', { zoomControl: true }).setView([20, 0], 2);
+    mapInstance.options.maxZoom = 20;
 
     // Dark tile layer (CartoDB Dark Matter — free, no key)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 20
     }).addTo(mapInstance);
 
     mapInstance.on('click', function (e) {
@@ -838,7 +851,6 @@ function setSelectedLabel(text, enableBtn) {
 function confirmMapLocation() {
   if (!selectedLabel) return;
 
-  // Use a shorter readable version — city + country
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${selectedLatLng.lat}&lon=${selectedLatLng.lng}&format=json&zoom=10`)
     .then(r => r.json())
     .then(data => {
@@ -849,34 +861,95 @@ function confirmMapLocation() {
         a.country
       ].filter(Boolean).join(', ');
 
-      document.getElementById('location').value = short || selectedLabel;
+      const label = short || selectedLabel;
+      const lat   = selectedLatLng.lat.toFixed(6);
+      const lng   = selectedLatLng.lng.toFixed(6);
+
+      // Fill hidden inputs
+      document.getElementById('location').value     = label;
+      document.getElementById('location_lat').value = lat;
+      document.getElementById('location_lng').value = lng;
+
+      // Show the display box
+      document.getElementById('location-display').style.display = 'block';
+      document.getElementById('location-display-text').textContent  = label;
+      document.getElementById('location-coords-text').textContent = `${lat}, ${lng}`;
+
       updateProgress();
       closeMapModal();
     })
     .catch(() => {
-      document.getElementById('location').value = selectedLabel;
+      document.getElementById('location').value     = selectedLabel;
+      document.getElementById('location_lat').value = selectedLatLng.lat.toFixed(6);
+      document.getElementById('location_lng').value = selectedLatLng.lng.toFixed(6);
+
+      document.getElementById('location-display').style.display = 'block';
+      document.getElementById('location-display-text').textContent  = selectedLabel;
+      document.getElementById('location-coords-text').textContent =
+        `${selectedLatLng.lat.toFixed(6)}, ${selectedLatLng.lng.toFixed(6)}`;
+
       updateProgress();
       closeMapModal();
     });
 }
 
+// Debounce timer
+let searchTimer = null;
+
 function searchMapLocation() {
   const query = document.getElementById('map-search-input').value.trim();
   if (!query) return;
+  clearSuggestions();
 
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`)
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&addressdetails=1`)
     .then(r => r.json())
     .then(results => {
-      if (!results.length) {
-        alert('No results found. Try a different search.');
-        return;
-      }
+      if (!results.length) { alert('No results found.'); return; }
       const { lat, lon } = results[0];
-      mapInstance.setView([+lat, +lon], 13);
+      mapInstance.setView([+lat, +lon], 17); 
       placeMarker(+lat, +lon);
     })
-    .catch(() => alert('Search failed. Check your connection.'));
+    .catch(() => alert('Search failed.'));
 }
+
+function clearSuggestions() {
+  const box = document.getElementById('map-suggestions');
+  if (box) box.innerHTML = '';
+}
+
+// Auto-suggest as user types
+document.getElementById('map-search-input').addEventListener('input', function () {
+  clearTimeout(searchTimer);
+  const query = this.value.trim();
+  if (query.length < 3) { clearSuggestions(); return; }
+
+  searchTimer = setTimeout(() => {
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&addressdetails=1`)
+      .then(r => r.json())
+      .then(results => {
+        const box = document.getElementById('map-suggestions');
+        box.innerHTML = '';
+        results.forEach(r => {
+          const item = document.createElement('div');
+          item.textContent = r.display_name;
+          item.style.cssText = `
+            padding: 9px 12px; font-size: 12px; color: #e5e7eb;
+            cursor: pointer; border-bottom: 0.5px solid #1e1e1e;
+            transition: background .15s;
+          `;
+          item.onmouseenter = () => item.style.background = '#1a1a1a';
+          item.onmouseleave = () => item.style.background = 'transparent';
+          item.onclick = () => {
+            document.getElementById('map-search-input').value = r.display_name;
+            mapInstance.setView([+r.lat, +r.lon], 17); 
+            placeMarker(+r.lat, +r.lon);
+            clearSuggestions();
+          };
+          box.appendChild(item);
+        });
+      });
+  }, 350); // wait 350ms after user stops typing
+});
 
 function locateMe() {
   if (!navigator.geolocation) {

@@ -365,6 +365,27 @@ select option { background: #111; }
   gap:1.25rem;
 }
 
+/* ── Adv pill toggle ─────────────────────────────────────────────────────── */
+.adv-pill {
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 10px;
+  padding: 10px 8px;
+  color: #9ca3af;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all .2s;
+  width: auto;
+  height: auto;
+}
+.adv-pill:hover { border-color: #6b7280; color: #e5e7eb; }
+.adv-pill.active { border-color: #a855f7; background: #130d1f; color: #a855f7; }
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   body {
@@ -413,5 +434,12 @@ select option { background: #111; }
   input[type="datetime-local"],
   select {
     font-size: 16px; /* prevents iOS zoom on focus */
+  }
+}
+
+@media (max-width: 768px) {
+  .two-col-layout {
+    grid-template-columns: 1fr !important;
+    display: grid;
   }
 }
