@@ -1,201 +1,603 @@
 <?php
-function oldAdv(string $field, string $default = ''): string {
+function oldPref(string $field, string $default = ''): string {
     return htmlspecialchars($_POST[$field] ?? $default);
 }
-function selectedAdv(string $field, string $value): string {
+function checkedPref(string $field, string $value): string {
+    $saved = $_POST[$field] ?? [];
+    if (is_array($saved)) return in_array($value, $saved) ? 'checked' : '';
+    return $saved === $value ? 'checked' : '';
+}
+function activePref(string $field, string $value): string {
     return (($_POST[$field] ?? '') === $value) ? 'active' : '';
 }
 ?>
 
-<div class="card" id="advanced-details-card" style="margin-top: 0;">
-  <div class="card-header">
-    <div style="display:flex; align-items:center; justify-content:space-between;">
-      <div>
-        <div class="header-badge">
-          <div class="dot" style="background:#a855f7;"></div>
-          Optional
-        </div>
-        <h1 style="font-size:20px; margin-top:8px;">Advanced Details</h1>
-        <p>Gear, environment & mood board for a richer plan</p>
-      </div>
+<style>
+/* ── AI Preferences Panel ─────────────────────────────────────────────────── */
+.pref-card {
+  background: #111;
+  border: 0.5px solid #2a2a2a;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.pref-header {
+  padding: 2rem 2rem 1.5rem;
+  border-bottom: 0.5px solid #1e1e1e;
+}
+
+.pref-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1c1c1c;
+  border: 0.5px solid #2e2e2e;
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: #e5e7eb;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.pref-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #3b82f6;
+  animation: prefPulse 2s infinite;
+}
+
+@keyframes prefPulse { 0%,100%{opacity:1}50%{opacity:.3} }
+
+.pref-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f0ede8;
+  letter-spacing: -.02em;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.pref-header p {
+  font-size: 13px;
+  color: #9ca3af;
+  font-weight: 300;
+}
+
+/* ── Body ────────────────────────────────────────────────────────────────── */
+.pref-body {
+  padding: 1.75rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Field ───────────────────────────────────────────────────────────────── */
+.pref-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pref-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+/* ── Select ──────────────────────────────────────────────────────────────── */
+.pref-select-wrap {
+  position: relative;
+}
+
+.pref-select-wrap select {
+  width: 100%;
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  padding: 10px 36px 10px 14px;
+  outline: none;
+  transition: border-color .2s, background .2s;
+  -webkit-appearance: none;
+  appearance: none;
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+.pref-select-wrap select:focus {
+  border-color: #3b82f6;
+  background: #0f0f0f;
+}
+
+.pref-select-wrap select option { background: #111; }
+
+.pref-select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #6b7280;
+}
+
+/* ── Radio Group ─────────────────────────────────────────────────────────── */
+.pref-radio-group {
+  display: flex;
+  gap: 8px;
+}
+
+.pref-radio-btn {
+  flex: 1;
+  position: relative;
+}
+
+.pref-radio-btn input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.pref-radio-btn label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 10px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+
+.pref-radio-btn label .radio-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.pref-radio-btn input[type="radio"]:checked + label {
+  border-color: #3b82f6;
+  background: rgba(59,130,246,0.06);
+  color: #3b82f6;
+}
+
+.pref-radio-btn label:hover {
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+/* ── Output Style Cards ──────────────────────────────────────────────────── */
+.pref-style-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.pref-style-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.pref-style-card input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.pref-style-card label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 6px;
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 10px;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .2s;
+  text-align: center;
+}
+
+.pref-style-card label .style-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.pref-style-card input[type="radio"]:checked + label {
+  border-color: #3b82f6;
+  background: rgba(59,130,246,0.06);
+  color: #3b82f6;
+  box-shadow: 0 0 12px rgba(59,130,246,0.15);
+}
+
+.pref-style-card label:hover {
+  border-color: #374151;
+  color: #e5e7eb;
+  background: #111;
+}
+
+/* ── Checkbox Group ──────────────────────────────────────────────────────── */
+.pref-checkbox-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.pref-checkbox-item {
+  position: relative;
+}
+
+.pref-checkbox-item input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.pref-checkbox-item label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.pref-checkbox-item label .check-box {
+  width: 14px; height: 14px;
+  border: 1px solid #333;
+  border-radius: 4px;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+
+.pref-checkbox-item label .check-box svg {
+  width: 9px; height: 9px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+.pref-checkbox-item input[type="checkbox"]:checked + label {
+  border-color: #3b82f6;
+  background: rgba(59,130,246,0.06);
+  color: #e5e7eb;
+}
+
+.pref-checkbox-item input[type="checkbox"]:checked + label .check-box {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.pref-checkbox-item input[type="checkbox"]:checked + label .check-box svg {
+  opacity: 1;
+}
+
+.pref-checkbox-item label:hover {
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
+/* ── Pill Toggle ─────────────────────────────────────────────────────────── */
+.pref-pill-group {
+  display: flex;
+  gap: 0;
+  border: 0.5px solid #222;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pref-pill-item {
+  flex: 1;
+  position: relative;
+}
+
+.pref-pill-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0; height: 0;
+}
+
+.pref-pill-item label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 8px;
+  background: #0d0d0d;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: all .2s;
+  border-right: 0.5px solid #222;
+}
+
+.pref-pill-item:last-child label {
+  border-right: none;
+}
+
+.pref-pill-item input[type="radio"]:checked + label {
+  background: rgba(59,130,246,0.1);
+  color: #3b82f6;
+  box-shadow: inset 0 0 20px rgba(59,130,246,0.08);
+}
+
+.pref-pill-item label:hover {
+  background: #111;
+  color: #e5e7eb;
+}
+
+/* ── Textarea ────────────────────────────────────────────────────────────── */
+.pref-textarea {
+  width: 100%;
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  padding: 12px 14px;
+  outline: none;
+  resize: vertical;
+  min-height: 90px;
+  transition: border-color .2s, background .2s;
+  color-scheme: dark;
+}
+
+.pref-textarea:focus {
+  border-color: #3b82f6;
+  background: #0f0f0f;
+}
+
+.pref-textarea::placeholder { color: #4b5563; }
+
+.pref-submit-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.pref-submit-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 0 24px rgba(59,130,246,0.35);
+}
+
+.pref-submit-btn:active { transform: translateY(0); }
+.pref-submit-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .pref-header, .pref-body { padding: 1.25rem 1.1rem; }
+  .pref-style-grid { grid-template-columns: repeat(3, 1fr); }
+  .pref-radio-group { flex-direction: column; }
+}
+</style>
+
+<div class="pref-card">
+
+  <!-- Header -->
+  <div class="pref-header">
+    <div class="pref-badge">
+      <div class="pref-dot"></div>
+      AI Powered
     </div>
+    <h1>Advanced AI<br>Preferences</h1>
+    <p>Help the AI personalize your shoot recommendations.</p>
   </div>
 
-  <div id="adv-body">
-    <div class="divider"></div>
-    <div class="card-body">
+  <!-- Body -->
+  <div class="pref-body">
 
-      <!-- Indoor / Outdoor Toggle -->
-      <div class="field">
-        <label>Environment</label>
-        <div style="display:flex; gap:8px;">
-          <button type="button"
-            class="adv-pill <?= selectedAdv('environment','outdoor') ?: (empty($_POST) ? 'active' : '') ?>"
-            data-env="outdoor"
-            onclick="pickPill(this,'environment','adv-pill')"
-            style="flex:1;"
-          >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="15" height="15">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
-            </svg>
-            Outdoor
-          </button>
-          <button type="button"
-            class="adv-pill <?= selectedAdv('environment','indoor') ?>"
-            data-env="indoor"
-            onclick="pickPill(this,'environment','adv-pill')"
-            style="flex:1;"
-          >
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="15" height="15">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-            </svg>
-            Indoor
-          </button>
-        </div>
-        <input type="hidden" name="environment" id="environment"
-          value="<?= oldAdv('environment','outdoor') ?>">
+    <!-- 1. Camera Type -->
+    <div class="pref-field">
+      <div class="pref-label">Camera Type</div>
+      <div class="pref-select-wrap">
+        <select name="camera_type">
+          <option value="">Select camera…</option>
+          <option value="dslr"    <?= oldPref('camera_type') === 'dslr'    ? 'selected' : '' ?>>📷 DSLR</option>
+          <option value="mirrorless" <?= oldPref('camera_type') === 'mirrorless' ? 'selected' : '' ?>>🎞 Mirrorless</option>
+          <option value="mobile"  <?= oldPref('camera_type') === 'mobile'  ? 'selected' : '' ?>>📱 Mobile Camera</option>
+          <option value="cinema"  <?= oldPref('camera_type') === 'cinema'  ? 'selected' : '' ?>>🎬 Cinema Camera</option>
+        </select>
+        <svg class="pref-select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
+    </div>
 
-      <!-- Camera / Gear -->
-      <div class="field">
-        <label for="gear">Camera &amp; Gear</label>
-        <div class="input-wrap">
-          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
-          </svg>
-          <select id="gear" name="gear">
-            <option value="">Select gear…</option>
-            <option value="phone"         <?= selectedAdv('gear','phone') ?>>📱 Smartphone</option>
-            <option value="entry_dslr"    <?= selectedAdv('gear','entry_dslr') ?>>📷 Entry DSLR / Mirrorless</option>
-            <option value="full_frame"    <?= selectedAdv('gear','full_frame') ?>>🎞 Full Frame</option>
-            <option value="medium_format" <?= selectedAdv('gear','medium_format') ?>>🔲 Medium Format</option>
-          </select>
-          <svg class="select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+    <!-- 2. Experience Level -->
+    <div class="pref-field">
+      <div class="pref-label">Experience Level</div>
+      <div class="pref-radio-group">
+        <div class="pref-radio-btn">
+          <input type="radio" name="experience" id="exp-beginner" value="beginner" <?= activePref('experience','beginner') ? 'checked' : '' ?>>
+          <label for="exp-beginner">
+            <span class="radio-icon">🌱</span>
+            Beginner
+          </label>
+        </div>
+        <div class="pref-radio-btn">
+          <input type="radio" name="experience" id="exp-intermediate" value="intermediate" <?= activePref('experience','intermediate') ? 'checked' : '' ?>>
+          <label for="exp-intermediate">
+            <span class="radio-icon">⚡</span>
+            Intermediate
+          </label>
+        </div>
+        <div class="pref-radio-btn">
+          <input type="radio" name="experience" id="exp-professional" value="professional" <?= activePref('experience','professional') ? 'checked' : '' ?>>
+          <label for="exp-professional">
+            <span class="radio-icon">🏆</span>
+            Professional
+          </label>
         </div>
       </div>
+    </div>
 
-      <!-- Backdrop -->
-      <div class="field">
-        <label>Backdrop / Background</label>
-        <div class="mood-grid" style="grid-template-columns:repeat(3,1fr);">
-          <?php
-          $backdrops = [
-            'natural'      => ['icon'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M12 22V8M12 8C12 8 7 3 3 5c0 0 2 8 9 8M12 8c0 0 5-5 9-3 0 0-2 8-9 8"/>',  'label'=>'Natural'],
-            'urban'        => ['icon'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/>',  'label'=>'Urban'],
-            'studio'       => ['icon'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5"/>',  'label'=>'Studio'],
-            'beach'        => ['icon'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636"/>',  'label'=>'Beach'],
-            'forest'       => ['icon'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>',  'label'=>'Forest'],
-            'architecture' => ['icon'=>'<path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21"/>',  'label'=>'Arch'],
-          ];
-          $savedBd = $_POST['backdrop'] ?? '';
-          foreach ($backdrops as $val => $b):
-          ?>
-          <button type="button"
-            class="mood-btn<?= $savedBd === $val ? ' active' : '' ?>"
-            data-backdrop="<?= $val ?>"
-            onclick="selectBackdrop(this)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><?= $b['icon'] ?></svg>
-            <?= $b['label'] ?>
-          </button>
-          <?php endforeach; ?>
-        </div>
-        <input type="hidden" name="backdrop" id="backdrop" value="<?= oldAdv('backdrop') ?>">
+    <!-- 3. Preferred Lighting Style -->
+    <div class="pref-field">
+      <div class="pref-label">Preferred Lighting Style</div>
+      <div class="pref-select-wrap">
+        <select name="lighting_style">
+          <option value="">Select lighting…</option>
+          <option value="natural"   <?= oldPref('lighting_style') === 'natural'   ? 'selected' : '' ?>>🌤 Natural Light</option>
+          <option value="studio"    <?= oldPref('lighting_style') === 'studio'    ? 'selected' : '' ?>>💡 Studio Light</option>
+          <option value="golden"    <?= oldPref('lighting_style') === 'golden'    ? 'selected' : '' ?>>🌅 Sunset / Golden Hour</option>
+          <option value="night"     <?= oldPref('lighting_style') === 'night'     ? 'selected' : '' ?>>🌙 Night Photography</option>
+          <option value="dramatic"  <?= oldPref('lighting_style') === 'dramatic'  ? 'selected' : '' ?>>🎭 Dramatic Low Light</option>
+        </select>
+        <svg class="pref-select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
+    </div>
 
-      <!-- Mood Board Upload -->
-      <div class="field">
-        <label>Mood Board / Client Brief</label>
-        <div class="upload-area" id="brief-upload-area">
-          <input type="file" name="mood_board" id="mood_board"
-            accept="image/*,application/pdf"
-            onchange="handleBriefFile(this)">
-          <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/>
-          </svg>
-          <div class="upload-text" id="brief-upload-text">Drop mood board or PDF brief</div>
-          <div class="upload-sub">Image or PDF — max 10 MB</div>
+    <!-- 4. Desired Output Style -->
+    <div class="pref-field">
+      <div class="pref-label">Desired Output Style</div>
+      <div class="pref-style-grid">
+        <?php
+        $styles = [
+          'instagram'  => ['emoji' => '📸', 'label' => 'Instagram'],
+          'editorial'  => ['emoji' => '🗞', 'label' => 'Editorial'],
+          'cinematic'  => ['emoji' => '🎬', 'label' => 'Cinematic'],
+          'wedding'    => ['emoji' => '💍', 'label' => 'Wedding'],
+          'street'     => ['emoji' => '🏙', 'label' => 'Street'],
+        ];
+        $savedStyle = $_POST['output_style'] ?? '';
+        foreach ($styles as $val => $s):
+        ?>
+        <div class="pref-style-card">
+          <input type="radio" name="output_style" id="style-<?= $val ?>" value="<?= $val ?>" <?= $savedStyle === $val ? 'checked' : '' ?>>
+          <label for="style-<?= $val ?>">
+            <span class="style-icon"><?= $s['emoji'] ?></span>
+            <?= $s['label'] ?>
+          </label>
         </div>
-
-        <!-- Preview strip -->
-        <div id="brief-preview-wrap" style="display:none; margin-top:10px; position:relative; width:fit-content;">
-          <img id="brief-preview-img" src="" alt=""
-            style="height:64px; border-radius:8px; border:0.5px solid #2e2e2e; display:none;">
-          <div id="brief-pdf-tag" style="display:none; background:#1a1a1a; border:0.5px solid #2e2e2e;
-            border-radius:8px; padding:8px 14px; font-size:12px; color:#9ca3af; display:none; align-items:center; gap:6px;">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-            </svg>
-            <span id="brief-pdf-name">document.pdf</span>
-          </div>
-          <button type="button" onclick="clearBrief()"
-            style="position:absolute; top:-6px; right:-6px; width:18px; height:18px;
-              background:#e87070; border:none; border-radius:50%; color:#fff;
-              font-size:11px; cursor:pointer; display:flex; align-items:center;
-              justify-content:center; z-index:10; padding:0;"
-          >&times;</button>
-        </div>
-
+        <?php endforeach; ?>
       </div>
+    </div>
 
-    </div><!-- /card-body -->
-  </div><!-- /adv-body -->
-</div>
+    <!-- 5. Available Equipment -->
+    <div class="pref-field">
+      <div class="pref-label">Available Equipment</div>
+      <div class="pref-checkbox-group">
+        <?php
+        $equipment = [
+          'reflector' => ['emoji' => '🔆', 'label' => 'Reflector'],
+          'tripod'    => ['emoji' => '📐', 'label' => 'Tripod'],
+          'softbox'   => ['emoji' => '💡', 'label' => 'Softbox'],
+          'drone'     => ['emoji' => '🚁', 'label' => 'Drone'],
+          'flash'     => ['emoji' => '⚡', 'label' => 'Flash'],
+          'led'       => ['emoji' => '🔦', 'label' => 'LED Light'],
+        ];
+        $savedEquip = $_POST['equipment'] ?? [];
+        foreach ($equipment as $val => $e):
+        ?>
+        <div class="pref-checkbox-item">
+          <input type="checkbox" name="equipment[]" id="equip-<?= $val ?>" value="<?= $val ?>"
+            <?= in_array($val, (array)$savedEquip) ? 'checked' : '' ?>>
+          <label for="equip-<?= $val ?>">
+            <span class="check-box">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            </span>
+            <?= $e['emoji'] ?> <?= $e['label'] ?>
+          </label>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
 
-<script>
+    <!-- 7. Preferred Shot Orientation -->
+    <div class="pref-field">
+      <div class="pref-label">Preferred Shot Orientation</div>
+      <div class="pref-pill-group">
+        <?php
+        $orientations = [
+          'portrait'   => ['emoji' => '📱', 'label' => 'Portrait'],
+          'landscape'  => ['emoji' => '🖥',  'label' => 'Landscape'],
+          'vertical'   => ['emoji' => '📲', 'label' => 'Social Vertical'],
+        ];
+        $savedOrientation = $_POST['orientation'] ?? '';
+        foreach ($orientations as $val => $o):
+        ?>
+        <div class="pref-pill-item">
+          <input type="radio" name="orientation" id="orient-<?= $val ?>" value="<?= $val ?>"
+            <?= $savedOrientation === $val ? 'checked' : '' ?>>
+          <label for="orient-<?= $val ?>">
+            <?= $o['emoji'] ?> <?= $o['label'] ?>
+          </label>
+        </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
 
-// ── Pill toggle (environment) ──────────────────────────────────────────────
-function pickPill(btn, hiddenId, pillClass) {
-  document.querySelectorAll('.' + pillClass).forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(hiddenId).value = btn.dataset.env || btn.dataset.value;
-}
+    <!-- 8. Content Platform -->
+    <div class="pref-field">
+      <div class="pref-label">Content Platform</div>
+      <div class="pref-select-wrap">
+        <select name="platform">
+          <option value="">Select platform…</option>
+          <option value="instagram"   <?= oldPref('platform') === 'instagram'   ? 'selected' : '' ?>>📸 Instagram</option>
+          <option value="tiktok"      <?= oldPref('platform') === 'tiktok'      ? 'selected' : '' ?>>🎵 TikTok</option>
+          <option value="youtube"     <?= oldPref('platform') === 'youtube'     ? 'selected' : '' ?>>▶️ YouTube</option>
+          <option value="portfolio"   <?= oldPref('platform') === 'portfolio'   ? 'selected' : '' ?>>🗂 Portfolio</option>
+          <option value="commercial"  <?= oldPref('platform') === 'commercial'  ? 'selected' : '' ?>>📢 Commercial Advertisement</option>
+        </select>
+        <svg class="pref-select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
 
-// ── Backdrop select ────────────────────────────────────────────────────────
-function selectBackdrop(btn) {
-  document.querySelectorAll('[data-backdrop]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('backdrop').value = btn.dataset.backdrop;
-}
-
-// ── Brief upload ───────────────────────────────────────────────────────────
-function handleBriefFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-
-  const area    = document.getElementById('brief-upload-area');
-  const text    = document.getElementById('brief-upload-text');
-  const wrap    = document.getElementById('brief-preview-wrap');
-  const img     = document.getElementById('brief-preview-img');
-  const pdfTag  = document.getElementById('brief-pdf-tag');
-  const pdfName = document.getElementById('brief-pdf-name');
-
-  area.classList.add('has-file');
-  text.textContent = file.name;
-  wrap.style.display = 'block';
-
-  if (file.type === 'application/pdf') {
-    img.style.display     = 'none';
-    pdfTag.style.display  = 'flex';
-    pdfName.textContent   = file.name;
-  } else {
-    pdfTag.style.display = 'none';
-    img.style.display    = 'block';
-    const reader = new FileReader();
-    reader.onload = e => { img.src = e.target.result; };
-    reader.readAsDataURL(file);
-  }
-}
-
-function clearBrief() {
-  document.getElementById('mood_board').value        = '';
-  document.getElementById('brief-upload-area').classList.remove('has-file');
-  document.getElementById('brief-upload-text').textContent = 'Drop mood board or PDF brief';
-  document.getElementById('brief-preview-wrap').style.display = 'none';
-  document.getElementById('brief-preview-img').src   = '';
-  document.getElementById('brief-pdf-tag').style.display = 'none';
-}
-</script>
+    <!-- 9. Additional Notes -->
+    <div class="pref-field">
+      <div class="pref-label">Additional Notes</div>
+      <textarea
+        name="ai_notes"
+        class="pref-textarea"
+        placeholder="Describe your creative vision, inspiration, or special requirements…"
+      ><?= oldPref('ai_notes') ?></textarea>
+    </div>
+  </div><!-- /pref-body -->
+</div><!-- /pref-card -->

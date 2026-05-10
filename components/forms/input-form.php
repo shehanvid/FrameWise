@@ -210,7 +210,7 @@ function selected(string $field, string $value): string {
         <div class="dot"></div>
         Studio AI
       </div>
-      <h1>Photo Shoot<br>Planner</h1>
+      <div class="adv-title">Photo Shoot<br>Planner</div>
       <p>Fill in the details to generate your personalised shoot plan</p>
       <div class="progress-bar">
         <div class="progress-fill" id="progress-fill"></div>
@@ -294,28 +294,32 @@ function selected(string $field, string $value): string {
       <!-- Mood -->
       <div class="field">
         <label>Mood</label>
-        <div class="mood-grid">
+        <div class="backdrop-grid">
           <?php
           $moods = [
-            'warm'      => ['icon' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',  'label' => 'Warm'],
-            'cool'      => ['icon' => '<path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/>',  'label' => 'Cool'],
-            'dramatic'  => ['icon' => '<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',  'label' => 'Dramatic'],
-            'natural'   => ['icon' => '<path d="M12 22V8M12 8C12 8 7 3 3 5c0 0 2 8 9 8M12 8c0 0 5-5 9-3 0 0-2 8-9 8"/>',  'label' => 'Natural'],
-            'moody'     => ['icon' => '<path d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>',  'label' => 'Moody'],
-            'airy'      => ['icon' => '<path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z"/><path d="M18 12c0 3.31-2.69 6-6 6s-6-2.69-6-6 2.69-6 6-6 6 2.69 6 6z"/><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z" opacity=".3"/>',  'label' => 'Airy'],
+            'warm'     => ['bg' => 'bg-mood-warm',     'label' => 'Warm',     'emoji' => '☀️'],
+            'cool'     => ['bg' => 'bg-mood-cool',     'label' => 'Cool',     'emoji' => '❄️'],
+            'dramatic' => ['bg' => 'bg-mood-dramatic', 'label' => 'Dramatic', 'emoji' => '⚡'],
+            'natural'  => ['bg' => 'bg-mood-natural',  'label' => 'Natural',  'emoji' => '🌿'],
+            'moody'    => ['bg' => 'bg-mood-moody',    'label' => 'Moody',    'emoji' => '🌙'],
+            'airy'     => ['bg' => 'bg-mood-airy',     'label' => 'Airy',     'emoji' => '🌤️'],
           ];
           $savedMood = $_POST['mood'] ?? '';
           foreach ($moods as $val => $m):
           ?>
-          <button
-            type="button"
-            class="mood-btn<?= $savedMood === $val ? ' active' : '' ?>"
-            data-mood="<?= $val ?>"
-            onclick="selectMood(this)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><?= $m['icon'] ?></svg>
-            <?= $m['label'] ?>
-          </button>
+          <div class="backdrop-tile <?= $savedMood === $val ? 'active' : '' ?>"
+              data-mood="<?= $val ?>"
+              onclick="selectMood(this)">
+            <div class="tile-bg <?= $m['bg'] ?>">
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.6;"><?= $m['emoji'] ?></div>
+            </div>
+            <div class="tile-label"><?= $m['label'] ?></div>
+            <div class="tile-check">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+          </div>
           <?php endforeach; ?>
         </div>
         <input type="hidden" name="mood" id="mood" value="<?= old('mood') ?>">
@@ -393,6 +397,7 @@ function selected(string $field, string $value): string {
           </svg>
           <span id="dress-result-text">Detected: —</span>
         </div>
+      </div>
 
       <div class="divider"></div>
 
@@ -408,19 +413,9 @@ function selected(string $field, string $value): string {
           <div class="upload-sub">JPG, PNG, WEBP &mdash; max 10 MB</div>
         </div>
       </div>
-
-      <button type="submit" class="submit-btn">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
-        </svg>
-        Generate Shoot Plan
-      </button>
     </form>
   </div>
   <?php endif; ?>
-
-</div><!-- /container -->
 
 <!-- ── Map Modal ──────────────────────────────────────────────────────────── -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -546,10 +541,10 @@ function selected(string $field, string $value): string {
 
 <script>
 // ── Mood toggle ────────────────────────────────────────────────────────────
-function selectMood(btn) {
-  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('mood').value = btn.dataset.mood;
+function selectMood(tile) {
+  document.querySelectorAll('[data-mood]').forEach(t => t.classList.remove('active'));
+  tile.classList.add('active');
+  document.getElementById('mood').value = tile.dataset.mood;
   updateProgress();
 }
 
@@ -966,3 +961,4 @@ function locateMe() {
   );
 }
 </script>
+</div>
