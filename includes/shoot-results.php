@@ -879,7 +879,7 @@ function toggleShot(row) {
         document.getElementById('weather-body').innerHTML = '<div style="color:#6b7280;font-size:12px;">No coordinates — weather unavailable.</div>';
         return;
     }
-    fetch(`includes/weather.php?lat=${lat}&lng=${lng}`)
+    fetch(`weather.php?lat=${lat}&lng=${lng}`)
         .then(r => r.json())
         .then(d => {
             if (d.error) throw new Error(d.error);
