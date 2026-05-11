@@ -1,9 +1,10 @@
 <form
   class="w-full"
   method="POST"
-  action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>"
+  action="includes/shoot-results.php"
   id="shoot-form"
 >
+
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start w-full max-w-screen-xl mx-auto pb-24">
     <div><?php include 'components/forms/input-form.php'; ?></div>
     <div><?php include 'components/forms/advanced-form.php'; ?></div>

@@ -11,10 +11,10 @@
     <?php elseif (isset($_SESSION["username"])): ?>
         <span class="mr-2 text-white/80 text-sm">Hello, <?= $_SESSION["username"]; ?></span>
         <a href="dashboard.php" class="mr-2 text-sm hover:text-white text-white/70 transition">Dashboard</a>
-        <a href="includes/logout.inc.php" class="text-sm text-red-400 hover:text-red-300 transition">Logout</a>
+        <a href="logout.inc.php" class="text-sm text-red-400 hover:text-red-300 transition">Logout</a>
     <?php else: ?>
-        <a href="login.php" class="mr-2 text-sm hover:text-white text-white/70 transition">Login</a>
-        <a href="signup.php" class="text-sm hover:text-white text-white/70 transition">Register</a>
+        <a href="../login.php" class="mr-2 text-sm hover:text-white text-white/70 transition">Login</a>
+        <a href="../signup.php" class="text-sm hover:text-white text-white/70 transition">Register</a>
     <?php endif; ?>
   </div>
 
