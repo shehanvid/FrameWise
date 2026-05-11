@@ -24,35 +24,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($shoot_type === '') $errors[] = 'Shoot type is required.';
     if ($mood       === '') $errors[] = 'Mood is required.';
 
-    // ── Image upload ─────────────────────────────────────────────────────
-    $image_name = '';
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        $finfo = new finfo(FILEINFO_MIME_TYPE);
-        $mime  = $finfo->file($_FILES['image']['tmp_name']);
-
-        if (!in_array($mime, $allowed_types)) {
-            $errors[] = 'Invalid image format. Use JPG, PNG, or WEBP.';
-        } elseif ($_FILES['image']['size'] > 10 * 1024 * 1024) {
-            $errors[] = 'Image must be under 10 MB.';
-        } else {
-            $ext        = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-            $image_name = 'upload_' . uniqid() . '.' . strtolower($ext);
-            $upload_dir = __DIR__ . '/uploads/';
-
-            if (!is_dir($upload_dir)) mkdir($upload_dir, 0755, true);
-
-            if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $image_name)) {
-                $errors[] = 'Failed to save uploaded image.';
-                $image_name = '';
-            }
-        }
-    } else if (!isset($_FILES['image']) || $_FILES['image']['error'] === UPLOAD_ERR_NO_FILE) {
-        $errors[] = 'A model image is required.';
-    } else {
-        $errors[] = 'Image upload error (code ' . $_FILES['image']['error'] . ').';
-    }
-
     // ── Generate plan if no errors ───────────────────────────────────────
     if (empty($errors)) {
         $success = true;
@@ -107,64 +78,6 @@ function selected(string $field, string $value): string {
         </svg>
       </div>
       <div>
-        <h2>Your Shoot Plan</h2>
-        <p>Generated &mdash; <?= date('M j, Y g:i A') ?></p>
-      </div>
-    </div>
-
-    <div class="result-body">
-
-      <?php if ($plan['image_name']): ?>
-      <img
-        src="uploads/<?= htmlspecialchars($plan['image_name']) ?>"
-        alt="Model reference"
-        class="preview-img"
-      >
-      <?php endif; ?>
-
-      <div class="meta-grid">
-        <div class="meta-item">
-          <div class="meta-label">Location</div>
-          <div class="meta-val"><?= $plan['location'] ?></div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Date &amp; Time</div>
-          <div class="meta-val"><?= $plan['datetime'] ?></div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Shoot Type</div>
-          <div class="meta-val"><?= $plan['shoot_type'] ?></div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Mood</div>
-          <div class="meta-val"><?= $plan['mood'] ?></div>
-        </div>
-        <div class="meta-item">
-          <div class="meta-label">Outfit Colour</div>
-          <div class="meta-val"><?= $plan['outfit'] ?></div>
-        </div>
-      </div>
-
-      <div>
-        <div class="section-title">Shot List</div>
-        <ul class="shot-list">
-          <?php foreach ($plan['shot_list'] as $i => $shot): ?>
-          <li>
-            <span class="shot-num"><?= $i + 1 ?></span>
-            <?= htmlspecialchars($shot) ?>
-          </li>
-          <?php endforeach; ?>
-        </ul>
-      </div>
-
-    </div>
-  </div>
-
-  <div style="margin-top:1rem; text-align:center;">
-    <a href="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" style="font-size:12px; color:#555; text-decoration:none; letter-spacing:.06em; text-transform:uppercase;">
-      &#8592; Plan a new shoot
-    </a>
-  </div>
 
   <?php else: ?>
   <!-- ── Form ───────────────────────────────────────────────────────────── -->
@@ -185,13 +98,7 @@ function selected(string $field, string $value): string {
       </div>
     </div>
 
-    <form
-      class="card-body"
-      method="POST"
-      enctype="multipart/form-data"
-      action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>"
-      id="shoot-form"
-    >
+    <div class="card-body">
       <!-- Location + DateTime -->
       <div class="field-row">
         <div class="field">
@@ -242,6 +149,7 @@ function selected(string $field, string $value): string {
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
           </svg>
           <select id="shoot_type" name="shoot_type" required>
+            <option value="" disabled selected hidden>Select shoot type</option>
             <?php $shoot_types_db = getShootTypes($conn); foreach ($shoot_types_db as $st): ?>
               <option value="<?= $st['value'] ?>" <?= selected('shoot_type', $st['value']) ?>>
                 <?= $st['label'] ?>
@@ -361,7 +269,7 @@ function selected(string $field, string $value): string {
           <div class="upload-sub">JPG, PNG, WEBP &mdash; max 10 MB</div>
         </div>
       </div>
-    </form>
+    </div>
   </div>
   <?php endif; ?>
 
