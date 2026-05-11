@@ -412,6 +412,16 @@ function activePref(string $field, string $value): string {
 }
 </style>
 
+<?php 
+$camera_types  = getLookupOptions($conn, 'camera_type');
+$exp_levels    = getLookupOptions($conn, 'experience');
+$lighting_opts = getLookupOptions($conn, 'lighting_style');
+$output_styles = getLookupOptions($conn, 'output_style');
+$orientations  = getLookupOptions($conn, 'orientation');
+$platforms     = getLookupOptions($conn, 'platform');
+$equipment_db  = getEquipment($conn);
+?>
+
 <div class="pref-card">
 
   <!-- Header -->
@@ -432,11 +442,11 @@ function activePref(string $field, string $value): string {
       <div class="pref-label">Camera Type</div>
       <div class="pref-select-wrap">
         <select name="camera_type">
-          <option value="">Select camera…</option>
-          <option value="dslr"    <?= oldPref('camera_type') === 'dslr'    ? 'selected' : '' ?>>📷 DSLR</option>
-          <option value="mirrorless" <?= oldPref('camera_type') === 'mirrorless' ? 'selected' : '' ?>>🎞 Mirrorless</option>
-          <option value="mobile"  <?= oldPref('camera_type') === 'mobile'  ? 'selected' : '' ?>>📱 Mobile Camera</option>
-          <option value="cinema"  <?= oldPref('camera_type') === 'cinema'  ? 'selected' : '' ?>>🎬 Cinema Camera</option>
+          <?php foreach ($camera_types as $item): ?>
+            <option value="<?= $item['value'] ?>" <?= oldPref('camera_type') === $item['value'] ? 'selected' : '' ?>>
+              <?= $item['emoji'] ?> <?= $item['label'] ?>
+            </option>
+          <?php endforeach; ?>
         </select>
         <svg class="pref-select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -448,27 +458,16 @@ function activePref(string $field, string $value): string {
     <div class="pref-field">
       <div class="pref-label">Experience Level</div>
       <div class="pref-radio-group">
-        <div class="pref-radio-btn">
-          <input type="radio" name="experience" id="exp-beginner" value="beginner" <?= activePref('experience','beginner') ? 'checked' : '' ?>>
-          <label for="exp-beginner">
-            <span class="radio-icon">🌱</span>
-            Beginner
-          </label>
-        </div>
-        <div class="pref-radio-btn">
-          <input type="radio" name="experience" id="exp-intermediate" value="intermediate" <?= activePref('experience','intermediate') ? 'checked' : '' ?>>
-          <label for="exp-intermediate">
-            <span class="radio-icon">⚡</span>
-            Intermediate
-          </label>
-        </div>
-        <div class="pref-radio-btn">
-          <input type="radio" name="experience" id="exp-professional" value="professional" <?= activePref('experience','professional') ? 'checked' : '' ?>>
-          <label for="exp-professional">
-            <span class="radio-icon">🏆</span>
-            Professional
-          </label>
-        </div>
+        <?php foreach ($exp_levels as $item): ?>
+          <div class="pref-radio-btn">
+            <input type="radio" name="experience" id="exp-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
+              <?= activePref('experience', $item['value']) ? 'checked' : '' ?>>
+            <label for="exp-<?= $item['value'] ?>">
+              <span class="radio-icon"><?= $item['emoji'] ?></span>
+              <?= $item['label'] ?>
+            </label>
+          </div>
+        <?php endforeach; ?>
       </div>
     </div>
 
@@ -477,12 +476,11 @@ function activePref(string $field, string $value): string {
       <div class="pref-label">Preferred Lighting Style</div>
       <div class="pref-select-wrap">
         <select name="lighting_style">
-          <option value="">Select lighting…</option>
-          <option value="natural"   <?= oldPref('lighting_style') === 'natural'   ? 'selected' : '' ?>>🌤 Natural Light</option>
-          <option value="studio"    <?= oldPref('lighting_style') === 'studio'    ? 'selected' : '' ?>>💡 Studio Light</option>
-          <option value="golden"    <?= oldPref('lighting_style') === 'golden'    ? 'selected' : '' ?>>🌅 Sunset / Golden Hour</option>
-          <option value="night"     <?= oldPref('lighting_style') === 'night'     ? 'selected' : '' ?>>🌙 Night Photography</option>
-          <option value="dramatic"  <?= oldPref('lighting_style') === 'dramatic'  ? 'selected' : '' ?>>🎭 Dramatic Low Light</option>
+          <?php foreach ($lighting_opts as $item): ?>
+            <option value="<?= $item['value'] ?>" <?= oldPref('lighting_style') === $item['value'] ? 'selected' : '' ?>>
+              <?= $item['emoji'] ?> <?= $item['label'] ?>
+            </option>
+          <?php endforeach; ?>
         </select>
         <svg class="pref-select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -495,23 +493,17 @@ function activePref(string $field, string $value): string {
       <div class="pref-label">Desired Output Style</div>
       <div class="pref-style-grid">
         <?php
-        $styles = [
-          'instagram'  => ['emoji' => '📸', 'label' => 'Instagram'],
-          'editorial'  => ['emoji' => '🗞', 'label' => 'Editorial'],
-          'cinematic'  => ['emoji' => '🎬', 'label' => 'Cinematic'],
-          'wedding'    => ['emoji' => '💍', 'label' => 'Wedding'],
-          'street'     => ['emoji' => '🏙', 'label' => 'Street'],
-        ];
         $savedStyle = $_POST['output_style'] ?? '';
-        foreach ($styles as $val => $s):
+        foreach ($output_styles as $item):
         ?>
-        <div class="pref-style-card">
-          <input type="radio" name="output_style" id="style-<?= $val ?>" value="<?= $val ?>" <?= $savedStyle === $val ? 'checked' : '' ?>>
-          <label for="style-<?= $val ?>">
-            <span class="style-icon"><?= $s['emoji'] ?></span>
-            <?= $s['label'] ?>
-          </label>
-        </div>
+          <div class="pref-style-card">
+            <input type="radio" name="output_style" id="style-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
+              <?= $savedStyle === $item['value'] ? 'checked' : '' ?>>
+            <label for="style-<?= $item['value'] ?>">
+              <span class="style-icon"><?= $item['emoji'] ?></span>
+              <?= $item['label'] ?>
+            </label>
+          </div>
         <?php endforeach; ?>
       </div>
     </div>
@@ -521,29 +513,21 @@ function activePref(string $field, string $value): string {
       <div class="pref-label">Available Equipment</div>
       <div class="pref-checkbox-group">
         <?php
-        $equipment = [
-          'reflector' => ['emoji' => '🔆', 'label' => 'Reflector'],
-          'tripod'    => ['emoji' => '📐', 'label' => 'Tripod'],
-          'softbox'   => ['emoji' => '💡', 'label' => 'Softbox'],
-          'drone'     => ['emoji' => '🚁', 'label' => 'Drone'],
-          'flash'     => ['emoji' => '⚡', 'label' => 'Flash'],
-          'led'       => ['emoji' => '🔦', 'label' => 'LED Light'],
-        ];
         $savedEquip = $_POST['equipment'] ?? [];
-        foreach ($equipment as $val => $e):
+        foreach ($equipment_db as $item):
         ?>
-        <div class="pref-checkbox-item">
-          <input type="checkbox" name="equipment[]" id="equip-<?= $val ?>" value="<?= $val ?>"
-            <?= in_array($val, (array)$savedEquip) ? 'checked' : '' ?>>
-          <label for="equip-<?= $val ?>">
-            <span class="check-box">
-              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-              </svg>
-            </span>
-            <?= $e['emoji'] ?> <?= $e['label'] ?>
-          </label>
-        </div>
+          <div class="pref-checkbox-item">
+            <input type="checkbox" name="equipment[]" id="equip-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
+              <?= in_array($item['value'], (array)$savedEquip) ? 'checked' : '' ?>>
+            <label for="equip-<?= $item['value'] ?>">
+              <span class="check-box">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+              </span>
+              <?= $item['emoji'] ?> <?= $item['label'] ?>
+            </label>
+          </div>
         <?php endforeach; ?>
       </div>
     </div>
@@ -553,21 +537,16 @@ function activePref(string $field, string $value): string {
       <div class="pref-label">Preferred Shot Orientation</div>
       <div class="pref-pill-group">
         <?php
-        $orientations = [
-          'portrait'   => ['emoji' => '📱', 'label' => 'Portrait'],
-          'landscape'  => ['emoji' => '🖥',  'label' => 'Landscape'],
-          'vertical'   => ['emoji' => '📲', 'label' => 'Social Vertical'],
-        ];
         $savedOrientation = $_POST['orientation'] ?? '';
-        foreach ($orientations as $val => $o):
+        foreach ($orientations as $item):
         ?>
-        <div class="pref-pill-item">
-          <input type="radio" name="orientation" id="orient-<?= $val ?>" value="<?= $val ?>"
-            <?= $savedOrientation === $val ? 'checked' : '' ?>>
-          <label for="orient-<?= $val ?>">
-            <?= $o['emoji'] ?> <?= $o['label'] ?>
-          </label>
-        </div>
+          <div class="pref-pill-item">
+            <input type="radio" name="orientation" id="orient-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
+              <?= $savedOrientation === $item['value'] ? 'checked' : '' ?>>
+            <label for="orient-<?= $item['value'] ?>">
+              <?= $item['emoji'] ?> <?= $item['label'] ?>
+            </label>
+          </div>
         <?php endforeach; ?>
       </div>
     </div>
@@ -577,12 +556,11 @@ function activePref(string $field, string $value): string {
       <div class="pref-label">Content Platform</div>
       <div class="pref-select-wrap">
         <select name="platform">
-          <option value="">Select platform…</option>
-          <option value="instagram"   <?= oldPref('platform') === 'instagram'   ? 'selected' : '' ?>>📸 Instagram</option>
-          <option value="tiktok"      <?= oldPref('platform') === 'tiktok'      ? 'selected' : '' ?>>🎵 TikTok</option>
-          <option value="youtube"     <?= oldPref('platform') === 'youtube'     ? 'selected' : '' ?>>▶️ YouTube</option>
-          <option value="portfolio"   <?= oldPref('platform') === 'portfolio'   ? 'selected' : '' ?>>🗂 Portfolio</option>
-          <option value="commercial"  <?= oldPref('platform') === 'commercial'  ? 'selected' : '' ?>>📢 Commercial Advertisement</option>
+          <?php foreach ($platforms as $item): ?>
+            <option value="<?= $item['value'] ?>" <?= oldPref('platform') === $item['value'] ? 'selected' : '' ?>>
+              <?= $item['emoji'] ?> <?= $item['label'] ?>
+            </option>
+          <?php endforeach; ?>
         </select>
         <svg class="pref-select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>

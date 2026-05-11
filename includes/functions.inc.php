@@ -176,3 +176,50 @@ else if (isset($_SESSION["username"]))
 {
     
 } 
+
+
+function getShootTypes($conn) {
+    $result = mysqli_query($conn, "SELECT * FROM shoot_types ORDER BY id");
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+function getShotList($conn, $shoot_type_value) {
+    $stmt = mysqli_stmt_init($conn);
+    mysqli_stmt_prepare($stmt, "SELECT s.item FROM shot_list_items s JOIN shoot_types t ON s.shoot_type_id = t.id WHERE t.value = ? ORDER BY s.sort_order");
+    mysqli_stmt_bind_param($stmt, "s", $shoot_type_value);
+    mysqli_stmt_execute($stmt);
+    $rows = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    return array_column($rows, 'item');
+}
+
+function getMoods($conn) {
+    $result = mysqli_query($conn, "SELECT * FROM moods ORDER BY id");
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+function getMoodLighting($conn, $mood_value) {
+    $stmt = mysqli_stmt_init($conn);
+    mysqli_stmt_prepare($stmt, "SELECT lighting_recommendation FROM moods WHERE value = ?");
+    mysqli_stmt_bind_param($stmt, "s", $mood_value);
+    mysqli_stmt_execute($stmt);
+    $row = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    return $row['lighting_recommendation'] ?? 'Set lighting to complement your chosen mood.';
+}
+
+function getSwatches($conn) {
+    $result = mysqli_query($conn, "SELECT * FROM outfit_swatches ORDER BY sort_order");
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+function getLookupOptions($conn, $category) {
+    $stmt = mysqli_stmt_init($conn);
+    mysqli_stmt_prepare($stmt, "SELECT * FROM lookup_options WHERE category = ? ORDER BY sort_order");
+    mysqli_stmt_bind_param($stmt, "s", $category);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+function getEquipment($conn) {
+    $result = mysqli_query($conn, "SELECT * FROM equipment_options ORDER BY id");
+    return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}

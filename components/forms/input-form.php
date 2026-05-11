@@ -61,30 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dt_obj       = new DateTime($datetime);
         $date_display = $dt_obj->format('l, F j Y \a\t g:i A');
 
-        // Build shot list based on shoot type
-        $shot_lists = [
-            'portrait'    => ['Close-up headshot', 'Three-quarter profile', 'Environmental portrait', 'Candid expression', 'Detail — eyes / hands'],
-            'fashion'     => ['Full-length editorial', 'Walking / movement shot', 'Detail — accessories', 'Seated pose', 'Over-shoulder look-back'],
-            'product'     => ['Hero front-facing', 'Top-down flat lay', '45-degree angle', 'Detail / texture macro', 'Lifestyle in-use shot'],
-            'editorial'   => ['Wide establishing frame', 'Story-driven mid shot', 'Expressive close-up', 'Environmental context', 'Graphic / abstract angle'],
-            'commercial'  => ['Clean white-background hero', 'In-use lifestyle shot', 'Group / team dynamic', 'Logo / branding in frame', 'Call-to-action composition'],
-        ];
-
-        // Lighting recommendations per mood
-        $lighting_map = [
-            'warm'      => 'Golden-hour window light or tungsten gels. Use a large silver reflector to wrap fill. Target 5600K → 4200K blend.',
-            'cool'      => 'Overcast natural light or CTB-gelled strobes. Large softbox at 90° for even, shadowless coverage. Aim for 6500–7500K.',
-            'dramatic'  => 'Hard single-source key light at 45°. Deep shadows — no fill or minimal negative fill with a black flag. High contrast ratio (1:8+).',
-            'natural'   => 'Diffused window or open shade. Bounce card for subtle fill. Keep it clean: 5000–5500K, minimal post-processing.',
-            'moody'     => 'Low-key setup: floor or side rim light. Fog machine optional. Pull exposure down ½–1 stop in-camera for atmosphere.',
-            'airy'      => 'Backlit bright window or large octabox overhead. Over-expose ½ stop. White reflectors everywhere. Aim for lifted shadows.',
-        ];
-
-        // Colour palette suggestion based on outfit
-        $palette_note = $outfit
-            ? "Outfit colour <strong>" . htmlspecialchars($outfit) . "</strong> — consider complementary background tones and accent props that harmonise without competing."
-            : "No outfit colour specified — keep the background neutral (white, grey, or muted earthy tones) to give you flexibility in post.";
-
         $plan = [
             'location'    => htmlspecialchars($location),
             'location_lat' => $location_lat,
@@ -94,9 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'mood'        => ucfirst(htmlspecialchars($mood)),
             'outfit'      => $outfit ? htmlspecialchars($outfit) : '—',
             'image_name'  => $image_name,
-            'shot_list'   => $shot_lists[$shoot_type] ?? ['Custom shot 1', 'Custom shot 2', 'Custom shot 3'],
-            'lighting'    => $lighting_map[$mood] ?? 'Set lighting to complement your chosen mood.',
-            'palette'     => $palette_note,
+            'shot_list'   => getShotList($conn, $shoot_type),
             'gear'        => $gear,
             'environment' => $environment,
             'backdrop'    => $backdrop,
@@ -181,16 +155,6 @@ function selected(string $field, string $value): string {
           </li>
           <?php endforeach; ?>
         </ul>
-      </div>
-
-      <div>
-        <div class="section-title">Lighting Setup</div>
-        <div class="info-block"><?= $plan['lighting'] ?></div>
-      </div>
-
-      <div>
-        <div class="section-title">Colour &amp; Palette Notes</div>
-        <div class="info-block"><?= $plan['palette'] ?></div>
       </div>
 
     </div>
@@ -278,12 +242,11 @@ function selected(string $field, string $value): string {
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
           </svg>
           <select id="shoot_type" name="shoot_type" required>
-            <option value="">Select type…</option>
-            <option value="portrait"   <?= selected('shoot_type','portrait')   ?>>Portrait</option>
-            <option value="fashion"    <?= selected('shoot_type','fashion')    ?>>Fashion</option>
-            <option value="product"    <?= selected('shoot_type','product')    ?>>Product</option>
-            <option value="editorial"  <?= selected('shoot_type','editorial')  ?>>Editorial</option>
-            <option value="commercial" <?= selected('shoot_type','commercial') ?>>Commercial</option>
+            <?php $shoot_types_db = getShootTypes($conn); foreach ($shoot_types_db as $st): ?>
+              <option value="<?= $st['value'] ?>" <?= selected('shoot_type', $st['value']) ?>>
+                <?= $st['label'] ?>
+              </option>
+            <?php endforeach; ?>
           </select>
           <svg class="select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -296,21 +259,15 @@ function selected(string $field, string $value): string {
         <label>Mood</label>
         <div class="backdrop-grid">
           <?php
-          $moods = [
-            'warm'     => ['bg' => 'bg-mood-warm',     'label' => 'Warm',     'emoji' => '☀️'],
-            'cool'     => ['bg' => 'bg-mood-cool',     'label' => 'Cool',     'emoji' => '❄️'],
-            'dramatic' => ['bg' => 'bg-mood-dramatic', 'label' => 'Dramatic', 'emoji' => '⚡'],
-            'natural'  => ['bg' => 'bg-mood-natural',  'label' => 'Natural',  'emoji' => '🌿'],
-            'moody'    => ['bg' => 'bg-mood-moody',    'label' => 'Moody',    'emoji' => '🌙'],
-            'airy'     => ['bg' => 'bg-mood-airy',     'label' => 'Airy',     'emoji' => '🌤️'],
-          ];
+          $moods_data     = getMoods($conn);
           $savedMood = $_POST['mood'] ?? '';
-          foreach ($moods as $val => $m):
+          foreach ($moods_data as $m):
+            $val = $m['value'];
           ?>
           <div class="backdrop-tile <?= $savedMood === $val ? 'active' : '' ?>"
               data-mood="<?= $val ?>"
               onclick="selectMood(this)">
-            <div class="tile-bg <?= $m['bg'] ?>">
+            <div class="tile-bg bg-mood-<?= $m['value'] ?>">
               <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.6;"><?= $m['emoji'] ?></div>
             </div>
             <div class="tile-label"><?= $m['label'] ?></div>
@@ -368,24 +325,15 @@ function selected(string $field, string $value): string {
 
         <div class="color-swatches" id="swatch-wrap">
           <?php
-          $swatches = [
-            ['color'=>'white',  'bg'=>'#f5f5f0'],
-            ['color'=>'black',  'bg'=>'#1a1a1a'],
-            ['color'=>'red',    'bg'=>'#c0392b'],
-            ['color'=>'blue',   'bg'=>'#2980b9'],
-            ['color'=>'green',  'bg'=>'#27ae60'],
-            ['color'=>'amber',  'bg'=>'#f39c12'],
-            ['color'=>'violet', 'bg'=>'#8e44ad'],
-            ['color'=>'cream',  'bg'=>'#e8d5b7'],
-          ];
+          $swatches_db    = getSwatches($conn);
           $savedOutfit = strtolower(trim($_POST['outfit'] ?? ''));
-          foreach ($swatches as $s):
+          foreach ($swatches_db as $s):
           ?>
           <div
-            class="swatch<?= $savedOutfit === $s['color'] ? ' selected' : '' ?>"
-            style="background:<?= $s['bg'] ?>;"
-            data-color="<?= $s['color'] ?>"
-            onclick="pickSwatch(this,'<?= $s['color'] ?>')"
+            class="swatch<?= $savedOutfit === $s['color_name'] ? ' selected' : '' ?>"
+            style="background:<?= $s['hex_value'] ?>;"
+            data-color="<?= $s['color_name'] ?>"
+            onclick="pickSwatch(this,'<?= $s['color_name'] ?>')"
           ></div>
           <?php endforeach; ?>
         </div>
