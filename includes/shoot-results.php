@@ -445,6 +445,180 @@ $plan = [
     </div>
 </div>
 
+<?php
+// ── TEMPORARY: MediaPipe body analysis debug panel ─────────────────────
+$body_analysis_raw = $_POST['body_analysis'] ?? '';
+$body_analysis = $body_analysis_raw ? json_decode($body_analysis_raw, true) : null;
+
+if ($body_analysis && !isset($body_analysis['error'])): ?>
+<div style="
+    background: #0a0f0a;
+    border: 1px solid #22c55e44;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+">
+    <!-- Header -->
+    <div style="
+        display: flex; align-items: center; gap: 10px;
+        padding: 14px 18px;
+        border-bottom: 0.5px solid #1a3a1a;
+        background: #0d130d;
+    ">
+        <div style="
+            width: 30px; height: 30px; border-radius: 8px;
+            background: #0a1f0a; border: 0.5px solid #22c55e66;
+            display: flex; align-items: center; justify-content: center;
+        ">
+            <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2" width="15" height="15">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div>
+            <div style="font-size: 13px; font-weight: 600; color: #e5e7eb;">
+                MediaPipe Body Analysis · Debug Output
+            </div>
+            <div style="font-size: 10px; color: #6b7280; margin-top: 1px;">
+                Confidence: 
+                <span style="color: <?= ['high'=>'#22c55e','medium'=>'#f59e0b','low'=>'#e87070'][$body_analysis['confidence'] ?? 'medium'] ?? '#9ca3af' ?>">
+                    <?= htmlspecialchars($body_analysis['confidence'] ?? '—') ?>
+                </span>
+            </div>
+        </div>
+        <div style="margin-left:auto; font-size:10px; color:#4b5563; background:#111; border:0.5px solid #222; border-radius:6px; padding:3px 8px;">
+            TEMP · REMOVE BEFORE PROD
+        </div>
+    </div>
+
+    <!-- Measurements Grid -->
+    <div style="padding: 14px 18px;">
+        <div style="
+            font-size: 10px; color: #6b7280; text-transform: uppercase;
+            letter-spacing: .1em; margin-bottom: 10px;
+        ">Physical Measurements</div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px;">
+            <?php
+            $measurements = [
+                ['label' => 'Body Type',        'key' => 'body_type',         'icon' => '⬡', 'color' => '#60a5fa'],
+                ['label' => 'Face Shape',        'key' => 'face_shape',        'icon' => '◎', 'color' => '#c084fc'],
+                ['label' => 'Est. Height',       'key' => 'estimated_height',  'icon' => '↕', 'color' => '#34d399'],
+                ['label' => 'Shoulder Width',    'key' => 'shoulder_width',    'icon' => '⇔', 'color' => '#fbbf24'],
+                ['label' => 'Waist Definition',  'key' => 'waist_definition',  'icon' => '◉', 'color' => '#f472b6'],
+                ['label' => 'Hip Ratio',         'key' => 'hip_ratio',         'icon' => '⊕', 'color' => '#fb923c'],
+                ['label' => 'Neck Length',       'key' => 'neck_length',       'icon' => '↑', 'color' => '#a78bfa'],
+                ['label' => 'Leg Proportion',    'key' => 'leg_proportion',    'icon' => '↨', 'color' => '#38bdf8'],
+                ['label' => 'Arm Length',        'key' => 'arm_length',        'icon' => '↔', 'color' => '#94a3b8'],
+                ['label' => 'Posture',           'key' => 'posture',           'icon' => '⟳', 'color' => '#4ade80'],
+                ['label' => 'Face Symmetry',     'key' => 'face_symmetry',     'icon' => '⇌', 'color' => '#e879f9'],
+                ['label' => 'Jawline',           'key' => 'jawline',           'icon' => '◢', 'color' => '#f87171'],
+                ['label' => 'Forehead',          'key' => 'forehead',          'icon' => '▔', 'color' => '#fde68a'],
+                ['label' => 'Skin Tone',         'key' => 'skin_tone',         'icon' => '◐', 'color' => '#fdba74'],
+                ['label' => 'Hair Length',       'key' => 'hair_length',       'icon' => '~', 'color' => '#93c5fd'],
+                ['label' => 'Hair Texture',      'key' => 'hair_texture',      'icon' => '≈', 'color' => '#86efac'],
+                ['label' => 'Overall Presence',  'key' => 'overall_presence',  'icon' => '★', 'color' => '#fcd34d'],
+            ];
+            foreach ($measurements as $m):
+                $raw = $body_analysis[$m['key']] ?? null;
+                $val = $raw ? ucwords(str_replace('_', ' ', $raw)) : '—';
+            ?>
+            <div style="
+                background: #0d0d0d;
+                border: 0.5px solid #1a2a1a;
+                border-radius: 8px;
+                padding: 8px 10px;
+            ">
+                <div style="font-size: 9px; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px;">
+                    <?= $m['icon'] ?> <?= $m['label'] ?>
+                </div>
+                <div style="font-size: 12px; font-weight: 500; color: <?= $m['color'] ?>;">
+                    <?= htmlspecialchars($val) ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Recommended Angles -->
+        <?php if (!empty($body_analysis['recommended_angles'])): ?>
+        <div style="margin-bottom: 10px;">
+            <div style="font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px;">
+                ✓ Recommended Angles
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <?php foreach ($body_analysis['recommended_angles'] as $angle): ?>
+                <span style="
+                    background: #0f1a2e; border: 0.5px solid #1e3a5f;
+                    color: #60a5fa; font-size: 11px; border-radius: 100px;
+                    padding: 4px 10px; letter-spacing: .03em;
+                "><?= htmlspecialchars(ucwords(str_replace('_', ' ', $angle))) ?></span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Avoid Angles -->
+        <?php if (!empty($body_analysis['avoid_angles'])): ?>
+        <div style="margin-bottom: 10px;">
+            <div style="font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px;">
+                ✗ Avoid Angles
+            </div>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <?php foreach ($body_analysis['avoid_angles'] as $angle): ?>
+                <span style="
+                    background: #1e0c0c; border: 0.5px solid #5a1a1a;
+                    color: #e87070; font-size: 11px; border-radius: 100px;
+                    padding: 4px 10px; letter-spacing: .03em;
+                "><?= htmlspecialchars(ucwords(str_replace('_', ' ', $angle))) ?></span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Pose Hints -->
+        <?php if (!empty($body_analysis['pose_hints'])): ?>
+        <div>
+            <div style="font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px;">
+                Pose Hints
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <?php foreach ($body_analysis['pose_hints'] as $hint): ?>
+                <div style="
+                    display: flex; gap: 8px; align-items: flex-start;
+                    background: #0d0d0d; border: 0.5px solid #1a1a2a;
+                    border-radius: 7px; padding: 8px 10px;
+                    font-size: 11px; color: #9ca3af; line-height: 1.5;
+                ">
+                    <span style="color: #3b82f6; flex-shrink: 0; margin-top: 1px;">›</span>
+                    <?= htmlspecialchars($hint) ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Raw JSON toggle -->
+        <details style="margin-top: 12px;">
+            <summary style="
+                font-size: 10px; color: #4b5563; cursor: pointer;
+                text-transform: uppercase; letter-spacing: .08em;
+                list-style: none; display: flex; align-items: center; gap: 5px;
+            ">
+                ▶ Raw JSON
+            </summary>
+            <pre style="
+                margin-top: 8px;
+                background: #0a0a0a; border: 0.5px solid #1a1a1a;
+                border-radius: 8px; padding: 10px 12px;
+                font-size: 10px; color: #6b7280;
+                overflow-x: auto; line-height: 1.6;
+                white-space: pre-wrap; word-break: break-all;
+            "><?= htmlspecialchars(json_encode($body_analysis, JSON_PRETTY_PRINT)) ?></pre>
+        </details>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- ══════════════════════════════════════════════════════════════════════════
      CARD GRID
 ═══════════════════════════════════════════════════════════════════════════ -->

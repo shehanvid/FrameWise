@@ -509,6 +509,7 @@ function handleFile(input) {
   if (input.files && input.files[0]) {
     area.classList.add('has-file');
     text.textContent = input.files[0].name;
+    triggerBodyAnalysis(input.files[0]);
   }
   updateProgress();
 }
@@ -1099,5 +1100,431 @@ function fmt(str) {
   if (!str) return '—';
   return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
+</script>
+
+<script type="module">
+// ─── 1. Imports ──────────────────────────────────────────────────────────────
+import {
+  FaceLandmarker,
+  PoseLandmarker,
+  FilesetResolver,
+  DrawingUtils
+} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
+ 
+// ─── 2. State ─────────────────────────────────────────────────────────────────
+let faceLandmarker = null;
+let poseLandmarker = null;
+let modelsLoading  = false;
+let modelsReady    = false;
+ 
+// ─── 3. Lazy-load models (called on first image upload) ──────────────────────
+async function loadModels() {
+  if (modelsReady || modelsLoading) return;
+  modelsLoading = true;
+ 
+  try {
+    const vision = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+    );
+ 
+    [faceLandmarker, poseLandmarker] = await Promise.all([
+      FaceLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+          delegate: 'GPU'   // falls back to CPU automatically
+        },
+        outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: true,
+        runningMode: 'IMAGE',
+        numFaces: 1
+      }),
+      PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+          delegate: 'GPU'
+        },
+        runningMode: 'IMAGE',
+        numPoses: 1
+      })
+    ]);
+ 
+    modelsReady  = true;
+    modelsLoading = false;
+  } catch (err) {
+    modelsLoading = false;
+    throw new Error('MediaPipe model load failed: ' + err.message);
+  }
+}
+ 
+// ─── 4. Main analysis entry point ─────────────────────────────────────────────
+window.triggerBodyAnalysis = async function(file) {
+  const statusWrap = document.getElementById('analysis-status');
+  const spinner    = document.getElementById('analysis-spinner');
+  const statusIcon = document.getElementById('analysis-status-icon');
+  const statusText = document.getElementById('analysis-status-text');
+  const statusSub  = document.getElementById('analysis-status-sub');
+  const panel      = document.getElementById('body-analysis-panel');
+ 
+  // Reset UI
+  panel.style.display      = 'none';
+  statusWrap.style.display = 'flex';
+  spinner.style.display    = 'block';
+  statusIcon.style.display = 'none';
+  statusText.style.color   = '';
+  statusText.textContent   = 'Loading MediaPipe models…';
+  statusSub.textContent    = 'First run downloads ~8 MB of WASM — subsequent runs are instant';
+ 
+  try {
+    // ── 4a. Load models ──────────────────────────────────────────────────
+    await loadModels();
+    statusText.textContent = 'Running face & pose detection…';
+    statusSub.textContent  = 'Powered by MediaPipe · runs entirely in your browser';
+ 
+    // ── 4b. Draw image to offscreen canvas ───────────────────────────────
+    const img = await fileToImage(file);
+    const canvas  = document.createElement('canvas');
+    canvas.width  = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+ 
+    // ── 4c. Run landmarkers ───────────────────────────────────────────────
+    const [faceResult, poseResult] = await Promise.all([
+      faceLandmarker.detect(canvas),
+      poseLandmarker.detect(canvas)
+    ]);
+ 
+    const hasFace = faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0;
+    const hasPose = poseResult.landmarks       && poseResult.landmarks.length > 0;
+ 
+    if (!hasFace && !hasPose) {
+      showAnalysisError('No person detected — please upload a clear photo of the model.');
+      return;
+    }
+ 
+    // ── 4d. Extract attributes ────────────────────────────────────────────
+    const faceAttrs = hasFace ? extractFaceAttributes(faceResult, canvas) : {};
+    const poseAttrs = hasPose ? extractPoseAttributes(poseResult, canvas) : {};
+ 
+    // ── 4e. Merge & derive body type ──────────────────────────────────────
+    const attrs = {
+      ...defaultAttrs(),
+      ...faceAttrs,
+      ...poseAttrs,
+      confidence: (hasFace && hasPose) ? 'high' : hasFace ? 'medium' : 'medium'
+    };
+    attrs.body_type = deriveBodyType(attrs);
+    attrs.overall_presence = derivePresence(attrs);
+    attrs.recommended_angles = recommendAngles(attrs);
+    attrs.avoid_angles       = avoidAngles(attrs);
+ 
+    // ── 4f. Ask PHP to add pose_hints (same endpoint, lighter role) ───────
+    let finalAttrs = attrs;
+    try {
+      const resp = await fetch('includes/analyze-model.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(attrs)
+      });
+      if (resp.ok) finalAttrs = await resp.json();
+    } catch (_) { /* offline fallback — use attrs as-is */ }
+ 
+    if (!finalAttrs.pose_hints) finalAttrs.pose_hints = derivePoseHintsClient(attrs);
+ 
+    // ── 4g. Store & render ────────────────────────────────────────────────
+    window.bodyAnalysisData = finalAttrs;
+    document.getElementById('body_analysis_input').value = JSON.stringify(finalAttrs);
+ 
+    spinner.style.display    = 'none';
+    statusIcon.style.display = 'block';
+    statusIcon.innerHTML     = `<svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2.5" width="14" height="14">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+    statusText.textContent = 'MediaPipe analysis complete — ' + finalAttrs.body_type + ' body type detected';
+    statusText.style.color = '#22c55e';
+    statusSub.textContent  = 'Face: ' + (finalAttrs.face_shape || '—') + '  ·  Confidence: ' + finalAttrs.confidence;
+ 
+    renderAnalysisPanel(finalAttrs);
+ 
+  } catch (err) {
+    showAnalysisError('Analysis failed: ' + err.message);
+  }
+};
+ 
+// ─── 5. Image file → HTMLImageElement ────────────────────────────────────────
+function fileToImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload  = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Image load failed')); };
+    img.src = url;
+  });
+}
+ 
+// ─── 6. Face attribute extraction from 478-point mesh ────────────────────────
+function extractFaceAttributes(result, canvas) {
+  const lm = result.faceLandmarks[0]; // array of {x,y,z} normalised 0-1
+  const W  = canvas.width;
+  const H  = canvas.height;
+ 
+  const p = (i) => ({ x: lm[i].x * W, y: lm[i].y * H });
+ 
+  // Key landmark indices (MediaPipe Face Mesh canonical)
+  // Forehead top: 10, Chin bottom: 152
+  // Cheekbone left: 234, Cheekbone right: 454
+  // Jaw left: 172, Jaw right: 397
+  // Left eye outer: 33, Right eye outer: 263
+  // Nose tip: 1
+ 
+  const foreheadTop   = p(10);
+  const chin          = p(152);
+  const cheekL        = p(234);
+  const cheekR        = p(454);
+  const jawL          = p(172);
+  const jawR          = p(397);
+  const eyeOuterL     = p(33);
+  const eyeOuterR     = p(263);
+  const noseTip       = p(1);
+ 
+  const faceHeight    = dist(foreheadTop, chin);
+  const cheekWidth    = dist(cheekL, cheekR);
+  const jawWidth      = dist(jawL, jawR);
+  const foreheadWidth = dist(p(54), p(284));  // temples
+ 
+  const ratio_h_w = faceHeight / (cheekWidth || 1);
+  const ratio_jaw_cheek = jawWidth / (cheekWidth || 1);
+  const ratio_fore_cheek = foreheadWidth / (cheekWidth || 1);
+ 
+  // ── Face shape classification ──────────────────────────────────────────
+  let face_shape = 'oval';
+  if (ratio_h_w > 1.55)                              face_shape = 'oblong';
+  else if (ratio_h_w < 1.10)                         face_shape = 'round';
+  else if (ratio_jaw_cheek > 0.90 && ratio_h_w < 1.35) face_shape = 'square';
+  else if (ratio_fore_cheek > 1.05 && ratio_jaw_cheek < 0.75) face_shape = 'heart';
+  else if (ratio_fore_cheek < 0.88 && ratio_jaw_cheek < 0.80) face_shape = 'diamond';
+  // else oval / rectangle → keep 'oval'
+ 
+  // ── Jawline ──────────────────────────────────────────────────────────
+  const jawline = ratio_jaw_cheek > 0.88 ? 'sharp' : ratio_jaw_cheek > 0.72 ? 'soft' : 'round';
+ 
+  // ── Forehead ─────────────────────────────────────────────────────────
+  const forehead = ratio_fore_cheek > 1.02 ? 'wide' : ratio_fore_cheek > 0.88 ? 'medium' : 'narrow';
+ 
+  // ── Face symmetry (compare left/right landmark distances) ─────────────
+  const leftHalf  = dist(p(33),  p(234));
+  const rightHalf = dist(p(263), p(454));
+  const symRatio  = Math.min(leftHalf, rightHalf) / (Math.max(leftHalf, rightHalf) || 1);
+  const face_symmetry = symRatio > 0.96 ? 'high' : symRatio > 0.90 ? 'medium' : 'natural';
+ 
+  // ── Blendshapes for posture / expression clues ────────────────────────
+  // (available if outputFaceBlendshapes: true)
+  let posture = 'upright';
+  if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length) {
+    const mat = result.facialTransformationMatrixes[0].data; // column-major 4×4
+    // mat[8] = approx head tilt forward/back
+    const tiltX = Math.atan2(mat[8], mat[10]) * (180 / Math.PI);
+    if (tiltX > 12)       posture = 'slightly_forward';
+    else if (tiltX < -12) posture = 'relaxed';
+  }
+ 
+  return { face_shape, face_symmetry, jawline, forehead, posture };
+}
+ 
+// ─── 7. Pose attribute extraction from 33-point skeleton ─────────────────────
+function extractPoseAttributes(result, canvas) {
+  const lm = result.landmarks[0]; // normalised 0-1
+  const W  = canvas.width;
+  const H  = canvas.height;
+ 
+  // MediaPipe Pose landmark indices
+  const IDX = {
+    nose:       0,
+    leftShoulder:  11, rightShoulder: 12,
+    leftElbow:     13, rightElbow:    14,
+    leftWrist:     15, rightWrist:    16,
+    leftHip:       23, rightHip:      24,
+    leftKnee:      25, rightKnee:     26,
+    leftAnkle:     27, rightAnkle:    28,
+    leftEar:        7, rightEar:       8,
+    leftMouth:     9,  rightMouth:    10,
+  };
+ 
+  const p  = (k) => ({ x: lm[IDX[k]].x * W, y: lm[IDX[k]].y * H });
+  const vis = (k) => lm[IDX[k]].visibility ?? 1;
+ 
+  const lShoulder = p('leftShoulder');
+  const rShoulder = p('rightShoulder');
+  const lHip      = p('leftHip');
+  const rHip      = p('rightHip');
+  const lKnee     = p('leftKnee');
+  const rKnee     = p('rightKnee');
+  const lAnkle    = p('leftAnkle');
+  const rAnkle    = p('rightAnkle');
+  const nose      = p('nose');
+ 
+  const midShoulder = mid(lShoulder, rShoulder);
+  const midHip      = mid(lHip,      rHip);
+  const midKnee     = mid(lKnee,     rKnee);
+  const midAnkle    = mid(lAnkle,    rAnkle);
+ 
+  const shoulderW = dist(lShoulder, rShoulder);
+  const hipW      = dist(lHip,      rHip);
+  const torsoH    = dist(midShoulder, midHip);
+  const legH      = dist(midHip,     midAnkle);
+  const neckH     = dist(midShoulder, nose);
+  const fullH     = dist(nose,        midAnkle);
+ 
+  // ── Shoulder width ─────────────────────────────────────────────────────
+  const shoulder_width = shoulderW / (hipW || 1) > 1.25 ? 'broad'
+                       : shoulderW / (hipW || 1) > 0.90 ? 'medium' : 'narrow';
+ 
+  // ── Hip ratio ──────────────────────────────────────────────────────────
+  const hip_ratio = hipW / (shoulderW || 1) > 1.10 ? 'wide'
+                  : hipW / (shoulderW || 1) > 0.85 ? 'balanced' : 'narrow';
+ 
+  // ── Waist definition (approximate: assume waist ≈ 60% down torso) ─────
+  // We don't have explicit waist points in PoseLandmarker; use shoulder/hip ratio as proxy
+  const waist_definition = (Math.abs(shoulderW - hipW) / (Math.max(shoulderW, hipW) || 1)) > 0.15
+    ? 'defined' : (Math.abs(shoulderW - hipW) / (Math.max(shoulderW, hipW) || 1)) > 0.07
+    ? 'moderate' : 'minimal';
+ 
+  // ── Leg proportion ─────────────────────────────────────────────────────
+  const legRatio = legH / (fullH || 1);
+  const leg_proportion = legRatio > 0.55 ? 'long' : legRatio < 0.46 ? 'short' : 'average';
+ 
+  // ── Neck length ────────────────────────────────────────────────────────
+  const neckRatio = neckH / (torsoH || 1);
+  const neck_length = neckRatio > 0.38 ? 'long' : neckRatio < 0.22 ? 'short' : 'medium';
+ 
+  // ── Arm length ────────────────────────────────────────────────────────
+  const armH = dist(lShoulder, p('leftWrist'));
+  const arm_length = armH / (torsoH || 1) > 1.1 ? 'long'
+                   : armH / (torsoH || 1) < 0.85 ? 'short' : 'average';
+ 
+  // ── Estimated height (relative proportions only) ──────────────────────
+  const estimated_height = fullH / H > 0.80 ? 'tall'
+                         : fullH / H < 0.60 ? 'petite' : 'average';
+ 
+  return {
+    shoulder_width,
+    hip_ratio,
+    waist_definition,
+    leg_proportion,
+    neck_length,
+    arm_length,
+    estimated_height,
+  };
+}
+ 
+// ─── 8. Derive body type from attrs ──────────────────────────────────────────
+function deriveBodyType(a) {
+  const sw = a.shoulder_width;   // narrow/medium/broad
+  const hr = a.hip_ratio;        // narrow/balanced/wide
+  const wd = a.waist_definition; // defined/moderate/minimal
+ 
+  if (sw === 'broad'  && hr === 'wide'    && wd === 'defined')  return 'hourglass';
+  if (sw === 'medium' && hr === 'wide'    && wd !== 'defined')  return 'pear';
+  if (sw === 'broad'  && hr === 'narrow'  )                     return 'inverted_triangle';
+  if (sw === 'broad'  && hr === 'balanced')                     return 'athletic';
+  if (wd === 'minimal' && sw !== 'narrow' && hr !== 'wide')     return 'apple';
+  if (sw === 'narrow' && hr === 'narrow')                       return 'rectangle';
+  return 'rectangle'; // fallback
+}
+ 
+function derivePresence(a) {
+  if (a.estimated_height === 'tall' && a.shoulder_width === 'broad') return 'statuesque';
+  if (a.estimated_height === 'petite')                               return 'petite';
+  if (a.shoulder_width === 'broad')                                  return 'commanding';
+  return 'balanced';
+}
+ 
+// ─── 9. Angle recommendations ─────────────────────────────────────────────────
+function recommendAngles(a) {
+  const angles = [];
+  if (['oval','diamond'].includes(a.face_shape)) angles.push('three_quarter');
+  if (['round','heart'].includes(a.face_shape))  angles.push('slightly_above');
+  if (a.shoulder_width === 'broad')              angles.push('three_quarter');
+  if (a.leg_proportion === 'long')               angles.push('full_length');
+  angles.push('eye_level');
+  return [...new Set(angles)].slice(0, 3);
+}
+ 
+function avoidAngles(a) {
+  const avoid = [];
+  if (a.face_shape === 'oblong')   avoid.push('very_high');
+  if (a.face_shape === 'square')   avoid.push('straight_on');
+  if (a.face_shape === 'round')    avoid.push('low_angle');
+  return avoid.slice(0, 2);
+}
+ 
+// ─── 10. Client-side pose hints (fallback if PHP unreachable) ────────────────
+function derivePoseHintsClient(a) {
+  const hints = [];
+  const bodyMap = {
+    hourglass:         'Accentuate the waist — hands on hips, S-curve poses work beautifully.',
+    pear:              'Draw attention upward — strong shoulder poses, A-line stances.',
+    apple:             'Elongate the torso — side angles, slight lean forward.',
+    rectangle:         'Create curves — hip pop, twisted torso, diagonal body lines.',
+    inverted_triangle: 'Balance the frame — hip emphasis, low-angle shots.',
+    athletic:          'Show strength and line — power poses, dynamic movement.',
+  };
+  if (bodyMap[a.body_type]) hints.push(bodyMap[a.body_type]);
+ 
+  const faceMap = {
+    round:   'Tilt chin slightly down and forward to define the jawline.',
+    square:  'Soft three-quarter angle softens the jaw — avoid straight-on.',
+    heart:   'Eye-level or slightly above — draws balance to forehead.',
+    oblong:  'Avoid very high angles — eye-level or slightly low is best.',
+    oval:    'Most angles work well — classic three-quarter is universally flattering.',
+    diamond: 'Highlight cheekbones — three-quarter angle with slight chin tilt.',
+  };
+  if (faceMap[a.face_shape]) hints.push(faceMap[a.face_shape]);
+ 
+  if (a.leg_proportion === 'short') hints.push('Shoot from a lower angle to elongate the legs.');
+  if (a.leg_proportion === 'long')  hints.push('Full-length shots will make a dramatic impact.');
+  if (a.neck_length === 'short')    hints.push('Avoid high necklines in styling — open neckline elongates.');
+  if (a.shoulder_width === 'broad') hints.push('Three-quarter body angle minimizes shoulder width naturally.');
+ 
+  return hints;
+}
+ 
+// ─── 11. Default attrs (for when face or pose is partially missing) ───────────
+function defaultAttrs() {
+  return {
+    body_type: 'rectangle', estimated_height: 'average',
+    shoulder_width: 'medium', waist_definition: 'moderate',
+    hip_ratio: 'balanced', neck_length: 'medium',
+    leg_proportion: 'average', arm_length: 'average',
+    posture: 'upright', face_shape: 'oval', face_symmetry: 'medium',
+    jawline: 'soft', forehead: 'medium', skin_tone: 'medium',
+    hair_length: 'unknown', hair_texture: 'unknown',
+    overall_presence: 'balanced', recommended_angles: ['eye_level'],
+    avoid_angles: [], confidence: 'medium',
+  };
+}
+ 
+// ─── 12. Geometry helpers ─────────────────────────────────────────────────────
+function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+function mid(a, b)  { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
+ 
+// ─── 13. UI helpers (reuse the existing renderAnalysisPanel / showAnalysisError
+//         functions already defined later in input-form.php) ───────────────────
+window.showAnalysisError = function(msg) {
+  const spinner    = document.getElementById('analysis-spinner');
+  const statusIcon = document.getElementById('analysis-status-icon');
+  const statusText = document.getElementById('analysis-status-text');
+  const statusSub  = document.getElementById('analysis-status-sub');
+ 
+  spinner.style.display    = 'none';
+  statusIcon.style.display = 'block';
+  statusIcon.innerHTML     = `<svg fill="none" viewBox="0 0 24 24" stroke="#e87070" stroke-width="2.5" width="14" height="14">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+  statusText.textContent = msg;
+  statusText.style.color = '#e87070';
+  statusSub.textContent  = '';
+};
+ 
 </script>
 </div>
