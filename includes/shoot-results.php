@@ -879,7 +879,8 @@ function toggleShot(row) {
         document.getElementById('weather-body').innerHTML = '<div style="color:#6b7280;font-size:12px;">No coordinates — weather unavailable.</div>';
         return;
     }
-    fetch(`weather.php?lat=${lat}&lng=${lng}`)
+    const shootDatetime = <?= json_encode($_POST['datetime'] ?? '') ?>;
+    fetch(`weather.php?lat=${lat}&lng=${lng}&datetime=${encodeURIComponent(shootDatetime)}`)
         .then(r => r.json())
         .then(d => {
             if (d.error) throw new Error(d.error);
