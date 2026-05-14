@@ -193,6 +193,7 @@ $plan = [
 .sp-sun-stat { text-align: center; background: #0d0d0d; border: 0.5px solid #1a1a1a; border-radius: 8px; padding: 8px; }
 .sp-sun-stat-label { font-size: 10px; color: #6b7280; margin-bottom: 2px; }
 .sp-sun-stat-val { font-size: 13px; color: #f59e0b; font-weight: 500; }
+.sp-shadow-stat-val { font-size: 13px; color: #60a5fa; font-weight: 500; }
 
 /* ── Camera settings ──────────────────────────────────────────────────────── */
 .sp-cam-setting {
@@ -551,8 +552,8 @@ $plan = [
                     <span class="sp-compass-label sp-compass-e">E</span>
                     <span class="sp-compass-label sp-compass-w">W</span>
                     <div style="position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
-                        <div id="sun-arrow" style="position:absolute;width:2px;height:42px;background:linear-gradient(to top,transparent,#f59e0b);transform-origin:bottom center;bottom:50%;left:calc(50% - 1px);transform:rotate(220deg) translateY(-2px);"></div>
-                        <div id="shadow-arrow" style="position:absolute;width:2px;height:30px;background:linear-gradient(to top,transparent,#374151);transform-origin:bottom center;bottom:50%;left:calc(50% - 1px);transform:rotate(40deg) translateY(-2px);"></div>
+                        <div id="sun-arrow" style="position:absolute;width:2px;height:42px;background:linear-gradient(to top,transparent,#f59e0b);transform-origin:bottom center;bottom:50%;left:calc(50% - 1px);"></div>
+                        <div id="shadow-arrow" style="position:absolute;width:2px;height:32px;background:linear-gradient(to top,transparent,#60a5fa);transform-origin:bottom center;bottom:50%;left:calc(50% - 1px);"></div>
                         <div class="sp-compass-center"></div>
                     </div>
                 </div>
@@ -568,11 +569,11 @@ $plan = [
                 </div>
                 <div class="sp-sun-stat">
                     <div class="sp-sun-stat-label">Shadow dir</div>
-                    <div class="sp-sun-stat-val" id="shadow-dir">—</div>
+                    <div class="sp-shadow-stat-val" id="shadow-dir">—</div>
                 </div>
                 <div class="sp-sun-stat">
                     <div class="sp-sun-stat-label">Shadow len</div>
-                    <div class="sp-sun-stat-val" id="shadow-len">—</div>
+                    <div class="sp-shadow-stat-val" id="shadow-len">—</div>
                 </div>
             </div>
         </div>
@@ -805,18 +806,33 @@ function toggleShot(row) {
     const shadowLen   = altitudeDeg > 0 ? (1 / Math.tan(pos.altitude)).toFixed(1) + '× height' : 'No shadow';
 
     function degToCard(d) {
-        const cards = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+        const cards = [
+            'North','North-Northeast','Northeast','East-Northeast',
+            'East','East-Southeast','Southeast','South-Southeast',
+            'South','South-Southwest','Southwest','West-Southwest',
+            'West','West-Northwest','Northwest','North-Northwest'
+        ];
         return cards[Math.round(d / 22.5) % 16];
     }
 
-    document.getElementById('sun-azimuth').textContent  = degToCard(azimuthDeg) + ' ' + Math.round(azimuthDeg) + '°';
-    document.getElementById('sun-altitude').textContent = altitudeDeg.toFixed(1) + '°';
-    document.getElementById('shadow-dir').textContent   = degToCard(shadowDeg) + ' ' + Math.round(shadowDeg) + '°';
-    document.getElementById('shadow-len').textContent   = shadowLen;
+    function altitudeDesc(deg) {
+        if (deg < 0)  return 'Below horizon';
+        if (deg < 10) return 'Very low (' + deg.toFixed(1) + '°)';
+        if (deg < 25) return 'Low (' + deg.toFixed(1) + '°)';
+        if (deg < 45) return 'Mid-sky (' + deg.toFixed(1) + '°)';
+        if (deg < 70) return 'High (' + deg.toFixed(1) + '°)';
+        return 'Overhead (' + deg.toFixed(1) + '°)';
+    }
 
+    document.getElementById('sun-azimuth').textContent  = degToCard(azimuthDeg);
+    document.getElementById('sun-altitude').textContent = altitudeDesc(altitudeDeg);
+    document.getElementById('shadow-dir').textContent   = degToCard(shadowDeg);
+    document.getElementById('shadow-len').textContent   = shadowLen;
+    document.getElementById('sun-pos-sub').textContent  =
+    altitudeDeg < 0 ? 'Sun below horizon at shoot time' : 'At shoot time · ' + Math.round(azimuthDeg) + '° azimuth';
     // Rotate compass arrows
-    document.getElementById('sun-arrow').style.transform    = `rotate(${azimuthDeg}deg) translateY(-2px)`;
-    document.getElementById('shadow-arrow').style.transform = `rotate(${shadowDeg}deg) translateY(-2px)`;
+    document.getElementById('sun-arrow').style.transform    = `rotate(${azimuthDeg}deg)`;
+    document.getElementById('shadow-arrow').style.transform = `rotate(${shadowDeg}deg)`;
 
     // Sun score
     const sunScore = Math.min(100, Math.max(0, Math.round(((30 - Math.abs(altitudeDeg - 15)) / 30) * 100)));

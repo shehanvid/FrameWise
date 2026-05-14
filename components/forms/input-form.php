@@ -258,16 +258,106 @@ function selected(string $field, string $value): string {
       <div class="divider"></div>
 
       <!-- Image Upload -->
-      <div class="field">
+       <div class="field">
         <label>Model Image</label>
+ 
         <div class="upload-area" id="upload-area">
           <input type="file" name="image" id="image" accept="image/*" required onchange="handleFile(this)">
-          <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+          <svg class="upload-icon" id="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
           </svg>
           <div class="upload-text" id="upload-text">Drop image or click to browse</div>
           <div class="upload-sub">JPG, PNG, WEBP &mdash; max 10 MB</div>
         </div>
+ 
+        <!-- Analysis status bar (hidden until upload) -->
+        <div id="analysis-status" style="display:none; margin-top:10px;">
+          <div style="
+            display:flex; align-items:center; gap:8px;
+            background:#0d0d0d; border:0.5px solid #222;
+            border-radius:10px; padding:10px 14px;
+          ">
+            <div id="analysis-spinner" class="dress-spinner" style="display:none;"></div>
+            <div id="analysis-status-icon" style="display:none; width:14px; height:14px; flex-shrink:0;">
+              <!-- filled by JS -->
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:12px; color:#9ca3af;" id="analysis-status-text">Analyzing body proportions…</div>
+              <div style="font-size:10px; color:#4b5563; margin-top:2px;" id="analysis-status-sub"></div>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Body Analysis Result Panel (hidden until done) -->
+        <div id="body-analysis-panel" style="display:none; margin-top:10px;">
+          <div style="
+            background:#0a0f0a;
+            border:0.5px solid #1a3a1a;
+            border-radius:12px;
+            overflow:hidden;
+          ">
+            <!-- Panel header -->
+            <div style="
+              display:flex; align-items:center; justify-content:space-between;
+              padding:10px 14px;
+              border-bottom:0.5px solid #161616;
+            ">
+              <div style="display:flex; align-items:center; gap:7px;">
+                <div style="
+                  width:24px; height:24px; border-radius:6px;
+                  background:#0a1f0a; border:0.5px solid #22c55e44;
+                  display:flex; align-items:center; justify-content:center;
+                ">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2" width="12" height="12">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style="font-size:12px; font-weight:600; color:#e5e7eb;">Body Analysis Complete</div>
+                  <div style="font-size:10px; color:#6b7280;" id="ba-confidence-label">Powered by Gemini Vision</div>
+                </div>
+              </div>
+              <button type="button" onclick="clearBodyAnalysis()" style="
+                background:none; border:none; color:#4b5563;
+                font-size:16px; cursor:pointer; padding:2px 6px; line-height:1;
+                border-radius:4px; transition:color .15s;
+              " title="Clear analysis" onmouseover="this.style.color='#e87070'" onmouseout="this.style.color='#4b5563'">&times;</button>
+            </div>
+ 
+            <!-- Stat grid -->
+            <div style="padding:12px 14px; display:grid; grid-template-columns:1fr 1fr; gap:6px;" id="ba-stat-grid">
+              <!-- filled by JS -->
+            </div>
+ 
+            <!-- Pose hints -->
+            <div id="ba-hints-wrap" style="padding:0 14px 12px; display:none;">
+              <div style="
+                font-size:10px; color:#6b7280; letter-spacing:.08em;
+                text-transform:uppercase; margin-bottom:6px;
+              ">Pose Hints</div>
+              <div id="ba-hints-list" style="display:flex; flex-direction:column; gap:5px;"></div>
+            </div>
+ 
+            <!-- Angles -->
+            <div id="ba-angles-wrap" style="
+              padding:10px 14px;
+              border-top:0.5px solid #161616;
+              display:none;
+            ">
+              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <span style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0;">Best angles</span>
+                <div id="ba-angles-list" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+              </div>
+              <div id="ba-avoid-wrap" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:5px;">
+                <span style="font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0;">Avoid</span>
+                <div id="ba-avoid-list" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+ 
+        <!-- Hidden input to carry analysis JSON to PHP -->
+        <input type="hidden" name="body_analysis" id="body_analysis_input" value="">
       </div>
     </div>
   </div>
@@ -815,6 +905,199 @@ function locateMe() {
     },
     () => alert('Could not get your location. Please allow location access.')
   );
+}
+
+// ── Body analysis state ───────────────────────────────────────────────────
+let bodyAnalysisData = null;
+ 
+// ── Override handleFile to also trigger analysis ──────────────────────────
+function handleFile(input) {
+  const area = document.getElementById('upload-area');
+  const text = document.getElementById('upload-text');
+  if (input.files && input.files[0]) {
+    area.classList.add('has-file');
+    text.textContent = input.files[0].name;
+    triggerBodyAnalysis(input.files[0]);
+  }
+  updateProgress();
+}
+ 
+async function triggerBodyAnalysis(file) {
+  const statusWrap = document.getElementById('analysis-status');
+  const spinner    = document.getElementById('analysis-spinner');
+  const statusIcon = document.getElementById('analysis-status-icon');
+  const statusText = document.getElementById('analysis-status-text');
+  const statusSub  = document.getElementById('analysis-status-sub');
+  const panel      = document.getElementById('body-analysis-panel');
+ 
+  // Reset
+  panel.style.display   = 'none';
+  statusWrap.style.display = 'flex';
+  spinner.style.display    = 'block';
+  statusIcon.style.display = 'none';
+  statusText.textContent   = 'Analyzing body proportions…';
+  statusSub.textContent    = 'Using Gemini Vision AI · takes a few seconds';
+ 
+  try {
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload  = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+ 
+    const resp = await fetch('includes/analyze-model.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64, mime: file.type || 'image/jpeg' })
+    });
+ 
+    const data = await resp.json();
+ 
+    if (data.error) {
+      showAnalysisError(data.error === 'no_person_detected'
+        ? 'No person detected — upload a clear photo of the model.'
+        : 'Analysis failed: ' + data.error);
+      return;
+    }
+ 
+    bodyAnalysisData = data;
+    document.getElementById('body_analysis_input').value = JSON.stringify(data);
+ 
+    // Success state
+    spinner.style.display    = 'none';
+    statusIcon.style.display = 'block';
+    statusIcon.innerHTML     = `<svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+    statusText.textContent   = 'Body analysis complete — ' + data.body_type + ' body type detected';
+    statusText.style.color   = '#22c55e';
+    statusSub.textContent    = 'Face: ' + (data.face_shape || '—') + '  ·  Presence: ' + (data.overall_presence || '—');
+ 
+    renderAnalysisPanel(data);
+ 
+  } catch(err) {
+    showAnalysisError('Network error — check includes/analyze-model.php');
+  }
+}
+ 
+function showAnalysisError(msg) {
+  const spinner    = document.getElementById('analysis-spinner');
+  const statusIcon = document.getElementById('analysis-status-icon');
+  const statusText = document.getElementById('analysis-status-text');
+  const statusSub  = document.getElementById('analysis-status-sub');
+ 
+  spinner.style.display    = 'none';
+  statusIcon.style.display = 'block';
+  statusIcon.innerHTML     = `<svg fill="none" viewBox="0 0 24 24" stroke="#e87070" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+  statusText.textContent   = msg;
+  statusText.style.color   = '#e87070';
+  statusSub.textContent    = '';
+}
+ 
+function renderAnalysisPanel(data) {
+  const panel = document.getElementById('body-analysis-panel');
+ 
+  // Confidence badge
+  const confColor = { high:'#22c55e', medium:'#f59e0b', low:'#e87070' };
+  document.getElementById('ba-confidence-label').innerHTML =
+    `Gemini Vision · <span style="color:${confColor[data.confidence]||'#9ca3af'};">` +
+    (data.confidence || 'medium') + ` confidence</span>`;
+ 
+  // Build stat grid
+  const stats = [
+    { label:'Body Type',   value: fmt(data.body_type),       icon:'⬡', color:'#60a5fa' },
+    { label:'Face Shape',  value: fmt(data.face_shape),      icon:'◎', color:'#c084fc' },
+    { label:'Height',      value: fmt(data.estimated_height),icon:'↕', color:'#34d399' },
+    { label:'Shoulders',   value: fmt(data.shoulder_width),  icon:'⇔', color:'#fbbf24' },
+    { label:'Waist',       value: fmt(data.waist_definition),icon:'◉', color:'#f472b6' },
+    { label:'Leg Proportion',value:fmt(data.leg_proportion), icon:'↨', color:'#38bdf8' },
+    { label:'Neck',        value: fmt(data.neck_length),     icon:'↑', color:'#a78bfa' },
+    { label:'Skin Tone',   value: fmt(data.skin_tone),       icon:'◐', color:'#fb923c' },
+    { label:'Hair',        value: fmt(data.hair_length) + ' · ' + fmt(data.hair_texture), icon:'~', color:'#94a3b8' },
+    { label:'Posture',     value: fmt(data.posture),         icon:'⟳', color:'#4ade80' },
+  ];
+ 
+  document.getElementById('ba-stat-grid').innerHTML = stats.map(s => `
+    <div style="
+      background:#0d0d0d; border:0.5px solid #1a2a1a;
+      border-radius:8px; padding:7px 10px;
+    ">
+      <div style="font-size:9px; color:#4b5563; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px;">
+        ${s.icon} ${s.label}
+      </div>
+      <div style="font-size:12px; font-weight:500; color:${s.color};">${s.value}</div>
+    </div>
+  `).join('');
+ 
+  // Pose hints
+  if (data.pose_hints && data.pose_hints.length) {
+    const hintsWrap = document.getElementById('ba-hints-wrap');
+    const hintsList = document.getElementById('ba-hints-list');
+    hintsList.innerHTML = data.pose_hints.map(h => `
+      <div style="
+        display:flex; gap:7px; align-items:flex-start;
+        background:#0d0d0d; border:0.5px solid #1a1a2a;
+        border-radius:7px; padding:7px 10px;
+        font-size:11px; color:#9ca3af; line-height:1.45;
+      ">
+        <span style="color:#3b82f6; flex-shrink:0; margin-top:1px;">›</span>
+        ${h}
+      </div>
+    `).join('');
+    hintsWrap.style.display = 'block';
+  }
+ 
+  // Recommended angles
+  if (data.recommended_angles && data.recommended_angles.length) {
+    const anglesWrap = document.getElementById('ba-angles-wrap');
+    const anglesList = document.getElementById('ba-angles-list');
+    anglesList.innerHTML = data.recommended_angles.map(a => `
+      <span style="
+        background:#0f1a2e; border:0.5px solid #1e3a5f44;
+        color:#60a5fa; font-size:10px; border-radius:100px;
+        padding:3px 9px; letter-spacing:.04em;
+      ">${fmt(a)}</span>
+    `).join('');
+ 
+    if (data.avoid_angles && data.avoid_angles.length) {
+      document.getElementById('ba-avoid-list').innerHTML = data.avoid_angles.map(a => `
+        <span style="
+          background:#1e0c0c; border:0.5px solid #5a1a1a44;
+          color:#e87070; font-size:10px; border-radius:100px;
+          padding:3px 9px; letter-spacing:.04em;
+        ">${fmt(a)}</span>
+      `).join('');
+    }
+ 
+    anglesWrap.style.display = 'flex';
+    anglesWrap.style.flexDirection = 'column';
+  }
+ 
+  panel.style.display = 'block';
+}
+ 
+function clearBodyAnalysis() {
+  bodyAnalysisData = null;
+  document.getElementById('body_analysis_input').value = '';
+  document.getElementById('body-analysis-panel').style.display = 'none';
+  document.getElementById('analysis-status').style.display = 'none';
+ 
+  // Reset upload area
+  const area = document.getElementById('upload-area');
+  const text = document.getElementById('upload-text');
+  area.classList.remove('has-file');
+  text.textContent = 'Drop image or click to browse';
+  document.getElementById('image').value = '';
+ 
+  const statusText = document.getElementById('analysis-status-text');
+  statusText.style.color = '';
+ 
+  updateProgress();
+}
+ 
+// ── Utility: format snake_case to Title Case ──────────────────────────────
+function fmt(str) {
+  if (!str) return '—';
+  return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 </script>
 </div>
