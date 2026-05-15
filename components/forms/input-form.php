@@ -287,75 +287,7 @@ function selected(string $field, string $value): string {
             </div>
           </div>
         </div>
- 
-        <!-- Body Analysis Result Panel (hidden until done) -->
-        <div id="body-analysis-panel" style="display:none; margin-top:10px;">
-          <div style="
-            background:#0a0f0a;
-            border:0.5px solid #1a3a1a;
-            border-radius:12px;
-            overflow:hidden;
-          ">
-            <!-- Panel header -->
-            <div style="
-              display:flex; align-items:center; justify-content:space-between;
-              padding:10px 14px;
-              border-bottom:0.5px solid #161616;
-            ">
-              <div style="display:flex; align-items:center; gap:7px;">
-                <div style="
-                  width:24px; height:24px; border-radius:6px;
-                  background:#0a1f0a; border:0.5px solid #22c55e44;
-                  display:flex; align-items:center; justify-content:center;
-                ">
-                  <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2" width="12" height="12">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div style="font-size:12px; font-weight:600; color:#e5e7eb;">Body Analysis Complete</div>
-                  <div style="font-size:10px; color:#6b7280;" id="ba-confidence-label">Powered by Gemini Vision</div>
-                </div>
-              </div>
-              <button type="button" onclick="clearBodyAnalysis()" style="
-                background:none; border:none; color:#4b5563;
-                font-size:16px; cursor:pointer; padding:2px 6px; line-height:1;
-                border-radius:4px; transition:color .15s;
-              " title="Clear analysis" onmouseover="this.style.color='#e87070'" onmouseout="this.style.color='#4b5563'">&times;</button>
-            </div>
- 
-            <!-- Stat grid -->
-            <div style="padding:12px 14px; display:grid; grid-template-columns:1fr 1fr; gap:6px;" id="ba-stat-grid">
-              <!-- filled by JS -->
-            </div>
- 
-            <!-- Pose hints -->
-            <div id="ba-hints-wrap" style="padding:0 14px 12px; display:none;">
-              <div style="
-                font-size:10px; color:#6b7280; letter-spacing:.08em;
-                text-transform:uppercase; margin-bottom:6px;
-              ">Pose Hints</div>
-              <div id="ba-hints-list" style="display:flex; flex-direction:column; gap:5px;"></div>
-            </div>
- 
-            <!-- Angles -->
-            <div id="ba-angles-wrap" style="
-              padding:10px 14px;
-              border-top:0.5px solid #161616;
-              display:none;
-            ">
-              <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                <span style="font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0;">Best angles</span>
-                <div id="ba-angles-list" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
-              </div>
-              <div id="ba-avoid-wrap" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:5px;">
-                <span style="font-size:10px; color:#4b5563; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0;">Avoid</span>
-                <div id="ba-avoid-list" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
-              </div>
-            </div>
-          </div>
-        </div>
- 
+
         <!-- Hidden input to carry analysis JSON to PHP -->
         <input type="hidden" name="body_analysis" id="body_analysis_input" value="">
       </div>
@@ -973,8 +905,6 @@ async function triggerBodyAnalysis(file) {
     statusText.style.color   = '#22c55e';
     statusSub.textContent    = 'Face: ' + (data.face_shape || '—') + '  ·  Presence: ' + (data.overall_presence || '—');
  
-    renderAnalysisPanel(data);
- 
   } catch(err) {
     showAnalysisError('Network error — check includes/analyze-model.php');
   }
@@ -994,104 +924,21 @@ function showAnalysisError(msg) {
   statusSub.textContent    = '';
 }
  
-function renderAnalysisPanel(data) {
-  const panel = document.getElementById('body-analysis-panel');
- 
-  // Confidence badge
-  const confColor = { high:'#22c55e', medium:'#f59e0b', low:'#e87070' };
-  document.getElementById('ba-confidence-label').innerHTML =
-    `Gemini Vision · <span style="color:${confColor[data.confidence]||'#9ca3af'};">` +
-    (data.confidence || 'medium') + ` confidence</span>`;
- 
-  // Build stat grid
-  const stats = [
-    { label:'Body Type',   value: fmt(data.body_type),       icon:'⬡', color:'#60a5fa' },
-    { label:'Face Shape',  value: fmt(data.face_shape),      icon:'◎', color:'#c084fc' },
-    { label:'Height',      value: fmt(data.estimated_height),icon:'↕', color:'#34d399' },
-    { label:'Shoulders',   value: fmt(data.shoulder_width),  icon:'⇔', color:'#fbbf24' },
-    { label:'Waist',       value: fmt(data.waist_definition),icon:'◉', color:'#f472b6' },
-    { label:'Leg Proportion',value:fmt(data.leg_proportion), icon:'↨', color:'#38bdf8' },
-    { label:'Neck',        value: fmt(data.neck_length),     icon:'↑', color:'#a78bfa' },
-    { label:'Skin Tone',   value: fmt(data.skin_tone),       icon:'◐', color:'#fb923c' },
-    { label:'Hair',        value: fmt(data.hair_length) + ' · ' + fmt(data.hair_texture), icon:'~', color:'#94a3b8' },
-    { label:'Posture',     value: fmt(data.posture),         icon:'⟳', color:'#4ade80' },
-  ];
- 
-  document.getElementById('ba-stat-grid').innerHTML = stats.map(s => `
-    <div style="
-      background:#0d0d0d; border:0.5px solid #1a2a1a;
-      border-radius:8px; padding:7px 10px;
-    ">
-      <div style="font-size:9px; color:#4b5563; text-transform:uppercase; letter-spacing:.08em; margin-bottom:3px;">
-        ${s.icon} ${s.label}
-      </div>
-      <div style="font-size:12px; font-weight:500; color:${s.color};">${s.value}</div>
-    </div>
-  `).join('');
- 
-  // Pose hints
-  if (data.pose_hints && data.pose_hints.length) {
-    const hintsWrap = document.getElementById('ba-hints-wrap');
-    const hintsList = document.getElementById('ba-hints-list');
-    hintsList.innerHTML = data.pose_hints.map(h => `
-      <div style="
-        display:flex; gap:7px; align-items:flex-start;
-        background:#0d0d0d; border:0.5px solid #1a1a2a;
-        border-radius:7px; padding:7px 10px;
-        font-size:11px; color:#9ca3af; line-height:1.45;
-      ">
-        <span style="color:#3b82f6; flex-shrink:0; margin-top:1px;">›</span>
-        ${h}
-      </div>
-    `).join('');
-    hintsWrap.style.display = 'block';
-  }
- 
-  // Recommended angles
-  if (data.recommended_angles && data.recommended_angles.length) {
-    const anglesWrap = document.getElementById('ba-angles-wrap');
-    const anglesList = document.getElementById('ba-angles-list');
-    anglesList.innerHTML = data.recommended_angles.map(a => `
-      <span style="
-        background:#0f1a2e; border:0.5px solid #1e3a5f44;
-        color:#60a5fa; font-size:10px; border-radius:100px;
-        padding:3px 9px; letter-spacing:.04em;
-      ">${fmt(a)}</span>
-    `).join('');
- 
-    if (data.avoid_angles && data.avoid_angles.length) {
-      document.getElementById('ba-avoid-list').innerHTML = data.avoid_angles.map(a => `
-        <span style="
-          background:#1e0c0c; border:0.5px solid #5a1a1a44;
-          color:#e87070; font-size:10px; border-radius:100px;
-          padding:3px 9px; letter-spacing:.04em;
-        ">${fmt(a)}</span>
-      `).join('');
-    }
- 
-    anglesWrap.style.display = 'flex';
-    anglesWrap.style.flexDirection = 'column';
-  }
- 
-  panel.style.display = 'block';
-}
- 
 function clearBodyAnalysis() {
   bodyAnalysisData = null;
   document.getElementById('body_analysis_input').value = '';
-  document.getElementById('body-analysis-panel').style.display = 'none';
   document.getElementById('analysis-status').style.display = 'none';
- 
+
   // Reset upload area
   const area = document.getElementById('upload-area');
   const text = document.getElementById('upload-text');
   area.classList.remove('has-file');
   text.textContent = 'Drop image or click to browse';
   document.getElementById('image').value = '';
- 
+
   const statusText = document.getElementById('analysis-status-text');
   statusText.style.color = '';
- 
+
   updateProgress();
 }
  
@@ -1165,10 +1012,8 @@ window.triggerBodyAnalysis = async function(file) {
   const statusIcon = document.getElementById('analysis-status-icon');
   const statusText = document.getElementById('analysis-status-text');
   const statusSub  = document.getElementById('analysis-status-sub');
-  const panel      = document.getElementById('body-analysis-panel');
  
   // Reset UI
-  panel.style.display      = 'none';
   statusWrap.style.display = 'flex';
   spinner.style.display    = 'block';
   statusIcon.style.display = 'none';
@@ -1196,8 +1041,29 @@ window.triggerBodyAnalysis = async function(file) {
       poseLandmarker.detect(canvas)
     ]);
  
-    const hasFace = faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0;
-    const hasPose = poseResult.landmarks       && poseResult.landmarks.length > 0;
+    const hasFace = faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0 &&
+    (() => {
+        const lm = faceResult.faceLandmarks[0];
+        // Check a spread of reliable face landmarks: nose tip (1), 
+        // chin (152), left cheek (234), right cheek (454)
+        const keyFaceIdx = [1, 152, 234, 454];
+        // FaceLandmarker doesn't expose visibility scores the same way PoseLandmarker does,
+        // so instead we check that landmarks are within a reasonable face region
+        // (all within canvas bounds and not collapsed to a single point)
+        const xs = keyFaceIdx.map(i => lm[i].x);
+        const ys = keyFaceIdx.map(i => lm[i].y);
+        const spreadX = Math.max(...xs) - Math.min(...xs);
+        const spreadY = Math.max(...ys) - Math.min(...ys);
+        // If face landmarks are collapsed (< 5% spread), it's not a real face detection
+        return spreadX > 0.05 && spreadY > 0.05;
+    })();
+    const hasPose = poseResult.landmarks && poseResult.landmarks.length > 0 &&
+    (() => {
+        const lm = poseResult.landmarks[0];
+        const keyBodyIdx = [11, 12, 23, 24]; // shoulders + hips
+        const avgVis = keyBodyIdx.reduce((s, i) => s + (lm[i].visibility ?? 0), 0) / keyBodyIdx.length;
+        return avgVis > 0.3; // at least 30% confident on core body landmarks
+    })();
  
     if (!hasFace && !hasPose) {
       showAnalysisError('No person detected — please upload a clear photo of the model.');
@@ -1240,13 +1106,10 @@ window.triggerBodyAnalysis = async function(file) {
     spinner.style.display    = 'none';
     statusIcon.style.display = 'block';
     statusIcon.innerHTML     = `<svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2.5" width="14" height="14">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
-    statusText.textContent = 'MediaPipe analysis complete — ' + finalAttrs.body_type + ' body type detected';
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+    statusText.textContent = 'Model analyzed';
     statusText.style.color = '#22c55e';
-    statusSub.textContent  = 'Face: ' + (finalAttrs.face_shape || '—') + '  ·  Confidence: ' + finalAttrs.confidence;
- 
-    renderAnalysisPanel(finalAttrs);
- 
+    statusSub.textContent  = '';
   } catch (err) {
     showAnalysisError('Analysis failed: ' + err.message);
   }
@@ -1265,172 +1128,186 @@ function fileToImage(file) {
  
 // ─── 6. Face attribute extraction from 478-point mesh ────────────────────────
 function extractFaceAttributes(result, canvas) {
-  const lm = result.faceLandmarks[0]; // array of {x,y,z} normalised 0-1
-  const W  = canvas.width;
-  const H  = canvas.height;
- 
-  const p = (i) => ({ x: lm[i].x * W, y: lm[i].y * H });
- 
-  // Key landmark indices (MediaPipe Face Mesh canonical)
-  // Forehead top: 10, Chin bottom: 152
-  // Cheekbone left: 234, Cheekbone right: 454
-  // Jaw left: 172, Jaw right: 397
-  // Left eye outer: 33, Right eye outer: 263
-  // Nose tip: 1
- 
-  const foreheadTop   = p(10);
-  const chin          = p(152);
-  const cheekL        = p(234);
-  const cheekR        = p(454);
-  const jawL          = p(172);
-  const jawR          = p(397);
-  const eyeOuterL     = p(33);
-  const eyeOuterR     = p(263);
-  const noseTip       = p(1);
- 
-  const faceHeight    = dist(foreheadTop, chin);
-  const cheekWidth    = dist(cheekL, cheekR);
-  const jawWidth      = dist(jawL, jawR);
-  const foreheadWidth = dist(p(54), p(284));  // temples
- 
-  const ratio_h_w = faceHeight / (cheekWidth || 1);
-  const ratio_jaw_cheek = jawWidth / (cheekWidth || 1);
-  const ratio_fore_cheek = foreheadWidth / (cheekWidth || 1);
- 
-  // ── Face shape classification ──────────────────────────────────────────
-  let face_shape = 'oval';
-  if (ratio_h_w > 1.55)                              face_shape = 'oblong';
-  else if (ratio_h_w < 1.10)                         face_shape = 'round';
-  else if (ratio_jaw_cheek > 0.90 && ratio_h_w < 1.35) face_shape = 'square';
-  else if (ratio_fore_cheek > 1.05 && ratio_jaw_cheek < 0.75) face_shape = 'heart';
-  else if (ratio_fore_cheek < 0.88 && ratio_jaw_cheek < 0.80) face_shape = 'diamond';
-  // else oval / rectangle → keep 'oval'
- 
-  // ── Jawline ──────────────────────────────────────────────────────────
-  const jawline = ratio_jaw_cheek > 0.88 ? 'sharp' : ratio_jaw_cheek > 0.72 ? 'soft' : 'round';
- 
-  // ── Forehead ─────────────────────────────────────────────────────────
-  const forehead = ratio_fore_cheek > 1.02 ? 'wide' : ratio_fore_cheek > 0.88 ? 'medium' : 'narrow';
- 
-  // ── Face symmetry (compare left/right landmark distances) ─────────────
-  const leftHalf  = dist(p(33),  p(234));
-  const rightHalf = dist(p(263), p(454));
-  const symRatio  = Math.min(leftHalf, rightHalf) / (Math.max(leftHalf, rightHalf) || 1);
-  const face_symmetry = symRatio > 0.96 ? 'high' : symRatio > 0.90 ? 'medium' : 'natural';
- 
-  // ── Blendshapes for posture / expression clues ────────────────────────
-  // (available if outputFaceBlendshapes: true)
-  let posture = 'upright';
-  if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length) {
-    const mat = result.facialTransformationMatrixes[0].data; // column-major 4×4
-    // mat[8] = approx head tilt forward/back
-    const tiltX = Math.atan2(mat[8], mat[10]) * (180 / Math.PI);
-    if (tiltX > 12)       posture = 'slightly_forward';
-    else if (tiltX < -12) posture = 'relaxed';
-  }
- 
-  return { face_shape, face_symmetry, jawline, forehead, posture };
+    const lm = result.faceLandmarks[0];
+    const W  = canvas.width;
+    const H  = canvas.height;
+
+    const p = (i) => ({ x: lm[i].x * W, y: lm[i].y * H });
+
+    const foreheadTop = p(10);
+    const chin        = p(152);
+    const cheekL      = p(234);
+    const cheekR      = p(454);
+
+    const faceHeight  = dist(foreheadTop, chin);
+    const cheekWidth  = dist(cheekL, cheekR);
+
+    // Guard: if the detected face region is implausibly small
+    // (less than 4% of image width), landmarks are unreliable
+    const MIN_FACE_PX = W * 0.04;
+    if (cheekWidth < MIN_FACE_PX || faceHeight < MIN_FACE_PX) {
+        return {
+            face_shape:    'unknown',
+            face_symmetry: 'unknown',
+            jawline:       'unknown',
+            forehead:      'unknown',
+            posture:       'unknown',
+        };
+    }
+
+    const jawL          = p(172);
+    const jawR          = p(397);
+    const foreheadWidth = dist(p(54), p(284));
+
+    const ratio_h_w        = faceHeight  / (cheekWidth || 1);
+    const ratio_jaw_cheek  = dist(jawL, jawR) / (cheekWidth || 1);
+    const ratio_fore_cheek = foreheadWidth / (cheekWidth || 1);
+
+    let face_shape = 'oval';
+    if (ratio_h_w > 1.55)                                          face_shape = 'oblong';
+    else if (ratio_h_w < 1.10)                                     face_shape = 'round';
+    else if (ratio_jaw_cheek > 0.90 && ratio_h_w < 1.35)          face_shape = 'square';
+    else if (ratio_fore_cheek > 1.05 && ratio_jaw_cheek < 0.75)   face_shape = 'heart';
+    else if (ratio_fore_cheek < 0.88 && ratio_jaw_cheek < 0.80)   face_shape = 'diamond';
+
+    const jawline  = ratio_jaw_cheek  > 0.88 ? 'sharp' : ratio_jaw_cheek  > 0.72 ? 'soft' : 'round';
+    const forehead = ratio_fore_cheek > 1.02 ? 'wide'  : ratio_fore_cheek > 0.88 ? 'medium' : 'narrow';
+
+    const leftHalf  = dist(p(33),  p(234));
+    const rightHalf = dist(p(263), p(454));
+    const symRatio  = Math.min(leftHalf, rightHalf) / (Math.max(leftHalf, rightHalf) || 1);
+    const face_symmetry = symRatio > 0.96 ? 'high' : symRatio > 0.90 ? 'medium' : 'natural';
+
+    let posture = 'upright';
+    if (result.facialTransformationMatrixes && result.facialTransformationMatrixes.length) {
+        const mat   = result.facialTransformationMatrixes[0].data;
+        const tiltX = Math.atan2(mat[8], mat[10]) * (180 / Math.PI);
+        if (tiltX > 12)       posture = 'slightly_forward';
+        else if (tiltX < -12) posture = 'relaxed';
+    }
+
+    return { face_shape, face_symmetry, jawline, forehead, posture };
 }
  
 // ─── 7. Pose attribute extraction from 33-point skeleton ─────────────────────
 function extractPoseAttributes(result, canvas) {
-  const lm = result.landmarks[0]; // normalised 0-1
-  const W  = canvas.width;
-  const H  = canvas.height;
- 
-  // MediaPipe Pose landmark indices
-  const IDX = {
-    nose:       0,
-    leftShoulder:  11, rightShoulder: 12,
-    leftElbow:     13, rightElbow:    14,
-    leftWrist:     15, rightWrist:    16,
-    leftHip:       23, rightHip:      24,
-    leftKnee:      25, rightKnee:     26,
-    leftAnkle:     27, rightAnkle:    28,
-    leftEar:        7, rightEar:       8,
-    leftMouth:     9,  rightMouth:    10,
-  };
- 
-  const p  = (k) => ({ x: lm[IDX[k]].x * W, y: lm[IDX[k]].y * H });
-  const vis = (k) => lm[IDX[k]].visibility ?? 1;
- 
-  const lShoulder = p('leftShoulder');
-  const rShoulder = p('rightShoulder');
-  const lHip      = p('leftHip');
-  const rHip      = p('rightHip');
-  const lKnee     = p('leftKnee');
-  const rKnee     = p('rightKnee');
-  const lAnkle    = p('leftAnkle');
-  const rAnkle    = p('rightAnkle');
-  const nose      = p('nose');
- 
-  const midShoulder = mid(lShoulder, rShoulder);
-  const midHip      = mid(lHip,      rHip);
-  const midKnee     = mid(lKnee,     rKnee);
-  const midAnkle    = mid(lAnkle,    rAnkle);
- 
-  const shoulderW = dist(lShoulder, rShoulder);
-  const hipW      = dist(lHip,      rHip);
-  const torsoH    = dist(midShoulder, midHip);
-  const legH      = dist(midHip,     midAnkle);
-  const neckH     = dist(midShoulder, nose);
-  const fullH     = dist(nose,        midAnkle);
- 
-  // ── Shoulder width ─────────────────────────────────────────────────────
-  const shoulder_width = shoulderW / (hipW || 1) > 1.25 ? 'broad'
-                       : shoulderW / (hipW || 1) > 0.90 ? 'medium' : 'narrow';
- 
-  // ── Hip ratio ──────────────────────────────────────────────────────────
-  const hip_ratio = hipW / (shoulderW || 1) > 1.10 ? 'wide'
-                  : hipW / (shoulderW || 1) > 0.85 ? 'balanced' : 'narrow';
- 
-  // ── Waist definition (approximate: assume waist ≈ 60% down torso) ─────
-  // We don't have explicit waist points in PoseLandmarker; use shoulder/hip ratio as proxy
-  const waist_definition = (Math.abs(shoulderW - hipW) / (Math.max(shoulderW, hipW) || 1)) > 0.15
-    ? 'defined' : (Math.abs(shoulderW - hipW) / (Math.max(shoulderW, hipW) || 1)) > 0.07
-    ? 'moderate' : 'minimal';
- 
-  // ── Leg proportion ─────────────────────────────────────────────────────
-  const legRatio = legH / (fullH || 1);
-  const leg_proportion = legRatio > 0.55 ? 'long' : legRatio < 0.46 ? 'short' : 'average';
- 
-  // ── Neck length ────────────────────────────────────────────────────────
-  const neckRatio = neckH / (torsoH || 1);
-  const neck_length = neckRatio > 0.38 ? 'long' : neckRatio < 0.22 ? 'short' : 'medium';
- 
-  // ── Arm length ────────────────────────────────────────────────────────
-  const armH = dist(lShoulder, p('leftWrist'));
-  const arm_length = armH / (torsoH || 1) > 1.1 ? 'long'
-                   : armH / (torsoH || 1) < 0.85 ? 'short' : 'average';
- 
-  // ── Estimated height (relative proportions only) ──────────────────────
-  const estimated_height = fullH / H > 0.80 ? 'tall'
-                         : fullH / H < 0.60 ? 'petite' : 'average';
- 
-  return {
-    shoulder_width,
-    hip_ratio,
-    waist_definition,
-    leg_proportion,
-    neck_length,
-    arm_length,
-    estimated_height,
-  };
+    const lm = result.landmarks[0];
+    const W  = canvas.width;
+    const H  = canvas.height;
+
+    const IDX = {
+        leftShoulder:  11, rightShoulder: 12,
+        leftElbow:     13, rightElbow:    14,
+        leftWrist:     15, rightWrist:    16,
+        leftHip:       23, rightHip:      24,
+        leftKnee:      25, rightKnee:     26,
+        leftAnkle:     27, rightAnkle:    28,
+        nose:           0,
+    };
+
+    const VIS_THRESHOLD = 0.35; // landmark must be at least 35% confident
+
+    const p   = (k) => ({ x: lm[IDX[k]].x * W, y: lm[IDX[k]].y * H });
+    const vis = (k) => lm[IDX[k]].visibility ?? 0;
+    const ok  = (...keys) => keys.every(k => vis(k) > VIS_THRESHOLD);
+
+    // --- Shoulder width (needs both shoulders) ---
+    let shoulder_width = 'unknown';
+    if (ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
+        const shoulderW = dist(p('leftShoulder'), p('rightShoulder'));
+        const hipW      = dist(p('leftHip'),      p('rightHip'));
+        const ratio     = shoulderW / (hipW || 1);
+        shoulder_width  = ratio > 1.25 ? 'broad' : ratio > 0.90 ? 'medium' : 'narrow';
+    }
+
+    // --- Hip ratio (needs hips + shoulders) ---
+    let hip_ratio = 'unknown';
+    if (ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
+        const shoulderW = dist(p('leftShoulder'), p('rightShoulder'));
+        const hipW      = dist(p('leftHip'),      p('rightHip'));
+        const ratio     = hipW / (shoulderW || 1);
+        hip_ratio       = ratio > 1.10 ? 'wide' : ratio > 0.85 ? 'balanced' : 'narrow';
+    }
+
+    // --- Waist definition (needs shoulders + hips) ---
+    let waist_definition = 'unknown';
+    if (ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
+        const shoulderW = dist(p('leftShoulder'), p('rightShoulder'));
+        const hipW      = dist(p('leftHip'),      p('rightHip'));
+        const diff      = Math.abs(shoulderW - hipW) / (Math.max(shoulderW, hipW) || 1);
+        waist_definition = diff > 0.15 ? 'defined' : diff > 0.07 ? 'moderate' : 'minimal';
+    }
+
+    // --- Leg proportion (needs hips + ankles) ---
+    let leg_proportion = 'unknown';
+    if (ok('leftHip', 'rightHip', 'leftAnkle', 'rightAnkle', 'nose')) {
+        const midHip    = mid(p('leftHip'),    p('rightHip'));
+        const midAnkle  = mid(p('leftAnkle'), p('rightAnkle'));
+        const legH      = dist(midHip,   midAnkle);
+        const fullH     = dist(p('nose'), midAnkle);
+        const legRatio  = legH / (fullH || 1);
+        leg_proportion  = legRatio > 0.55 ? 'long' : legRatio < 0.46 ? 'short' : 'average';
+    }
+
+    // --- Neck length (needs shoulders + nose) ---
+    let neck_length = 'unknown';
+    if (ok('leftShoulder', 'rightShoulder', 'nose')) {
+        const midShoulder = mid(p('leftShoulder'), p('rightShoulder'));
+        const torsoH      = ok('leftHip', 'rightHip')
+            ? dist(midShoulder, mid(p('leftHip'), p('rightHip'))) : null;
+        const neckH       = dist(midShoulder, p('nose'));
+        if (torsoH) {
+            const ratio  = neckH / (torsoH || 1);
+            neck_length  = ratio > 0.38 ? 'long' : ratio < 0.22 ? 'short' : 'medium';
+        }
+    }
+
+    // --- Arm length (needs shoulders + wrists) ---
+    let arm_length = 'unknown';
+    if (ok('leftShoulder', 'leftWrist') && ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
+        const midShoulder = mid(p('leftShoulder'), p('rightShoulder'));
+        const torsoH      = dist(midShoulder, mid(p('leftHip'), p('rightHip')));
+        const armH        = dist(p('leftShoulder'), p('leftWrist'));
+        const ratio       = armH / (torsoH || 1);
+        arm_length        = ratio > 1.1 ? 'long' : ratio < 0.85 ? 'short' : 'average';
+    }
+
+    // --- Estimated height (needs nose + ankles) ---
+    let estimated_height = 'unknown';
+    if (ok('nose', 'leftAnkle', 'rightAnkle')) {
+        const midAnkle = mid(p('leftAnkle'), p('rightAnkle'));
+        const fullH    = dist(p('nose'), midAnkle);
+        estimated_height = fullH / H > 0.80 ? 'tall' : fullH / H < 0.60 ? 'petite' : 'average';
+    }
+
+    return {
+        shoulder_width,
+        hip_ratio,
+        waist_definition,
+        leg_proportion,
+        neck_length,
+        arm_length,
+        estimated_height,
+    };
 }
  
 // ─── 8. Derive body type from attrs ──────────────────────────────────────────
 function deriveBodyType(a) {
-  const sw = a.shoulder_width;   // narrow/medium/broad
-  const hr = a.hip_ratio;        // narrow/balanced/wide
-  const wd = a.waist_definition; // defined/moderate/minimal
- 
-  if (sw === 'broad'  && hr === 'wide'    && wd === 'defined')  return 'hourglass';
-  if (sw === 'medium' && hr === 'wide'    && wd !== 'defined')  return 'pear';
-  if (sw === 'broad'  && hr === 'narrow'  )                     return 'inverted_triangle';
-  if (sw === 'broad'  && hr === 'balanced')                     return 'athletic';
-  if (wd === 'minimal' && sw !== 'narrow' && hr !== 'wide')     return 'apple';
-  if (sw === 'narrow' && hr === 'narrow')                       return 'rectangle';
-  return 'rectangle'; // fallback
+    // If core body measurements are unknown, we can't determine body type
+    if (a.shoulder_width === 'unknown' || a.hip_ratio === 'unknown') {
+        return 'unknown';
+    }
+
+    const sw = a.shoulder_width;
+    const hr = a.hip_ratio;
+    const wd = a.waist_definition;
+
+    if (sw === 'broad'  && hr === 'wide'    && wd === 'defined')  return 'hourglass';
+    if (sw === 'medium' && hr === 'wide'    && wd !== 'defined')  return 'pear';
+    if (sw === 'broad'  && hr === 'narrow')                       return 'inverted_triangle';
+    if (sw === 'broad'  && hr === 'balanced')                     return 'athletic';
+    if (wd === 'minimal' && sw !== 'narrow' && hr !== 'wide')     return 'apple';
+    return 'rectangle';
 }
  
 function derivePresence(a) {
@@ -1492,17 +1369,28 @@ function derivePoseHintsClient(a) {
  
 // ─── 11. Default attrs (for when face or pose is partially missing) ───────────
 function defaultAttrs() {
-  return {
-    body_type: 'rectangle', estimated_height: 'average',
-    shoulder_width: 'medium', waist_definition: 'moderate',
-    hip_ratio: 'balanced', neck_length: 'medium',
-    leg_proportion: 'average', arm_length: 'average',
-    posture: 'upright', face_shape: 'oval', face_symmetry: 'medium',
-    jawline: 'soft', forehead: 'medium', skin_tone: 'medium',
-    hair_length: 'unknown', hair_texture: 'unknown',
-    overall_presence: 'balanced', recommended_angles: ['eye_level'],
-    avoid_angles: [], confidence: 'medium',
-  };
+    return {
+        body_type:          'unknown',
+        estimated_height:   'unknown',
+        shoulder_width:     'unknown',
+        waist_definition:   'unknown',
+        hip_ratio:          'unknown',
+        neck_length:        'unknown',
+        leg_proportion:     'unknown',
+        arm_length:         'unknown',
+        posture:            'unknown',
+        face_shape:         'unknown',   // was 'oval'
+        face_symmetry:      'unknown',   // was 'medium'
+        jawline:            'unknown',   // was 'soft'
+        forehead:           'unknown',   // was 'medium'
+        skin_tone:          'unknown',
+        hair_length:        'unknown',
+        hair_texture:       'unknown',
+        overall_presence:   'unknown',
+        recommended_angles: [],          // was ['eye_level'] — only add if we have data
+        avoid_angles:       [],
+        confidence:         'low',       // was 'medium' — unknown defaults = low confidence
+    };
 }
  
 // ─── 12. Geometry helpers ─────────────────────────────────────────────────────
