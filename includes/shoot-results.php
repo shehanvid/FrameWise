@@ -445,6 +445,8 @@ $plan = [
     </div>
 </div>
 
+<?php /* remove this comment for model analize result?>
+
 <?php
 // ── TEMPORARY: MediaPipe body analysis debug panel ─────────────────────
 $body_analysis_raw = $_POST['body_analysis'] ?? '';
@@ -596,6 +598,7 @@ if ($body_analysis && !isset($body_analysis['error'])): ?>
             </div>
         </div>
         <?php endif; ?>
+        
 
         <!-- Raw JSON toggle -->
         <details style="margin-top: 12px;">
@@ -619,6 +622,7 @@ if ($body_analysis && !isset($body_analysis['error'])): ?>
 </div>
 <?php endif; ?>
 
+<?php remove this comment for model analize result */ ?>
 <!-- ══════════════════════════════════════════════════════════════════════════
      CARD GRID
 ═══════════════════════════════════════════════════════════════════════════ -->
@@ -752,7 +756,7 @@ if ($body_analysis && !isset($body_analysis['error'])): ?>
             </div>
         </div>
     </div>
-
+                    
     <!-- ── CAMERA SETTINGS ──────────────────────────────────────────────── -->
     <div class="sp-card">
         <div class="sp-card-header">
@@ -768,21 +772,9 @@ if ($body_analysis && !isset($body_analysis['error'])): ?>
             </div>
         </div>
         <div class="sp-card-body" id="camera-body">
-            <?php
-            // Generate camera settings based on shoot type and mood
-            $cam = getCameraSettings($plan['shoot_type'], $plan['mood']);
-            foreach ($cam as $setting):
-            ?>
-            <div class="sp-cam-setting">
-                <div class="sp-cam-label"><?= $setting['icon'] ?>&nbsp;<?= $setting['label'] ?></div>
-                <div style="display:flex;align-items:center;">
-                    <div class="sp-cam-val"><?= $setting['value'] ?></div>
-                    <?php if (!empty($setting['badge'])): ?>
-                    <div class="sp-cam-badge"><?= $setting['badge'] ?></div>
-                    <?php endif; ?>
-                </div>
+            <div style="color:#6b7280;font-size:12px;padding:12px 0;">
+                Calculating from sun position…
             </div>
-            <?php endforeach; ?>
         </div>
     </div>
 
@@ -969,15 +961,19 @@ function toggleShot(row) {
     const lat = parseFloat(<?= json_encode($plan['location_lat'] ?: '6.9271') ?>);
     const lng = parseFloat(<?= json_encode($plan['location_lng'] ?: '79.8612') ?>);
     const dt  = new Date(<?= json_encode(str_replace(' at ', ' ', $plan['datetime'])) ?>);
+    const shootType = <?= json_encode(strtolower($plan['shoot_type'])) ?>;
+    const mood      = <?= json_encode(strtolower($plan['mood'])) ?>;
 
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // Sun position
-    const pos = SunCalc.getPosition(dt, lat, lng);
-    const azimuthDeg = (pos.azimuth * 180 / Math.PI + 180) % 360;
+    // ── Sun position ───────────────────────────────────────────────────────
+    const pos         = SunCalc.getPosition(dt, lat, lng);
+    const azimuthDeg  = (pos.azimuth * 180 / Math.PI + 180) % 360;
     const altitudeDeg = pos.altitude * 180 / Math.PI;
     const shadowDeg   = (azimuthDeg + 180) % 360;
-    const shadowLen   = altitudeDeg > 0 ? (1 / Math.tan(pos.altitude)).toFixed(1) + '× height' : 'No shadow';
+    const shadowLen   = altitudeDeg > 0
+        ? (1 / Math.tan(pos.altitude)).toFixed(1) + '× height'
+        : 'No shadow';
 
     function degToCard(d) {
         const cards = [
@@ -1002,21 +998,26 @@ function toggleShot(row) {
     document.getElementById('sun-altitude').textContent = altitudeDesc(altitudeDeg);
     document.getElementById('shadow-dir').textContent   = degToCard(shadowDeg);
     document.getElementById('shadow-len').textContent   = shadowLen;
-    document.getElementById('sun-pos-sub').textContent  =
-    altitudeDeg < 0 ? 'Sun below horizon at shoot time' : 'At shoot time · ' + Math.round(azimuthDeg) + '° azimuth';
-    // Rotate compass arrows
+    document.getElementById('sun-pos-sub').textContent  = altitudeDeg < 0
+        ? 'Sun below horizon at shoot time'
+        : 'At shoot time · ' + Math.round(azimuthDeg) + '° azimuth';
+
     document.getElementById('sun-arrow').style.transform    = `rotate(${azimuthDeg}deg)`;
     document.getElementById('shadow-arrow').style.transform = `rotate(${shadowDeg}deg)`;
 
-    // Sun score
-    const sunScore = Math.min(100, Math.max(0, Math.round(((30 - Math.abs(altitudeDeg - 15)) / 30) * 100)));
+    // ── Sun score (peaks at golden hour ~15°, 98 pts) ─────────────────────
+    const sunScore = altitudeDeg < 0  ? 10 :
+                     altitudeDeg < 6  ? 72 :
+                     altitudeDeg < 15 ? 98 :
+                     altitudeDeg < 30 ? 82 :
+                     altitudeDeg < 60 ? 55 : 30;
     document.getElementById('sun-score-bar').style.width = sunScore + '%';
     document.getElementById('sun-score-val').textContent  = sunScore;
 
-    // Golden / blue hour
-    const times = SunCalc.getTimes(dt, lat, lng);
-    const fmt   = t => t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    const now   = dt.getTime();
+    // ── Golden / blue hour times ───────────────────────────────────────────
+    const times       = SunCalc.getTimes(dt, lat, lng);
+    const fmt         = t => t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now         = dt.getTime();
 
     const goldenStart = times.goldenHour;
     const goldenEnd   = times.goldenHourEnd || times.sunsetStart;
@@ -1031,18 +1032,27 @@ function toggleShot(row) {
         return `<div class="sp-hour-badge" style="background:${col1};color:${col2};border:0.5px solid ${col2}44;">${label}</div>`;
     }
 
+    // ── Timeline fill: how far through golden→blue window is shoot time ───
+    const windowStart = goldenStart.getTime();
+    const windowEnd   = blueEnd.getTime();
+    const windowPct   = Math.min(100, Math.max(0,
+        Math.round(((now - windowStart) / (windowEnd - windowStart)) * 100)
+    ));
+
     document.getElementById('golden-body').innerHTML = `
         <div class="sp-hour-row">
             <div class="sp-hour-dot" style="background:#fb923c;box-shadow:0 0 5px #fb923c66;"></div>
             <div class="sp-hour-name">Golden Hour</div>
             <div class="sp-hour-time">${fmt(goldenStart)} – ${fmt(goldenEnd)}</div>
-            ${isGolden ? badgeHtml('Now','#1e0f00','#fb923c') : ''}
+            ${isGolden ? badgeHtml('Now', '#1e0f00', '#fb923c') : ''}
         </div>
         <div class="sp-hour-row">
             <div class="sp-hour-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa66;"></div>
             <div class="sp-hour-name">Blue Hour</div>
             <div class="sp-hour-time">${fmt(blueStart)} – ${fmt(blueEnd)}</div>
-            ${isBlue ? badgeHtml('Now','#0c1a2e','#60a5fa') : (!isGolden && now < blueStart.getTime() ? badgeHtml('Soon','#0c1a2e','#60a5fa') : '')}
+            ${isBlue
+                ? badgeHtml('Now', '#0c1a2e', '#60a5fa')
+                : (!isGolden && now < blueStart.getTime() ? badgeHtml('Soon', '#0c1a2e', '#60a5fa') : '')}
         </div>
         <div class="sp-hour-row">
             <div class="sp-hour-dot" style="background:#6b7280;"></div>
@@ -1051,14 +1061,126 @@ function toggleShot(row) {
             <div></div>
         </div>
         <div class="sp-tl-track">
-            <div class="sp-tl-fill" style="width:68%;background:linear-gradient(90deg,#fb923c,#fbbf24);"></div>
+            <div class="sp-tl-fill" style="width:${windowPct}%;background:linear-gradient(90deg,#fb923c,#fbbf24);"></div>
         </div>
         <div class="sp-tl-labels">
             <span class="sp-tl-label">${fmt(goldenStart)}</span>
-            <span class="sp-tl-label" style="color:#fb923c;font-weight:500;">${isGolden||isBlue?'NOW →':'SHOOT →'}</span>
+            <span class="sp-tl-label" style="color:#fb923c;font-weight:500;">${isGolden || isBlue ? 'NOW →' : 'SHOOT →'}</span>
             <span class="sp-tl-label">${fmt(blueEnd)}</span>
         </div>
     `;
+
+    // ── Dynamic camera settings based on sun altitude ─────────────────────
+    let aperture, shutter, iso, focal, wb, apertureBadge, isoBadge, lightNote, lightQuality;
+
+    if (altitudeDeg < 0) {
+        // Sun below horizon — night / pre-dawn
+        aperture = 'f/2.0'; shutter = '1/200s'; iso = '800';
+        apertureBadge = 'Low light'; isoBadge = 'Boosted';
+        wb = '3200K';
+        lightQuality = '#6b7280';
+        lightNote = 'Sun below horizon — use flash or continuous artificial light';
+    } else if (altitudeDeg < 6) {
+        // Blue hour — very soft, cool, low contrast
+        aperture = 'f/1.8'; shutter = '1/60s'; iso = '1600';
+        apertureBadge = 'Max light'; isoBadge = 'High';
+        wb = '7500K';
+        lightQuality = '#60a5fa';
+        lightNote = 'Blue hour — cool ethereal light, long exposures possible';
+    } else if (altitudeDeg < 15) {
+        // Golden hour — ideal photography light
+        aperture = 'f/2.0'; shutter = '1/250s'; iso = '200';
+        apertureBadge = 'Bokeh'; isoBadge = 'Clean';
+        wb = '4000K';
+        lightQuality = '#fb923c';
+        lightNote = '✦ Golden hour — warmest, most flattering light of the day';
+    } else if (altitudeDeg < 30) {
+        // Low-mid sun — still flattering, soft shadows
+        aperture = 'f/2.8'; shutter = '1/500s'; iso = '200';
+        apertureBadge = 'Shallow DOF'; isoBadge = 'Clean';
+        wb = '5200K';
+        lightQuality = '#4ade80';
+        lightNote = 'Low-mid sun — soft shadows, balanced contrast';
+    } else if (altitudeDeg < 60) {
+        // Approaching midday — harsh, seek shade
+        aperture = 'f/4.0'; shutter = '1/1000s'; iso = '100';
+        apertureBadge = 'Deeper DOF'; isoBadge = 'Base ISO';
+        wb = '6000K';
+        lightQuality = '#fbbf24';
+        lightNote = 'High sun — harsh shadows. Seek open shade or use a diffuser';
+    } else {
+        // Overhead — most unflattering, avoid if possible
+        aperture = 'f/5.6'; shutter = '1/2000s'; iso = '100';
+        apertureBadge = 'Stop down'; isoBadge = 'Base ISO';
+        wb = '6500K';
+        lightQuality = '#e87070';
+        lightNote = 'Near-overhead sun — avoid direct light. Use shade or reflector';
+    }
+
+    // Focal length by shoot type
+    const focalMap = {
+        portrait: '85mm', fashion: '85mm', product: '100mm',
+        street: '35mm',   landscape: '24mm', wedding: '50mm'
+    };
+    focal = focalMap[shootType] || '50mm';
+
+    // Mood nudge — dramatic/moody pushes ISO for film grain feel
+    if (['dramatic', 'moody'].includes(mood) && altitudeDeg > 6) {
+        iso = String(Math.min(3200, parseInt(iso) * 2));
+        isoBadge = 'Film grain';
+    }
+
+    // Airy/natural mood — keep it clean, pull ISO down one stop
+    if (['airy', 'natural'].includes(mood) && parseInt(iso) > 100) {
+        iso = String(Math.max(100, Math.round(parseInt(iso) / 2)));
+        isoBadge = 'Clean';
+    }
+
+    function renderCamSetting(icon, label, value, badge) {
+        return `
+            <div class="sp-cam-setting">
+                <div class="sp-cam-label">${icon}&nbsp;${label}</div>
+                <div style="display:flex;align-items:center;">
+                    <div class="sp-cam-val">${value}</div>
+                    ${badge ? `<div class="sp-cam-badge">${badge}</div>` : ''}
+                </div>
+            </div>`;
+    }
+
+    document.getElementById('camera-body').innerHTML = `
+        <div style="
+            background:#0d0d0d;
+            border:0.5px solid ${lightQuality}33;
+            border-left: 2px solid ${lightQuality};
+            border-radius:8px;
+            padding:9px 12px;
+            margin-bottom:14px;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        ">
+            <svg fill="none" viewBox="0 0 24 24" stroke="${lightQuality}" stroke-width="2" width="14" height="14" style="flex-shrink:0;">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21
+                       m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636
+                       M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+            </svg>
+            <div>
+                <div style="font-size:11px;color:${lightQuality};font-weight:500;">
+                    ${Math.round(altitudeDeg)}° sun altitude
+                </div>
+                <div style="font-size:11px;color:#6b7280;margin-top:1px;line-height:1.4;">
+                    ${lightNote}
+                </div>
+            </div>
+        </div>
+        ${renderCamSetting('◎', 'Aperture',      aperture, apertureBadge)}
+        ${renderCamSetting('⏱', 'Shutter speed',  shutter,  '')}
+        ${renderCamSetting('☀', 'ISO',             iso,      isoBadge)}
+        ${renderCamSetting('⌖', 'Focal length',    focal,    'Portrait')}
+        ${renderCamSetting('◑', 'White balance',   wb,       '')}
+    `;
+
 })();
 
 // ── OpenWeather fetch ──────────────────────────────────────────────────────

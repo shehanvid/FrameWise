@@ -141,3 +141,4 @@ echo json_encode([
     'clouds'      => $clouds,
     'rain_chance' => $rainChance,
 ]);
+

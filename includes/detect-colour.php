@@ -18,7 +18,17 @@ if (!$base64) {
     exit;
 }
 
-$apiKey = 'AIzaSyAx8DOuaqDY6ijjFDZm9kPxXNVjnAEdZv8';
+$envPath = __DIR__ . '/../.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with(trim($line), '#')) continue;
+        [$key, $val] = explode('=', $line, 2);
+        $_ENV[trim($key)] = trim($val);
+    }
+}
+
+$apiKey = $_ENV['GEMINI_API_KEY'] ?? '';
 
 $payload = json_encode([
     'contents' => [[
