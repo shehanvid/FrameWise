@@ -1275,7 +1275,7 @@ function toggleShot(row) {
     try {
         const bodyAnalysis = <?= json_encode(json_decode($_POST['body_analysis'] ?? '{}', true)) ?>;
 
-        const resp = await fetch('includes/ai-pose-match.php', {
+        const resp = await fetch('ai-pose-match.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1285,27 +1285,39 @@ function toggleShot(row) {
                 location:       SHOOT_CONTEXT.location,
                 experience:     SHOOT_CONTEXT.experience,
                 platform:       SHOOT_CONTEXT.platform,
+                lighting_style: SHOOT_CONTEXT.lighting_style,
                 body_type:      bodyAnalysis.body_type      ?? 'unknown',
                 face_shape:     bodyAnalysis.face_shape     ?? 'unknown',
+                face_symmetry:  bodyAnalysis.face_symmetry  ?? 'unknown',
+                jawline:        bodyAnalysis.jawline        ?? 'unknown',
                 shoulder_width: bodyAnalysis.shoulder_width ?? 'unknown',
+                waist_definition: bodyAnalysis.waist_definition ?? 'unknown',
                 hip_ratio:      bodyAnalysis.hip_ratio      ?? 'unknown',
                 leg_proportion: bodyAnalysis.leg_proportion ?? 'unknown',
                 neck_length:    bodyAnalysis.neck_length    ?? 'unknown',
+                arm_length:     bodyAnalysis.arm_length     ?? 'unknown',
                 overall_presence: bodyAnalysis.overall_presence ?? 'unknown',
+                recommended_angles: (bodyAnalysis.recommended_angles ?? []).join(', '),
+                avoid_angles:   (bodyAnalysis.avoid_angles ?? []).join(', '),
             })
         });
 
-        const data = await resp.json();
+        const rawText = await resp.text();
+        console.log('ai-pose-match.php raw response:', rawText);
+
+        const data = JSON.parse(rawText);
 
         if (data.poses && data.poses.length) {
             document.getElementById('pose-body').innerHTML = data.poses.map((p, i) => `
                 <div class="sp-pose-card" style="flex-direction:column;gap:8px;">
-                    <img 
-                        src="${p.image}" 
-                        alt="${p.name}"
-                        style="width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:8px;border:0.5px solid #1a1a1a;"
-                        loading="lazy"
-                    >
+                    <div style="
+                        width:100%;aspect-ratio:2/3;
+                        border-radius:8px;border:0.5px solid #1a1a1a;
+                        background:linear-gradient(135deg,#0d0d0d 0%,#161616 100%);
+                        display:flex;align-items:center;justify-content:center;
+                        font-family:'Bebas Neue',sans-serif;font-size:52px;
+                        color:#1e2030;user-select:none;
+                    ">0${i+1}</div>
                     <div>
                         <div class="sp-pose-num">0${i+1}</div>
                         <div class="sp-pose-name">${p.name}</div>
@@ -1316,8 +1328,9 @@ function toggleShot(row) {
             `).join('');
         }
     } catch(e) {
+        console.error('Pose fetch error:', e);
         document.getElementById('pose-body').innerHTML = 
-            '<div style="color:#6b7280;font-size:12px;grid-column:span 2;">Pose matching unavailable.</div>';
+            '<div style="color:#6b7280;font-size:12px;grid-column:span 5;">Pose matching unavailable.</div>';
     }
 })();
 

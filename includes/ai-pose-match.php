@@ -17,6 +17,27 @@ if (file_exists($envPath)) {
 
 $data = json_decode(file_get_contents('php://input'), true);
 
+if (!$data || !isset($data['body_type'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid or missing data']);
+    exit;
+}
+
+// Fill missing keys with defaults to prevent warnings
+$defaults = [
+    'estimated_height'  => 'unknown',
+    'posture'           => 'unknown',
+    'face_symmetry'     => 'unknown',
+    'jawline'           => 'unknown',
+    'forehead'          => 'unknown',
+    'arm_length'        => 'unknown',
+    'waist_definition'  => 'unknown',
+    'skin_tone'         => 'unknown',
+    'recommended_angles'=> '',
+    'avoid_angles'      => '',
+];
+$data = array_merge($defaults, $data);
+
 $prompt = "You are a professional photography pose director with deep knowledge of body types, face shapes, and shoot styles.
 
 AVAILABLE POSES (these are the ONLY poses you can choose from):
@@ -53,7 +74,7 @@ SHOOT DETAILS:
 MODEL BODY ANALYSIS (from MediaPipe):
 - Body type: {$data['body_type']}
 - Overall presence: {$data['overall_presence']}
-- Estimated height: {$data['estimated_height']}
+- Estimated height: " . ($data['estimated_height'] ?? 'unknown') . "
 - Face shape: {$data['face_shape']}
 - Face symmetry: {$data['face_symmetry']}
 - Jawline: {$data['jawline']}
@@ -63,7 +84,7 @@ MODEL BODY ANALYSIS (from MediaPipe):
 - Leg proportion: {$data['leg_proportion']}
 - Neck length: {$data['neck_length']}
 - Arm length: {$data['arm_length']}
-- Posture: {$data['posture']}
+- Posture: " . ($data['posture'] ?? 'unknown') . "
 - Recommended angles: {$data['recommended_angles']}
 - Angles to avoid: {$data['avoid_angles']}
 
@@ -88,7 +109,9 @@ $payload = json_encode([
     ]
 ]);
 
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $_ENV['GEMINI_API_KEY'];
+$apiKey = $_ENV['GEMINI_API_KEY'] ?? '';
+
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $apiKey;
 $ch  = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
