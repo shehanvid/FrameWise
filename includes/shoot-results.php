@@ -954,6 +954,16 @@ const SHOOT_CONTEXT = {
     body_analysis: <?= json_encode(isset($_POST['body_analysis']) ? json_decode($_POST['body_analysis'], true) : null) ?>,
 };
 
+let AVAILABLE_POSES = {};
+
+fetch('includes/get-poses.php')
+    .then(r => r.json())
+    .then(data => {
+        data.poses.forEach(p => {
+            AVAILABLE_POSES[p.id] = p;
+        });
+    });
+
 // ── Checklist toggle ───────────────────────────────────────────────────────
 function toggleShot(row) {
     const cb  = row.querySelector('.sp-shot-cb');
@@ -1303,10 +1313,9 @@ function toggleShot(row) {
         });
 
         const rawText = await resp.text();
-        console.log('ai-pose-match.php raw response:', rawText);
-
         const data = JSON.parse(rawText);
 
+const meta = AVAILABLE_POSES[p.id] || {};
         if (data.poses && data.poses.length) {
             document.getElementById('pose-body').innerHTML = data.poses.map((p, i) => `
                 <div class="sp-pose-card" style="flex-direction:column;gap:8px;">
