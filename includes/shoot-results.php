@@ -809,7 +809,7 @@ if ($body_analysis && !isset($body_analysis['error'])): ?>
                 <div class="sp-card-sub">Based on body &amp; face analysis · <?= htmlspecialchars($plan['shoot_type']) ?> shoot</div>
             </div>
         </div>
-        <div class="sp-card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="pose-body">
+        <div class="sp-card-body" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:start;" id="pose-body">
             <div style="color:#6b7280;font-size:12px;padding:12px 0;grid-column:span 2;">Analyzing model image…</div>
         </div>
     </div>
@@ -946,6 +946,12 @@ const SHOOT_CONTEXT = {
     experience:    <?= json_encode($_POST['experience']   ?? 'intermediate') ?>,
     lighting_style:<?= json_encode($_POST['lighting_style'] ?? 'natural') ?>,
     platform:      <?= json_encode($_POST['platform']     ?? 'instagram') ?>,
+    lighting_style:<?= json_encode($_POST['lighting_style'] ?? 'natural') ?>,
+    output_style:  <?= json_encode($_POST['output_style']   ?? '') ?>,
+    orientation:   <?= json_encode($_POST['orientation']    ?? 'portrait') ?>,
+    equipment:     <?= json_encode($_POST['equipment']      ?? []) ?>,
+    ai_notes:      <?= json_encode($_POST['ai_notes']       ?? '') ?>,
+    body_analysis: <?= json_encode(isset($_POST['body_analysis']) ? json_decode($_POST['body_analysis'], true) : null) ?>,
 };
 
 // ── Checklist toggle ───────────────────────────────────────────────────────
@@ -1038,6 +1044,15 @@ function toggleShot(row) {
     const windowPct   = Math.min(100, Math.max(0,
         Math.round(((now - windowStart) / (windowEnd - windowStart)) * 100)
     ));
+    SHOOT_CONTEXT.sun_altitude_deg  = altitudeDeg.toFixed(1);
+    SHOOT_CONTEXT.sun_azimuth_deg   = azimuthDeg.toFixed(1);
+    SHOOT_CONTEXT.shadow_length     = shadowLen;
+    SHOOT_CONTEXT.golden_hour_start = fmt(goldenStart);
+    SHOOT_CONTEXT.golden_hour_end   = fmt(goldenEnd);
+    SHOOT_CONTEXT.blue_hour_start   = fmt(blueStart);
+    SHOOT_CONTEXT.blue_hour_end     = fmt(blueEnd);
+    SHOOT_CONTEXT.is_golden_hour    = isGolden;
+    SHOOT_CONTEXT.is_blue_hour      = isBlue;
 
     document.getElementById('golden-body').innerHTML = `
         <div class="sp-hour-row">
@@ -1255,29 +1270,44 @@ function toggleShot(row) {
 })();
 
 // ── AI Pose & Tips generation via Anthropic API ───────────────────────────
-(async function generateAICards() {
+// Fetch poses from new endpoint
+(async function loadPoses() {
     try {
-        const resp = await fetch('includes/ai-generate.php', {
+        const bodyAnalysis = <?= json_encode(json_decode($_POST['body_analysis'] ?? '{}', true)) ?>;
+
+        const resp = await fetch('includes/ai-pose-match.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                shoot_type: SHOOT_CONTEXT.shoot_type,
-                mood:       SHOOT_CONTEXT.mood,
-                outfit:     SHOOT_CONTEXT.outfit,
-                location:   SHOOT_CONTEXT.location,
-                datetime:   SHOOT_CONTEXT.datetime,
-                experience: SHOOT_CONTEXT.experience,
-                platform:   SHOOT_CONTEXT.platform,
+                shoot_type:     SHOOT_CONTEXT.shoot_type,
+                mood:           SHOOT_CONTEXT.mood,
+                outfit:         SHOOT_CONTEXT.outfit,
+                location:       SHOOT_CONTEXT.location,
+                experience:     SHOOT_CONTEXT.experience,
+                platform:       SHOOT_CONTEXT.platform,
+                body_type:      bodyAnalysis.body_type      ?? 'unknown',
+                face_shape:     bodyAnalysis.face_shape     ?? 'unknown',
+                shoulder_width: bodyAnalysis.shoulder_width ?? 'unknown',
+                hip_ratio:      bodyAnalysis.hip_ratio      ?? 'unknown',
+                leg_proportion: bodyAnalysis.leg_proportion ?? 'unknown',
+                neck_length:    bodyAnalysis.neck_length    ?? 'unknown',
+                overall_presence: bodyAnalysis.overall_presence ?? 'unknown',
             })
         });
+
         const data = await resp.json();
 
-        // Poses
-        if (data.poses) {
+        if (data.poses && data.poses.length) {
             document.getElementById('pose-body').innerHTML = data.poses.map((p, i) => `
-                <div class="sp-pose-card">
-                    <div class="sp-pose-num">0${i+1}</div>
+                <div class="sp-pose-card" style="flex-direction:column;gap:8px;">
+                    <img 
+                        src="${p.image}" 
+                        alt="${p.name}"
+                        style="width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:8px;border:0.5px solid #1a1a1a;"
+                        loading="lazy"
+                    >
                     <div>
+                        <div class="sp-pose-num">0${i+1}</div>
                         <div class="sp-pose-name">${p.name}</div>
                         <div class="sp-pose-desc">${p.description}</div>
                         <div class="sp-pose-tag">${p.tag}</div>
@@ -1285,26 +1315,9 @@ function toggleShot(row) {
                 </div>
             `).join('');
         }
-
-        // Tips
-        if (data.tips) {
-            document.getElementById('tips-body').innerHTML = data.tips.map(t => `
-                <div class="sp-tip">
-                    <div class="sp-tip-icon">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="1.5" width="14" height="14">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <div class="sp-tip-title">${t.title}</div>
-                        <div class="sp-tip-text">${t.text}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
     } catch(e) {
-        document.getElementById('pose-body').innerHTML = '<div style="color:#6b7280;font-size:12px;grid-column:span 2;">Pose generation unavailable — check includes/ai-generate.php</div>';
-        document.getElementById('tips-body').innerHTML = '<div style="color:#6b7280;font-size:12px;">Tips unavailable.</div>';
+        document.getElementById('pose-body').innerHTML = 
+            '<div style="color:#6b7280;font-size:12px;grid-column:span 2;">Pose matching unavailable.</div>';
     }
 })();
 
@@ -1398,7 +1411,7 @@ async function sendChatMessage() {
     appendTyping();
 
     try {
-        const resp = await fetch('includes/chatbot.php', {
+        const resp = await fetch('chatbot.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
