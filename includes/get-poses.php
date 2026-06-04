@@ -2,32 +2,32 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 
-// Resolve the poses directory relative to THIS file (which lives in includes/)
-$posesDir = __DIR__ . '/../assets/poses/';
+$gender   = $_GET['gender'] ?? 'female';
+$gender   = in_array($gender, ['male', 'female']) ? $gender : 'female';
+$posesDir = __DIR__ . '/../assets/poses/' . $gender . '/';
 
 if (!is_dir($posesDir)) {
     http_response_code(404);
-    echo json_encode(['error' => 'Poses directory not found', 'poses' => []]);
+    echo json_encode(['error' => 'Poses directory not found for gender: ' . $gender, 'poses' => []]);
     exit;
 }
 
 $extensions = ['jpg', 'jpeg', 'png', 'webp'];
 $poses      = [];
-
-$files = scandir($posesDir);
+$files      = scandir($posesDir);
 sort($files);
 
 foreach ($files as $file) {
     $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
     if (!in_array($ext, $extensions)) continue;
 
-    $id    = pathinfo($file, PATHINFO_FILENAME); // e.g. "classic-three-quarter"
-    $label = ucwords(str_replace('-', ' ', $id)); // e.g. "Classic Three Quarter"
+    $id    = pathinfo($file, PATHINFO_FILENAME);
+    $label = ucwords(str_replace('-', ' ', $id));
 
     $poses[] = [
         'id'    => $id,
         'label' => $label,
-        'image' => 'assets/poses/' . $file,
+        'image' => 'assets/poses/' . $gender . '/' . $file,
         'file'  => $file,
     ];
 }

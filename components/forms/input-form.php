@@ -255,6 +255,38 @@ function selected(string $field, string $value): string {
         </div>
       </div>
 
+      <!-- Gender Toggle -->
+      <div class="field">
+        <label>Model Gender</label>
+        <div style="display:flex; gap:0; border:0.5px solid #222; border-radius:10px; overflow:hidden;">
+          <label for="gender-male" style="
+            flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+            padding:10px 8px; background:#0d0d0d; color:#6b7280;
+            font-size:13px; font-weight:400; letter-spacing:0; text-transform:none;
+            cursor:pointer; transition:all .2s; border-right:0.5px solid #222;
+          " id="gender-male-label">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/>
+            </svg>
+            Male
+          </label>
+          <input type="radio" name="gender" id="gender-male" value="male" style="display:none" onchange="updateGenderUI()">
+
+          <label for="gender-female" style="
+            flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+            padding:10px 8px; background:#0d0d0d; color:#6b7280;
+            font-size:13px; font-weight:400; letter-spacing:0; text-transform:none;
+            cursor:pointer; transition:all .2s;
+          " id="gender-female-label">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0"/>
+            </svg>
+            Female
+          </label>
+          <input type="radio" name="gender" id="gender-female" value="female" style="display:none" onchange="updateGenderUI()">
+        </div>
+      </div>
+
       <div class="divider"></div>
 
       <!-- Image Upload -->
@@ -611,7 +643,8 @@ function updateProgress() {
     document.getElementById('shoot_type')?.value,
     document.getElementById('mood')?.value,
     document.getElementById('outfit')?.value,
-    document.getElementById('image')?.files.length > 0 ? '1' : ''
+    document.getElementById('image')?.files.length > 0 ? '1' : '',
+    document.querySelector('input[name="gender"]:checked')?.value ?? ''
   ];
   const filled = fields.filter(f => f && f.trim() !== '').length;
   const pct    = Math.round((filled / fields.length) * 100);
@@ -1413,6 +1446,26 @@ window.showAnalysisError = function(msg) {
   statusText.style.color = '#e87070';
   statusSub.textContent  = '';
 };
+
+// ── Gender toggle UI ───────────────────────────────────────────────────────
+window.updateGenderUI = function() {
+  const maleLabel   = document.getElementById('gender-male-label');
+  const femaleLabel = document.getElementById('gender-female-label');
+  const isMale      = document.getElementById('gender-male').checked;
+
+  maleLabel.style.background   = isMale ? 'rgba(59,130,246,0.1)' : '#0d0d0d';
+  maleLabel.style.color        = isMale ? '#3b82f6' : '#6b7280';
+  maleLabel.style.borderColor  = isMale ? '#3b82f6' : '#222';
+  femaleLabel.style.background = !isMale ? 'rgba(59,130,246,0.1)' : '#0d0d0d';
+  femaleLabel.style.color      = !isMale ? '#3b82f6' : '#6b7280';
+}
+
+// Default to female
+document.getElementById('gender-female').checked = true;
+updateGenderUI();
+document.querySelectorAll('input[name="gender"]').forEach(el => {
+  el.addEventListener('change', updateProgress);
+});
  
 </script>
 </div>

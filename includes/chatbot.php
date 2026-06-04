@@ -43,6 +43,7 @@ function predictCameraSettings(array $ctx): array {
     $lightStyle   = strtolower($ctx['lighting_style'] ?? 'natural');
     $platform     = strtolower($ctx['platform']      ?? 'instagram');
     $orientation  = strtolower($ctx['orientation']   ?? 'portrait');
+    $gender = strtolower($ctx['gender'] ?? 'female');
 
     // ── Base settings by sun altitude ─────────────────────────────────────
     if ($sunAltitude < 0) {
@@ -231,6 +232,7 @@ BASIC INFO (from planner form):
 - Shoot type:     " . ($context['shoot_type']  ?? '—') . "
 - Mood / style:   " . ($context['mood']        ?? '—') . "
 - Outfit colour:  " . ($context['outfit']      ?? '—') . "
+- Model gender:   " . ($context['gender']      ?? '—') . "
 - Environment:    " . ($context['environment'] ?? '—') . "
 - Backdrop:       " . ($context['backdrop']    ?? '—') . "
 

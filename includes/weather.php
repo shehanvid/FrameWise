@@ -21,6 +21,7 @@ if (!is_numeric($lat) || !is_numeric($lng)) {
 // Parse shoot date/time
 $targetDate = $datetime ? date('Y-m-d', strtotime($datetime)) : date('Y-m-d');
 $targetHour = $datetime ? (int)date('H', strtotime($datetime)) : (int)date('H');
+error_log('datetime: ' . ($_GET['datetime'] ?? 'MISSING'));
 
 // Check forecast range
 $daysAhead = (strtotime($targetDate) - strtotime('today')) / 86400;

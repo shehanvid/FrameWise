@@ -24,6 +24,7 @@ if (!$data || !isset($data['body_type'])) {
 }
 
 $defaults = [
+    'gender' => 'female',
     'estimated_height'   => 'unknown',
     'posture'            => 'unknown',
     'face_symmetry'      => 'unknown',
@@ -85,6 +86,7 @@ AVAILABLE POSES (these are the ONLY poses you can choose from):
 
 SHOOT DETAILS:
 - Shoot type: {$data['shoot_type']}
+- Model gender: {$data['gender']}
 - Mood: {$data['mood']}
 - Outfit color: {$data['outfit']}
 - Location: {$data['location']}
@@ -157,7 +159,7 @@ $selectedPoses = [];
 foreach ($poseIds as $id) {
     if (isset($poseData[$id])) {
         $selectedPoses[] = array_merge(
-            ['id' => $id, 'image' => "assets/poses/{$id}.jpg"],
+            ['id' => $id, 'image' => "assets/poses/{$data['gender']}/{$id}.jpg"],
             $poseData[$id]
         );
     }
@@ -167,7 +169,7 @@ foreach ($poseIds as $id) {
 if (empty($selectedPoses)) {
     $selectedPoses = array_slice(
         array_map(
-            fn($id, $meta) => array_merge(['id' => $id, 'image' => "assets/poses/{$id}.jpg"], $meta),
+            fn($id, $meta) => array_merge(['id' => $id, 'image' => "assets/poses/{$data['gender']}/{$id}.jpg"], $meta),
             array_keys($poseData),
             array_values($poseData)
         ),

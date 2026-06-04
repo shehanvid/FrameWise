@@ -24,6 +24,7 @@ $outfit       = trim($_POST['outfit']       ?? '');
 $gear         = trim($_POST['gear']         ?? '');
 $environment  = trim($_POST['environment']  ?? 'outdoor');
 $backdrop     = trim($_POST['backdrop']     ?? '');
+$gender       = trim($_POST['gender']       ?? 'female');
 
 $errors = [];
 if ($location   === '') $errors[] = 'Location is required.';
@@ -57,6 +58,7 @@ $plan = [
     'gear'         => $gear,
     'environment'  => $environment,
     'backdrop'     => $backdrop,
+    'gender' => $gender,
 ];
 
 // ── NOW it's safe to output HTML ───────────────────────────────────────────
@@ -942,6 +944,7 @@ const SHOOT_CONTEXT = {
     shoot_type: <?= json_encode($plan['shoot_type']) ?>,
     mood:       <?= json_encode($plan['mood']) ?>,
     outfit:     <?= json_encode($plan['outfit']) ?>,
+    gender: <?= json_encode($gender) ?>,
     camera_type:   <?= json_encode($_POST['camera_type']  ?? 'DSLR') ?>,
     experience:    <?= json_encode($_POST['experience']   ?? 'intermediate') ?>,
     lighting_style:<?= json_encode($_POST['lighting_style'] ?? 'natural') ?>,
@@ -956,7 +959,7 @@ const SHOOT_CONTEXT = {
 
 let AVAILABLE_POSES = {};
 
-fetch('get-poses.php')
+fetch('get-poses.php?gender=' + encodeURIComponent(<?= json_encode($gender) ?>))
     .then(r => r.json())
     .then(data => {
         data.poses.forEach(p => {
@@ -1291,6 +1294,7 @@ function toggleShot(row) {
             body: JSON.stringify({
                 shoot_type:     SHOOT_CONTEXT.shoot_type,
                 mood:           SHOOT_CONTEXT.mood,
+                gender:         SHOOT_CONTEXT.gender,
                 outfit:         SHOOT_CONTEXT.outfit,
                 location:       SHOOT_CONTEXT.location,
                 experience:     SHOOT_CONTEXT.experience,
