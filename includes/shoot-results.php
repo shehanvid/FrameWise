@@ -956,7 +956,7 @@ const SHOOT_CONTEXT = {
 
 let AVAILABLE_POSES = {};
 
-fetch('includes/get-poses.php')
+fetch('get-poses.php')
     .then(r => r.json())
     .then(data => {
         data.poses.forEach(p => {
@@ -1315,7 +1315,6 @@ function toggleShot(row) {
         const rawText = await resp.text();
         const data = JSON.parse(rawText);
 
-const meta = AVAILABLE_POSES[p.id] || {};
         if (data.poses && data.poses.length) {
             document.getElementById('pose-body').innerHTML = data.poses.map((p, i) => `
                 <div class="sp-pose-card" style="flex-direction:column;gap:8px;">

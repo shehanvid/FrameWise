@@ -23,35 +23,65 @@ if (!$data || !isset($data['body_type'])) {
     exit;
 }
 
-// Fill missing keys with defaults to prevent warnings
 $defaults = [
-    'estimated_height'  => 'unknown',
-    'posture'           => 'unknown',
-    'face_symmetry'     => 'unknown',
-    'jawline'           => 'unknown',
-    'forehead'          => 'unknown',
-    'arm_length'        => 'unknown',
-    'waist_definition'  => 'unknown',
-    'skin_tone'         => 'unknown',
-    'recommended_angles'=> '',
-    'avoid_angles'      => '',
+    'estimated_height'   => 'unknown',
+    'posture'            => 'unknown',
+    'face_symmetry'      => 'unknown',
+    'jawline'            => 'unknown',
+    'forehead'           => 'unknown',
+    'arm_length'         => 'unknown',
+    'waist_definition'   => 'unknown',
+    'skin_tone'          => 'unknown',
+    'recommended_angles' => '',
+    'avoid_angles'       => '',
+    'shoot_type'         => 'unknown',
+    'mood'               => 'unknown',
+    'outfit'             => 'unknown',
+    'location'           => 'unknown',
+    'experience'         => 'unknown',
+    'platform'           => 'unknown',
+    'lighting_style'     => 'unknown',
+    'overall_presence'   => 'unknown',
+    'face_shape'         => 'unknown',
+    'shoulder_width'     => 'unknown',
+    'hip_ratio'          => 'unknown',
+    'leg_proportion'     => 'unknown',
+    'neck_length'        => 'unknown',
 ];
 $data = array_merge($defaults, $data);
 
-$prompt = "You are a professional photography pose director with deep knowledge of body types, face shapes, and shoot styles.
+// 1. Build pose data from files
+$posesDir     = __DIR__ . '/../assets/poses/';
+$poseData     = [];
+$availableIds = [];
 
+foreach (scandir($posesDir) as $file) {
+    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+    if (!in_array($ext, ['jpg','jpeg','png','webp'])) continue;
+
+    $id               = pathinfo($file, PATHINFO_FILENAME);
+    $availableIds[]   = $id;
+    $poseData[$id]    = [
+        'name'        => ucwords(str_replace('-', ' ', $id)),
+        'description' => '',
+        'tag'         => '',
+    ];
+}
+
+// 2. Build poseLines string
 $poseLines = '';
 foreach ($availableIds as $id) {
-    $label = ucwords(str_replace('-', ' ', $id));
-    $meta  = $poseData[$id] ?? ['description' => '', 'tag' => ''];
+    $label      = ucwords(str_replace('-', ' ', $id));
+    $meta       = $poseData[$id] ?? ['description' => '', 'tag' => ''];
     $poseLines .= "{$id} | {$label}" .
         ($meta['description'] ? " | {$meta['description']}" : '') . "\n";
 }
 
-$prompt = "...
+// 3. Build the full prompt as one string
+$prompt = "You are a professional photography pose director with deep knowledge of body types, face shapes, and shoot styles.
+
 AVAILABLE POSES (these are the ONLY poses you can choose from):
 {$poseLines}
-...";
 
 SHOOT DETAILS:
 - Shoot type: {$data['shoot_type']}
@@ -65,7 +95,7 @@ SHOOT DETAILS:
 MODEL BODY ANALYSIS (from MediaPipe):
 - Body type: {$data['body_type']}
 - Overall presence: {$data['overall_presence']}
-- Estimated height: " . ($data['estimated_height'] ?? 'unknown') . "
+- Estimated height: {$data['estimated_height']}
 - Face shape: {$data['face_shape']}
 - Face symmetry: {$data['face_symmetry']}
 - Jawline: {$data['jawline']}
@@ -75,7 +105,7 @@ MODEL BODY ANALYSIS (from MediaPipe):
 - Leg proportion: {$data['leg_proportion']}
 - Neck length: {$data['neck_length']}
 - Arm length: {$data['arm_length']}
-- Posture: " . ($data['posture'] ?? 'unknown') . "
+- Posture: {$data['posture']}
 - Recommended angles: {$data['recommended_angles']}
 - Angles to avoid: {$data['avoid_angles']}
 
@@ -92,15 +122,15 @@ Think through:
 Return ONLY a valid JSON array of exactly 5 pose IDs. No explanation. No markdown. No extra text.
 Example output: [\"classic-three-quarter\",\"s-curve\",\"window-light-profile\",\"seated-editorial\",\"profile-silhouette\"]";
 
+// 4. Call Gemini API
+$apiKey  = $_ENV['GEMINI_API_KEY'] ?? '';
 $payload = json_encode([
-    'contents' => [['parts' => [['text' => $prompt]]]],
+    'contents'         => [['parts' => [['text' => $prompt]]]],
     'generationConfig' => [
         'temperature'     => 0.2,
         'maxOutputTokens' => 80,
     ]
 ]);
-
-$apiKey = $_ENV['GEMINI_API_KEY'] ?? '';
 
 $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $apiKey;
 $ch  = curl_init($url);
@@ -119,22 +149,10 @@ $rawText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
 $rawText = trim(preg_replace('/```json|```/', '', $rawText));
 $poseIds = json_decode($rawText, true) ?? [];
 
-// Pose metadata map — same data as the prompt, structured for display
-$posesDir  = __DIR__ . '/../assets/poses/';
-$poseData  = [];
+// 5. Only keep IDs that have an actual image file
+$poseIds = array_filter($poseIds, fn($id) => in_array($id, $availableIds));
 
-foreach (scandir($posesDir) as $file) {
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (!in_array($ext, ['jpg','jpeg','png','webp'])) continue;
-
-    $id          = pathinfo($file, PATHINFO_FILENAME);
-    $poseData[$id] = [
-        'name'        => ucwords(str_replace('-', ' ', $id)),
-        'description' => '',   // AI fills this via the prompt
-        'tag'         => '',
-    ];
-}
-// Build response with only the selected poses
+// 6. Build selected poses response
 $selectedPoses = [];
 foreach ($poseIds as $id) {
     if (isset($poseData[$id])) {
@@ -145,22 +163,14 @@ foreach ($poseIds as $id) {
     }
 }
 
-$availableIds = array_map(
-    fn($f) => pathinfo($f, PATHINFO_FILENAME),
-    array_filter(scandir($posesDir), fn($f) => in_array(
-        strtolower(pathinfo($f, PATHINFO_EXTENSION)),
-        ['jpg','jpeg','png','webp']
-    ))
-);
-
-// Only keep AI-selected IDs that have an actual image file
-$poseIds = array_filter($poseIds, fn($id) => in_array($id, $availableIds));
-
-// Fallback: if AI returned garbage, send first 5
+// 7. Fallback: if AI returned garbage, send first 5
 if (empty($selectedPoses)) {
     $selectedPoses = array_slice(
-        array_map(fn($id, $meta) => array_merge(['id'=>$id, 'image'=>"assets/poses/{$id}.jpg"], $meta),
-            array_keys($poseData), array_values($poseData)),
+        array_map(
+            fn($id, $meta) => array_merge(['id' => $id, 'image' => "assets/poses/{$id}.jpg"], $meta),
+            array_keys($poseData),
+            array_values($poseData)
+        ),
         0, 5
     );
 }
