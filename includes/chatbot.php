@@ -1,4 +1,20 @@
 <?php
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode(['error' => "PHP Error: $errstr in $errfile:$errline"]);
+    exit;
+});
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        http_response_code(500);
+        echo json_encode(['error' => "PHP Fatal: {$error['message']} in {$error['file']}:{$error['line']}"]);
+    }
+});
+
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -260,10 +276,11 @@ SUN DATA AT SHOOT TIME:
 - Sun altitude:  " . ($context['sun_altitude_deg'] ?? 'unknown') . "°
 - Sun azimuth:   " . ($context['sun_azimuth_deg']  ?? 'unknown') . "°
 - Shadow length: " . ($context['shadow_length']    ?? 'unknown') . "
-- Golden hour:   " . ($context['golden_hour_start'] ?? '—') . " → " . ($context['golden_hour_end'] ?? '—') . ($context['is_golden_hour'] ? ' ← ACTIVE NOW' : '') . "
-- Blue hour:     " . ($context['blue_hour_start']   ?? '—') . " → " . ($context['blue_hour_end']   ?? '—') . ($context['is_blue_hour']   ? ' ← ACTIVE NOW' : '') . "
+- Golden hour:   " . ($context['golden_hour_start'] ?? '—') . " → " . ($context['golden_hour_end'] ?? '—') . (!empty($context['is_golden_hour']) && $context['is_golden_hour'] ? ' ← ACTIVE NOW' : '') . "
+- Blue hour:     " . ($context['blue_hour_start']   ?? '—') . " → " . ($context['blue_hour_end']   ?? '—') . (!empty($context['is_blue_hour'])   && $context['is_blue_hour']   ? ' ← ACTIVE NOW' : '') . "
 - Shoot during golden hour: " . (!empty($context['is_golden_hour']) ? 'YES — exploit warm directional light' : 'No') . "
 - Shoot during blue hour:   " . (!empty($context['is_blue_hour'])   ? 'YES — cool diffused ethereal light'   : 'No') . "
+
 {$bodyAnalysisSection}
 
 ══════════════════════════════════════════

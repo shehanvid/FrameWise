@@ -8,21 +8,154 @@ if (!isset($_SESSION['username'])) {
 
 include 'header.php';
 
-// ── Fetch counts from DB (replace with your real queries) ──────────────────
-// $total_shoots    = getTotalShoots($conn);
-// $completed       = getCompletedShoots($conn);
-// $ai_plans        = getAIPlans($conn);
-// $avg_score       = getAverageScore($conn);
-// $recent_shoots   = getRecentShoots($conn, 5);
-// $mood_stats      = getMoodStats($conn);
-// $top_locations   = getTopLocations($conn, 5);
-// $ai_body_stats   = getBodyAnalysisStats($conn);
+$uid = $_SESSION['userid'];
 
-// ── Placeholder data (remove when real queries are in place) ───────────────
-$total_shoots  = 148;
-$completed     = 124;
-$ai_plans      = 89;
-$avg_score     = 86;
+// ── Total shoots ───────────────────────────────────────────────────────────
+$r = $conn->prepare("SELECT COUNT(*) FROM shoot_results WHERE user_id = ?");
+$r->bind_param("i", $uid); $r->execute();
+$total_shoots = $r->get_result()->fetch_row()[0];
+
+// ── Completed (shoot date has passed) ─────────────────────────────────────
+$r = $conn->prepare("SELECT COUNT(*) FROM shoot_results WHERE user_id = ? AND shoot_datetime < NOW()");
+$r->bind_param("i", $uid); $r->execute();
+$completed = $r->get_result()->fetch_row()[0];
+
+// ── Pending (shoot date is in the future) ──────────────────────────────────
+$r = $conn->prepare("SELECT COUNT(*) FROM shoot_results WHERE user_id = ? AND shoot_datetime >= NOW()");
+$r->bind_param("i", $uid); $r->execute();
+$pending = $r->get_result()->fetch_row()[0];
+
+// ── Average shoot score ────────────────────────────────────────────────────
+$r = $conn->prepare("SELECT AVG(weather_score) FROM shoot_results WHERE user_id = ? AND weather_score IS NOT NULL");
+$r->bind_param("i", $uid); $r->execute();
+$avg_score = (int)round($r->get_result()->fetch_row()[0] ?? 0);
+
+// ── This month count ───────────────────────────────────────────────────────
+$r = $conn->prepare("SELECT COUNT(*) FROM shoot_results WHERE user_id = ? AND MONTH(shoot_datetime) = MONTH(NOW()) AND YEAR(shoot_datetime) = YEAR(NOW())");
+$r->bind_param("i", $uid); $r->execute();
+$this_month = $r->get_result()->fetch_row()[0];
+
+// ── This week count ────────────────────────────────────────────────────────
+$r = $conn->prepare("SELECT COUNT(*) FROM shoot_results WHERE user_id = ? AND shoot_datetime >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+$r->bind_param("i", $uid); $r->execute();
+$this_week = $r->get_result()->fetch_row()[0];
+
+// ── Monthly activity (last 12 months) ─────────────────────────────────────
+$r = $conn->prepare("
+    SELECT 
+        MONTH(shoot_datetime) as mon,
+        YEAR(shoot_datetime)  as yr,
+        COUNT(*)              as total,
+        SUM(CASE WHEN shoot_datetime < NOW() THEN 1 ELSE 0 END) as done
+    FROM shoot_results
+    WHERE user_id = ?
+      AND shoot_datetime >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+    GROUP BY YEAR(shoot_datetime), MONTH(shoot_datetime)
+    ORDER BY yr ASC, mon ASC
+");
+$r->bind_param("i", $uid); $r->execute();
+$monthly_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Build a month-keyed array for the chart
+$monthly_data = [];
+foreach ($monthly_rows as $row) {
+    $monthly_data[$row['yr'] . '-' . str_pad($row['mon'], 2, '0', STR_PAD_LEFT)] = [
+        'planned' => (int)$row['total'],
+        'done'    => (int)$row['done'],
+    ];
+}
+
+// ── Mood breakdown ─────────────────────────────────────────────────────────
+$r = $conn->prepare("
+    SELECT mood, COUNT(*) as cnt 
+    FROM shoot_results 
+    WHERE user_id = ? 
+    GROUP BY mood 
+    ORDER BY cnt DESC 
+    LIMIT 6
+");
+$r->bind_param("i", $uid); $r->execute();
+$mood_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$mood_colors = [
+    'warm'     => ['color'=>'#fb923c','bg'=>'linear-gradient(135deg,#3d1f00,#c8690a)'],
+    'cool'     => ['color'=>'#3b82f6','bg'=>'linear-gradient(135deg,#001a3d,#0a6ac8)'],
+    'dramatic' => ['color'=>'#a855f7','bg'=>'linear-gradient(135deg,#1a0a2e,#6b0f8a)'],
+    'natural'  => ['color'=>'#4ade80','bg'=>'linear-gradient(135deg,#1a2e1a,#3d6b2a)'],
+    'moody'    => ['color'=>'#6b7280','bg'=>'linear-gradient(135deg,#0d0d1a,#2a2040)'],
+    'airy'     => ['color'=>'#93c5fd','bg'=>'linear-gradient(135deg,#1a2a3a,#6a9abf)'],
+    'default'  => ['color'=>'#e5e7eb','bg'=>'linear-gradient(135deg,#1a1a1a,#2a2a2a)'],
+];
+$mood_max = !empty($mood_rows) ? $mood_rows[0]['cnt'] : 1;
+
+// ── Top locations ──────────────────────────────────────────────────────────
+$r = $conn->prepare("
+    SELECT location, COUNT(*) as cnt 
+    FROM shoot_results 
+    WHERE user_id = ? 
+    GROUP BY location 
+    ORDER BY cnt DESC 
+    LIMIT 5
+");
+$r->bind_param("i", $uid); $r->execute();
+$location_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// ── Shoot type distribution ────────────────────────────────────────────────
+$r = $conn->prepare("
+    SELECT shoot_type, COUNT(*) as cnt 
+    FROM shoot_results 
+    WHERE user_id = ? 
+    GROUP BY shoot_type 
+    ORDER BY cnt DESC
+");
+$r->bind_param("i", $uid); $r->execute();
+$type_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$type_colors = [
+    'portrait'  => '#c084fc',
+    'fashion'   => '#3b82f6',
+    'wedding'   => '#fb923c',
+    'street'    => '#4ade80',
+    'landscape' => '#f59e0b',
+    'product'   => '#60a5fa',
+    'default'   => '#6b7280',
+];
+
+// ── Recent shoots (last 8) ─────────────────────────────────────────────────
+$r = $conn->prepare("
+    SELECT id, location, shoot_type, mood, outfit_colour, shoot_datetime,
+           weather_score, ai_plan
+    FROM shoot_results
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 8
+");
+$r->bind_param("i", $uid); $r->execute();
+$recent_shoots = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// ── Pending shoots details (upcoming, soonest first) ──────────────────────
+$r = $conn->prepare("
+    SELECT id, location, shoot_type, shoot_datetime
+    FROM shoot_results
+    WHERE user_id = ? AND shoot_datetime >= NOW()
+    ORDER BY shoot_datetime ASC
+    LIMIT 5
+");
+$r->bind_param("i", $uid); $r->execute();
+$pending_shoots = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// ── Completion rate by type ────────────────────────────────────────────────
+$r = $conn->prepare("
+    SELECT shoot_type,
+           COUNT(*) as total,
+           SUM(CASE WHEN shoot_datetime < NOW() THEN 1 ELSE 0 END) as done
+    FROM shoot_results
+    WHERE user_id = ?
+    GROUP BY shoot_type
+    ORDER BY total DESC
+");
+$r->bind_param("i", $uid); $r->execute();
+$completion_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <link rel="stylesheet" href="../assets/css/dashboard-style.css">
@@ -63,7 +196,7 @@ $avg_score     = 86;
             <div class="db-stat-value"><?= $total_shoots ?></div>
             <div class="db-stat-change up">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                +12 this month
+                +<?= $this_month ?> this month
             </div>
         </div>
 
@@ -76,20 +209,21 @@ $avg_score     = 86;
             <div class="db-stat-value"><?= $completed ?></div>
             <div class="db-stat-change up">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                <?= round(($completed / max($total_shoots,1)) * 100) ?>% success rate
+                <?= round(($completed / max($total_shoots, 1)) * 100) ?>% success rate
             </div>
         </div>
 
+        <!-- PENDING SHOOTS (replaces AI Plans Generated) -->
         <div class="db-stat-card">
-            <div class="db-stat-accent" style="background:#a855f7;"></div>
-            <div class="db-stat-label" style="color:#a855f7;">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
-                AI Plans Generated
+            <div class="db-stat-accent" style="background:#f59e0b;"></div>
+            <div class="db-stat-label" style="color:#f59e0b;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Pending Shoots
             </div>
-            <div class="db-stat-value"><?= $ai_plans ?></div>
-            <div class="db-stat-change ai">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                +8 this week
+            <div class="db-stat-value"><?= $pending ?></div>
+            <div class="db-stat-change <?= $pending > 0 ? 'ai' : 'up' ?>">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
+                <?= $pending > 0 ? "$pending awaiting AI plan" : 'All plans generated' ?>
             </div>
         </div>
 
@@ -99,10 +233,10 @@ $avg_score     = 86;
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>
                 Avg. Shoot Score
             </div>
-            <div class="db-stat-value"><?= $avg_score ?></div>
+            <div class="db-stat-value"><?= $avg_score ?: '—' ?></div>
             <div class="db-stat-change up">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                +4 pts from last month
+                Based on weather score
             </div>
         </div>
 
@@ -111,7 +245,6 @@ $avg_score     = 86;
     <!-- ── Row 1: Activity Chart + Quick Actions ─────────────────────────── -->
     <div class="db-grid-3">
 
-        <!-- Activity Chart -->
         <div class="db-card">
             <div class="db-card-head">
                 <div class="db-card-head-left">
@@ -140,7 +273,6 @@ $avg_score     = 86;
             </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="db-card">
             <div class="db-card-head">
                 <div class="db-card-head-left">
@@ -154,26 +286,23 @@ $avg_score     = 86;
                 </div>
             </div>
             <div class="db-card-body" style="padding-top:12px;">
-
-                <!-- AI Credits -->
                 <div class="db-credits-wrap">
-                    <div class="db-credits-label">AI Credits — <?= date('M Y') ?></div>
+                    <div class="db-credits-label">Plans Generated · <?= date('M Y') ?></div>
                     <div class="db-credits-track">
-                        <div class="db-credits-fill" style="width:62%;"></div>
+                        <div class="db-credits-fill" style="width:<?= $total_shoots > 0 ? round(($completed / $total_shoots) * 100) : 0 ?>%;"></div>
                     </div>
                     <div class="db-credits-meta">
-                        <span>620 / 1000 used</span>
-                        <span>62%</span>
+                        <span><?= $completed ?> / <?= $total_shoots ?> completed</span>
+                        <span><?= $total_shoots > 0 ? round(($completed / $total_shoots) * 100) : 0 ?>%</span>
                     </div>
                 </div>
-
                 <a href="index.php" class="db-quick-btn">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     New Shoot Plan
                 </a>
-                <a href="chatbot.php" class="db-quick-btn">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/></svg>
-                    Ask AI Director
+                <a href="shoots.php" class="db-quick-btn">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
+                    View All Shoots
                 </a>
                 <a href="weather.php" class="db-quick-btn">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"/></svg>
@@ -202,72 +331,76 @@ $avg_score     = 86;
                     </div>
                     <div>
                         <div class="db-card-title">Recent Shoot Plans</div>
-                        <div class="db-card-sub">Last 30 days</div>
+                        <div class="db-card-sub">Last 8 shoots</div>
                     </div>
-                </div>
-                <div style="display:flex;gap:6px;">
-                    <button class="db-action-btn">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/></svg>
-                        Filter
-                    </button>
-                    <button class="db-action-btn">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"/></svg>
-                        Sort
-                    </button>
                 </div>
             </div>
             <div class="db-card-body" style="padding:0 18px;">
                 <table class="db-table">
                     <thead>
                         <tr>
-                            <th style="width:28%;">Model / Client</th>
-                            <th style="width:14%;">Type</th>
-                            <th style="width:16%;">Location</th>
-                            <th style="width:14%;">Mood</th>
-                            <th style="width:10%;">Score</th>
-                            <th style="width:10%;">Date</th>
+                            <th style="width:20%;">Location</th>
+                            <th style="width:12%;">Type</th>
+                            <th style="width:12%;">Mood</th>
+                            <th style="width:14%;">Outfit</th>
+                            <th style="width:12%;">Score</th>
+                            <th style="width:14%;">Date</th>
                             <th style="width:8%;">Status</th>
+                            <th style="width:8%;"></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        // ── Replace this block with your DB query results ──────────────
-                        $sample_shoots = [
-                            ['name'=>'Mia Fernandez',   'outfit'=>'Cream outfit',  'type'=>'Fashion',  'type_class'=>'db-tag-blue',   'location'=>'Colombo Fort',  'mood'=>'Warm',     'score'=>91, 'score_color'=>'#22c55e', 'date'=>'Jun 3',  'status'=>'Done',   'status_class'=>'db-status-done'],
-                            ['name'=>'James Obasi',     'outfit'=>'Black outfit',  'type'=>'Portrait', 'type_class'=>'db-tag-purple', 'location'=>'Kandy Hills',   'mood'=>'Dramatic', 'score'=>84, 'score_color'=>'#3b82f6', 'date'=>'Jun 1',  'status'=>'Done',   'status_class'=>'db-status-done'],
-                            ['name'=>'Ayesha Kumar',    'outfit'=>'White outfit',  'type'=>'Wedding',  'type_class'=>'db-tag-orange', 'location'=>'Galle Fort',    'mood'=>'Airy',     'score'=>96, 'score_color'=>'#22c55e', 'date'=>'May 29', 'status'=>'Done',   'status_class'=>'db-status-done'],
-                            ['name'=>'Tom Wijesinghe',  'outfit'=>'Navy outfit',   'type'=>'Street',   'type_class'=>'db-tag-green',  'location'=>'Pettah Market', 'mood'=>'Moody',    'score'=>72, 'score_color'=>'#f59e0b', 'date'=>'May 27', 'status'=>'Review', 'status_class'=>'db-status-review'],
-                            ['name'=>'Elena Rodrigo',   'outfit'=>'Green outfit',  'type'=>'Portrait', 'type_class'=>'db-tag-purple', 'location'=>'Horton Plains', 'mood'=>'Natural',  'score'=>88, 'score_color'=>'#22c55e', 'date'=>'May 24', 'status'=>'Done',   'status_class'=>'db-status-done'],
-                            ['name'=>'Sophia Laurent',  'outfit'=>'Beige outfit',  'type'=>'Fashion',  'type_class'=>'db-tag-blue',   'location'=>'Galle Face',    'mood'=>'Cool',     'score'=>79, 'score_color'=>'#3b82f6', 'date'=>'May 20', 'status'=>'Draft',  'status_class'=>'db-status-draft'],
-                        ];
-                        foreach ($sample_shoots as $s): ?>
+                        <?php if (empty($recent_shoots)): ?>
                         <tr>
+                            <td colspan="8" style="text-align:center;color:#4b5563;padding:24px 0;">No shoots yet — <a href="index.php" style="color:#3b82f6;">create your first plan</a></td>
+                        </tr>
+                        <?php else: ?>
+                        <?php foreach ($recent_shoots as $s):
+                            $is_done    = !empty($s['ai_plan']);
+                            $score      = (int)($s['weather_score'] ?? 0);
+                            $score_col  = $score >= 80 ? '#22c55e' : ($score >= 60 ? '#f59e0b' : '#e87070');
+                            $type_key   = strtolower($s['shoot_type'] ?? '');
+                            $type_col   = $type_colors[$type_key] ?? $type_colors['default'];
+                            $shoot_date = (new DateTime($s['shoot_datetime']))->format('M j');
+                        ?>
+                        <tr>
+                            <td style="font-size:11px;color:#e5e7eb;"><?= htmlspecialchars($s['location']) ?></td>
+                            <td><span class="db-tag" style="background:<?= $type_col ?>22;color:<?= $type_col ?>;border:0.5px solid <?= $type_col ?>44;"><?= ucfirst(htmlspecialchars($s['shoot_type'])) ?></span></td>
+                            <td style="font-size:11px;color:#9ca3af;"><?= ucfirst(htmlspecialchars($s['mood'])) ?></td>
+                            <td style="font-size:11px;color:#6b7280;"><?= htmlspecialchars($s['outfit_colour'] ?: '—') ?></td>
                             <td>
-                                <div style="font-weight:500;color:#e5e7eb;"><?= htmlspecialchars($s['name']) ?></div>
-                                <div style="font-size:10px;color:#4b5563;"><?= htmlspecialchars($s['outfit']) ?></div>
-                            </td>
-                            <td><span class="db-tag <?= $s['type_class'] ?>"><?= $s['type'] ?></span></td>
-                            <td style="font-size:11px;"><?= htmlspecialchars($s['location']) ?></td>
-                            <td style="font-size:11px;color:#9ca3af;"><?= htmlspecialchars($s['mood']) ?></td>
-                            <td>
+                                <?php if ($score > 0): ?>
                                 <div class="db-score-wrap">
                                     <div class="db-score-track">
-                                        <div class="db-score-fill" style="width:<?= $s['score'] ?>%;background:<?= $s['score_color'] ?>;"></div>
+                                        <div class="db-score-fill" style="width:<?= $score ?>%;background:<?= $score_col ?>;"></div>
                                     </div>
-                                    <span style="font-size:11px;color:<?= $s['score_color'] ?>;"><?= $s['score'] ?></span>
+                                    <span style="font-size:11px;color:<?= $score_col ?>;"><?= $score ?></span>
                                 </div>
+                                <?php else: ?>
+                                <span style="font-size:11px;color:#4b5563;">—</span>
+                                <?php endif; ?>
                             </td>
-                            <td style="font-size:11px;"><?= $s['date'] ?></td>
-                            <td><span class="db-tag <?= $s['status_class'] ?>"><?= $s['status'] ?></span></td>
+                            <td style="font-size:11px;color:#6b7280;"><?= $shoot_date ?></td>
+                            <td>
+                                <?php if ($is_done): ?>
+                                    <span class="db-tag db-status-done">Done</span>
+                                <?php else: ?>
+                                    <span class="db-tag db-status-review">Pending</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <a href="view-result.php?id=<?= $s['id'] ?>" class="db-action-btn" style="font-size:10px;">View</a>
+                            </td>
                         </tr>
                         <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- ── Row 3: Mood + Locations + Weather + Activity ─────────────────── -->
+    <!-- ── Row 3: Mood + Locations + Activity ────────────────────────────── -->
     <div class="db-grid-4">
 
         <!-- Mood Breakdown -->
@@ -279,28 +412,27 @@ $avg_score     = 86;
                     </div>
                     <div>
                         <div class="db-card-title">Mood Breakdown</div>
-                        <div class="db-card-sub">All time</div>
+                        <div class="db-card-sub">All shoots</div>
                     </div>
                 </div>
             </div>
             <div class="db-card-body" style="padding-top:8px;">
-                <?php
-                $moods = [
-                    ['name'=>'Warm',     'count'=>34, 'pct'=>100, 'color'=>'#fb923c', 'bg'=>'linear-gradient(135deg,#3d1f00,#c8690a)'],
-                    ['name'=>'Cool',     'count'=>28, 'pct'=>82,  'color'=>'#3b82f6', 'bg'=>'linear-gradient(135deg,#001a3d,#0a6ac8)'],
-                    ['name'=>'Dramatic', 'count'=>22, 'pct'=>65,  'color'=>'#a855f7', 'bg'=>'linear-gradient(135deg,#1a0a2e,#6b0f8a)'],
-                    ['name'=>'Natural',  'count'=>19, 'pct'=>56,  'color'=>'#4ade80', 'bg'=>'linear-gradient(135deg,#1a2e1a,#3d6b2a)'],
-                    ['name'=>'Moody',    'count'=>16, 'pct'=>47,  'color'=>'#6b7280', 'bg'=>'linear-gradient(135deg,#0d0d1a,#2a2040)'],
-                    ['name'=>'Airy',     'count'=>14, 'pct'=>41,  'color'=>'#93c5fd', 'bg'=>'linear-gradient(135deg,#1a2a3a,#6a9abf)'],
-                ];
-                foreach ($moods as $m): ?>
+                <?php if (empty($mood_rows)): ?>
+                    <div style="color:#4b5563;font-size:12px;padding:12px 0;">No data yet.</div>
+                <?php else: ?>
+                <?php foreach ($mood_rows as $m):
+                    $mk    = strtolower($m['mood']);
+                    $mc    = $mood_colors[$mk] ?? $mood_colors['default'];
+                    $pct   = round(($m['cnt'] / $mood_max) * 100);
+                ?>
                 <div class="db-mood-row">
-                    <div class="db-mood-swatch" style="background:<?= $m['bg'] ?>;"></div>
-                    <div class="db-mood-name"><?= $m['name'] ?></div>
-                    <div class="db-mood-count"><?= $m['count'] ?></div>
-                    <div class="db-mood-bar"><div class="db-mood-fill" style="width:<?= $m['pct'] ?>%;background:<?= $m['color'] ?>;"></div></div>
+                    <div class="db-mood-swatch" style="background:<?= $mc['bg'] ?>;"></div>
+                    <div class="db-mood-name"><?= ucfirst(htmlspecialchars($m['mood'])) ?></div>
+                    <div class="db-mood-count"><?= $m['cnt'] ?></div>
+                    <div class="db-mood-bar"><div class="db-mood-fill" style="width:<?= $pct ?>%;background:<?= $mc['color'] ?>;"></div></div>
                 </div>
                 <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -318,61 +450,59 @@ $avg_score     = 86;
                 </div>
             </div>
             <div class="db-card-body" style="padding-top:8px;">
-                <?php
-                $locations = [
-                    ['rank'=>'01','name'=>'Galle Fort',       'sub'=>'Southern Province · 18 shoots', 'fav'=>true],
-                    ['rank'=>'02','name'=>'Galle Face Green',  'sub'=>'Colombo · 14 shoots',           'fav'=>false],
-                    ['rank'=>'03','name'=>'Negombo Beach',     'sub'=>'Western Province · 11 shoots',  'fav'=>false],
-                    ['rank'=>'04','name'=>'Horton Plains',     'sub'=>'Central Province · 9 shoots',   'fav'=>false],
-                    ['rank'=>'05','name'=>'Sigiriya Rock',     'sub'=>'North Central · 7 shoots',      'fav'=>false],
-                ];
-                foreach ($locations as $l): ?>
+                <?php if (empty($location_rows)): ?>
+                    <div style="color:#4b5563;font-size:12px;padding:12px 0;">No data yet.</div>
+                <?php else: ?>
+                <?php foreach ($location_rows as $i => $l): ?>
                 <div class="db-location-item">
-                    <div class="db-location-rank"><?= $l['rank'] ?></div>
+                    <div class="db-location-rank"><?= str_pad($i + 1, 2, '0', STR_PAD_LEFT) ?></div>
                     <div style="flex:1;">
-                        <div class="db-location-name"><?= htmlspecialchars($l['name']) ?></div>
-                        <div class="db-location-sub"><?= htmlspecialchars($l['sub']) ?></div>
+                        <div class="db-location-name"><?= htmlspecialchars($l['location']) ?></div>
+                        <div class="db-location-sub"><?= $l['cnt'] ?> shoot<?= $l['cnt'] != 1 ? 's' : '' ?></div>
                     </div>
-                    <?php if ($l['fav']): ?><span class="db-location-badge">Fav</span><?php endif; ?>
+                    <?php if ($i === 0): ?><span class="db-location-badge">Top</span><?php endif; ?>
                 </div>
                 <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
-        <!-- Today's Weather -->
+        <!-- Pending Shoots -->
         <div class="db-card">
             <div class="db-card-head">
                 <div class="db-card-head-left">
                     <div class="db-card-icon" style="background:#1a1209;border:0.5px solid #3a2d10;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/></svg>
+                        <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <div class="db-card-title">Today's Weather</div>
-                        <div class="db-card-sub">Saved locations</div>
+                        <div class="db-card-title">Pending Shoots</div>
+                        <div class="db-card-sub">Awaiting AI plan</div>
                     </div>
                 </div>
-                <a href="weather.php" class="db-card-link">Refresh</a>
+                <?php if ($pending > 0): ?>
+                <span class="db-tag db-status-review" style="font-size:10px;"><?= $pending ?> pending</span>
+                <?php endif; ?>
             </div>
             <div class="db-card-body" style="padding-top:8px;">
-                <?php
-                $weather_locs = [
-                    ['icon'=>'🌤',  'loc'=>'Negombo',    'cond'=>'Partly cloudy · 82% humidity', 'temp'=>'31°', 'label'=>'Good',  'label_class'=>'db-status-done'],
-                    ['icon'=>'☀️',  'loc'=>'Galle Fort', 'cond'=>'Clear · Golden hr 5:58 PM',     'temp'=>'29°', 'label'=>'Ideal', 'label_class'=>'db-status-done'],
-                    ['icon'=>'🌧',  'loc'=>'Kandy',      'cond'=>'Rain expected · 70% chance',    'temp'=>'24°', 'label'=>'Avoid', 'label_class'=>'db-status-review'],
-                ];
-                foreach ($weather_locs as $w): ?>
-                <div class="db-weather-item">
-                    <div class="db-weather-icon"><?= $w['icon'] ?></div>
-                    <div class="db-weather-info">
-                        <div class="db-weather-loc"><?= htmlspecialchars($w['loc']) ?></div>
-                        <div class="db-weather-cond"><?= htmlspecialchars($w['cond']) ?></div>
+                <?php if (empty($pending_shoots)): ?>
+                    <div style="color:#4b5563;font-size:12px;padding:12px 0;display:flex;align-items:center;gap:8px;">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="1.5" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        All shoots have AI plans!
                     </div>
-                    <div style="text-align:right;flex-shrink:0;">
-                        <div class="db-weather-temp"><?= $w['temp'] ?></div>
-                        <span class="db-tag <?= $w['label_class'] ?>" style="font-size:9px;"><?= $w['label'] ?></span>
+                <?php else: ?>
+                <?php foreach ($pending_shoots as $p):
+                    $pd = (new DateTime($p['shoot_datetime']))->format('M j · g:i A');
+                ?>
+                <div class="db-activity-item" style="align-items:flex-start;">
+                    <div class="db-activity-dot" style="background:#f59e0b;border:2px solid #f59e0b;margin-top:4px;"></div>
+                    <div style="flex:1;">
+                        <div style="font-size:12px;color:#e5e7eb;font-weight:500;"><?= htmlspecialchars($p['location']) ?></div>
+                        <div style="font-size:11px;color:#6b7280;"><?= ucfirst($p['shoot_type']) ?> · <?= $pd ?></div>
                     </div>
+                    <a href="view-result.php?id=<?= $p['id'] ?>" class="db-action-btn" style="font-size:10px;flex-shrink:0;">Open</a>
                 </div>
                 <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -385,36 +515,42 @@ $avg_score     = 86;
                     </div>
                     <div>
                         <div class="db-card-title">Activity Feed</div>
-                        <div class="db-card-sub">Recent events</div>
+                        <div class="db-card-sub">Recent shoots</div>
                     </div>
                 </div>
             </div>
             <div class="db-card-body" style="padding-top:8px;">
-                <?php
-                $activities = [
-                    ['dot'=>'#22c55e', 'text'=>'<strong>Mia Fernandez</strong> shoot marked complete · Score 91',         'time'=>'2h ago'],
-                    ['dot'=>'#3b82f6', 'text'=>'<strong>New plan</strong> generated for Sophia Laurent · Fashion',         'time'=>'5h ago'],
-                    ['dot'=>'#a855f7', 'text'=>'<strong>AI Director</strong> suggested 5 poses for portrait session',      'time'=>'Yesterday'],
-                    ['dot'=>'#f59e0b', 'text'=>'<strong>Weather alert</strong> for Kandy shoot Jun 9 · Rain forecast',     'time'=>'Yesterday'],
-                    ['dot'=>'#4ade80', 'text'=>'<strong>Sigiriya Rock</strong> added to favourite locations',              'time'=>'Jun 3'],
-                    ['dot'=>'#60a5fa', 'text'=>'<strong>89 AI credits</strong> used this month · 62% of quota',           'time'=>'Jun 3'],
-                ];
-                foreach ($activities as $a): ?>
+                <?php if (empty($recent_shoots)): ?>
+                    <div style="color:#4b5563;font-size:12px;padding:12px 0;">No activity yet.</div>
+                <?php else: ?>
+                <?php foreach (array_slice($recent_shoots, 0, 6) as $s):
+                    $is_done   = !empty($s['ai_plan']);
+                    $dot_color = $is_done ? '#22c55e' : '#f59e0b';
+                    $ago_dt    = new DateTime($s['shoot_datetime']);
+                    $now_dt    = new DateTime();
+                    $diff      = $now_dt->diff($ago_dt);
+                    if ($diff->days === 0)       $ago = $diff->h . 'h ago';
+                    elseif ($diff->days === 1)   $ago = 'Yesterday';
+                    else                         $ago = $ago_dt->format('M j');
+                ?>
                 <div class="db-activity-item">
-                    <div class="db-activity-dot" style="background:<?= $a['dot'] ?>;border:2px solid <?= $a['dot'] ?>;"></div>
-                    <div class="db-activity-text"><?= $a['text'] ?></div>
-                    <div class="db-activity-time"><?= $a['time'] ?></div>
+                    <div class="db-activity-dot" style="background:<?= $dot_color ?>;border:2px solid <?= $dot_color ?>;"></div>
+                    <div class="db-activity-text">
+                        <strong><?= ucfirst(htmlspecialchars($s['shoot_type'])) ?></strong> shoot at <?= htmlspecialchars($s['location']) ?>
+                        <?= $is_done ? '· <span style="color:#22c55e;">Plan ready</span>' : '· <span style="color:#f59e0b;">Pending</span>' ?>
+                    </div>
+                    <div class="db-activity-time"><?= $ago ?></div>
                 </div>
                 <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
     </div>
 
-    <!-- ── Row 4: Shoot Type Donut + AI Body Analysis ────────────────────── -->
+    <!-- ── Row 4: Shoot Type Donut ───────────────────────────────────────── -->
     <div class="db-grid-2" style="margin-bottom:0;">
 
-        <!-- Shoot Type Distribution -->
         <div class="db-card">
             <div class="db-card-head">
                 <div class="db-card-head-left">
@@ -428,107 +564,129 @@ $avg_score     = 86;
                 </div>
             </div>
             <div class="db-card-body">
+                <?php if (empty($type_rows)): ?>
+                    <div style="color:#4b5563;font-size:12px;padding:12px 0;">No data yet.</div>
+                <?php else:
+                    // Build donut segments
+                    $circumference = 276.46; // 2π × 44
+                    $offset = 0;
+                    $segments = [];
+                    foreach ($type_rows as $t) {
+                        $pct = $t['cnt'] / max($total_shoots, 1);
+                        $segments[] = [
+                            'type'   => $t['shoot_type'],
+                            'cnt'    => $t['cnt'],
+                            'pct'    => round($pct * 100),
+                            'dash'   => round($pct * $circumference, 1),
+                            'offset' => -$offset,
+                            'color'  => $type_colors[strtolower($t['shoot_type'])] ?? $type_colors['default'],
+                        ];
+                        $offset += round($pct * $circumference, 1);
+                    }
+                ?>
                 <div class="db-donut-wrap">
                     <svg width="120" height="120" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="44" fill="none" stroke="#1a1a1a" stroke-width="20"/>
-                        <!-- Fashion 40% -->
-                        <circle cx="60" cy="60" r="44" fill="none" stroke="#3b82f6" stroke-width="20"
-                            stroke-dasharray="110.6 165.9" stroke-dashoffset="0"
-                            stroke-linecap="butt" transform="rotate(-90 60 60)"/>
-                        <!-- Portrait 30% -->
-                        <circle cx="60" cy="60" r="44" fill="none" stroke="#c084fc" stroke-width="20"
-                            stroke-dasharray="82.9 193.6" stroke-dashoffset="-110.6"
-                            stroke-linecap="butt" transform="rotate(-90 60 60)"/>
-                        <!-- Wedding 20% -->
-                        <circle cx="60" cy="60" r="44" fill="none" stroke="#fb923c" stroke-width="20"
-                            stroke-dasharray="55.3 221.2" stroke-dashoffset="-193.5"
-                            stroke-linecap="butt" transform="rotate(-90 60 60)"/>
-                        <!-- Street 10% -->
-                        <circle cx="60" cy="60" r="44" fill="none" stroke="#4ade80" stroke-width="20"
-                            stroke-dasharray="27.6 248.9" stroke-dashoffset="-248.8"
-                            stroke-linecap="butt" transform="rotate(-90 60 60)"/>
+                        <?php foreach ($segments as $seg): ?>
+                        <circle cx="60" cy="60" r="44" fill="none"
+                            stroke="<?= $seg['color'] ?>" stroke-width="20"
+                            stroke-dasharray="<?= $seg['dash'] ?> <?= $circumference - $seg['dash'] ?>"
+                            stroke-dashoffset="<?= $seg['offset'] ?>"
+                            stroke-linecap="butt"
+                            transform="rotate(-90 60 60)"/>
+                        <?php endforeach; ?>
                         <text x="60" y="55" text-anchor="middle" fill="#fff" font-family="Bebas Neue,sans-serif" font-size="20"><?= $total_shoots ?></text>
                         <text x="60" y="68" text-anchor="middle" fill="#6b7280" font-family="DM Sans,sans-serif" font-size="10">total</text>
                     </svg>
                     <div class="db-donut-legend">
+                        <?php foreach ($segments as $seg): ?>
                         <div class="db-donut-legend-item">
-                            <div class="db-donut-legend-dot" style="background:#3b82f6;"></div>
-                            <div><div class="db-donut-label">Fashion</div><div class="db-donut-pct" style="color:#3b82f6;">40%</div></div>
+                            <div class="db-donut-legend-dot" style="background:<?= $seg['color'] ?>;"></div>
+                            <div>
+                                <div class="db-donut-label"><?= ucfirst(htmlspecialchars($seg['type'])) ?></div>
+                                <div class="db-donut-pct" style="color:<?= $seg['color'] ?>;"><?= $seg['pct'] ?>%</div>
+                            </div>
                         </div>
-                        <div class="db-donut-legend-item">
-                            <div class="db-donut-legend-dot" style="background:#c084fc;"></div>
-                            <div><div class="db-donut-label">Portrait</div><div class="db-donut-pct" style="color:#c084fc;">30%</div></div>
-                        </div>
-                        <div class="db-donut-legend-item">
-                            <div class="db-donut-legend-dot" style="background:#fb923c;"></div>
-                            <div><div class="db-donut-label">Wedding</div><div class="db-donut-pct" style="color:#fb923c;">20%</div></div>
-                        </div>
-                        <div class="db-donut-legend-item">
-                            <div class="db-donut-legend-dot" style="background:#4ade80;"></div>
-                            <div><div class="db-donut-label">Street</div><div class="db-donut-pct" style="color:#4ade80;">10%</div></div>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
 
-        <!-- AI Body Analysis Stats -->
+        <!-- Completion Rate by Type -->
         <div class="db-card">
             <div class="db-card-head">
                 <div class="db-card-head-left">
                     <div class="db-card-icon" style="background:#0a1a10;border:0.5px solid #0f3d20;">
-                        <svg fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                        <svg fill="none" viewBox="0 0 24 24" stroke="#4ade80" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <div>
-                        <div class="db-card-title">AI Body Analysis</div>
-                        <div class="db-card-sub">MediaPipe · <?= $ai_plans ?> models analyzed</div>
+                        <div class="db-card-title">Completion by Type</div>
+                        <div class="db-card-sub">AI plan generated rate</div>
                     </div>
                 </div>
             </div>
-            <div class="db-card-body">
-                <div class="db-ai-grid">
-                    <?php
-                    $ai_cells = [
-                        ['label'=>'Most Common',    'val'=>'Hourglass',    'color'=>'#c084fc', 'sub'=>'Body type · 34%'],
-                        ['label'=>'Face Shape',     'val'=>'Oval',         'color'=>'#3b82f6', 'sub'=>'Most frequent · 41%'],
-                        ['label'=>'Confidence',     'val'=>'High',         'color'=>'#22c55e', 'sub'=>'Avg. analysis · 78%'],
-                        ['label'=>'Top Angle',      'val'=>'3/4 View',     'color'=>'#fb923c', 'sub'=>'Recommended · 52%'],
-                        ['label'=>'Height Est.',    'val'=>'Average',      'color'=>'#f59e0b', 'sub'=>'Most models · 63%'],
-                        ['label'=>'Symmetry',       'val'=>'Medium',       'color'=>'#60a5fa', 'sub'=>'Face avg · 58%'],
-                    ];
-                    foreach ($ai_cells as $c): ?>
-                    <div class="db-ai-cell">
-                        <div class="db-ai-cell-label"><?= $c['label'] ?></div>
-                        <div class="db-ai-cell-val" style="color:<?= $c['color'] ?>;"><?= $c['val'] ?></div>
-                        <div class="db-ai-cell-sub"><?= $c['sub'] ?></div>
-                    </div>
-                    <?php endforeach; ?>
+            <div class="db-card-body" style="padding-top:8px;">
+                <?php
+                // Completion rate per shoot type
+                $r = $conn->prepare("
+                    SELECT shoot_type,
+                           COUNT(*) as total,
+                           SUM(CASE WHEN ai_plan IS NOT NULL THEN 1 ELSE 0 END) as done
+                    FROM shoot_results
+                    WHERE user_id = ?
+                    GROUP BY shoot_type
+                    ORDER BY total DESC
+                ");
+                $r->bind_param("i", $uid); $r->execute();
+                $completion_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+                if (empty($completion_rows)): ?>
+                    <div style="color:#4b5563;font-size:12px;padding:12px 0;">No data yet.</div>
+                <?php else: ?>
+                <?php foreach ($completion_rows as $cr):
+                    $pct   = round(($cr['done'] / max($cr['total'], 1)) * 100);
+                    $col   = $type_colors[strtolower($cr['shoot_type'])] ?? $type_colors['default'];
+                ?>
+                <div class="db-mood-row">
+                    <div class="db-mood-swatch" style="background:<?= $col ?>22;border:0.5px solid <?= $col ?>44;"></div>
+                    <div class="db-mood-name"><?= ucfirst(htmlspecialchars($cr['shoot_type'])) ?></div>
+                    <div class="db-mood-count" style="color:<?= $col ?>;"><?= $pct ?>%</div>
+                    <div class="db-mood-bar"><div class="db-mood-fill" style="width:<?= $pct ?>%;background:<?= $col ?>;"></div></div>
                 </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
     </div>
 
-</div><!-- /db-main -->
+</div>
 
 <script>
 (function buildChart() {
-    const months  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const planned = [8,11,9,14,12,16,0,0,0,0,0,0];
-    const done    = [7,10,8,13,11,14,0,0,0,0,0,0];
-    const max = 16;
-    const curMonth = new Date().getMonth();
+    const monthlyData = <?= json_encode($monthly_data) ?>;
     const barsEl   = document.getElementById('db-chart-bars');
     const labelsEl = document.getElementById('db-chart-labels');
-
     if (!barsEl || !labelsEl) return;
 
-    for (let i = 0; i <= curMonth; i++) {
-        const p  = planned[i] || 0;
-        const d  = done[i]    || 0;
-        const ph = Math.round((p / max) * 130);
-        const dh = Math.round((d / max) * 130);
-        const isNow = i === curMonth;
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const keys = Object.keys(monthlyData);
+    if (keys.length === 0) {
+        barsEl.innerHTML = '<div style="color:#4b5563;font-size:12px;padding:20px;">No shoot data yet.</div>';
+        return;
+    }
+
+    const maxVal = Math.max(...keys.map(k => monthlyData[k].planned), 1);
+
+    keys.forEach(key => {
+        const [yr, mon] = key.split('-');
+        const p  = monthlyData[key].planned;
+        const d  = monthlyData[key].done;
+        const ph = Math.round((p / maxVal) * 130);
+        const dh = Math.round((d / maxVal) * 130);
+        const now = new Date();
+        const isNow = parseInt(mon) - 1 === now.getMonth() && parseInt(yr) === now.getFullYear();
 
         const col = document.createElement('div');
         col.className = 'db-bar-col';
@@ -542,11 +700,11 @@ $avg_score     = 86;
 
         const lbl = document.createElement('div');
         lbl.className = 'db-chart-label';
-        lbl.textContent = months[i];
+        lbl.textContent = monthNames[parseInt(mon) - 1];
         lbl.style.color = isNow ? '#3b82f6' : '#4b5563';
         lbl.style.fontWeight = isNow ? '500' : '400';
         labelsEl.appendChild(lbl);
-    }
+    });
 })();
 </script>
 
