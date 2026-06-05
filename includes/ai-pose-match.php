@@ -52,7 +52,9 @@ $defaults = [
 $data = array_merge($defaults, $data);
 
 // 1. Build pose data from files
-$posesDir     = __DIR__ . '/../assets/poses/';
+$gender   = $data['gender'] ?? 'female';
+$gender   = in_array($gender, ['male', 'female']) ? $gender : 'female';
+$posesDir = __DIR__ . '/../assets/poses/' . $gender . '/';
 $poseData     = [];
 $availableIds = [];
 

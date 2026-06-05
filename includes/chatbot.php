@@ -286,7 +286,7 @@ RESPONSE STYLE:
 - Use specific values (f/2.8 not 'wide aperture'; 'chin forward 5°' not 'tilt a little')
 - Reference the predicted camera settings above when relevant — explain *why* they suit this session
 - **Bold** key terms for scannability
-- Under 200 words unless a full breakdown is explicitly requested
+- Under 400 words unless a full breakdown is explicitly requested
 - Always tie advice back to THIS specific shoot context (location, mood, model analysis, platform)";
 
 // ── Convert chat history to Gemini format ─────────────────────────────────
@@ -321,7 +321,7 @@ $payload = json_encode([
         'temperature'     => 0.7,
         'topP'            => 0.9,
         'topK'            => 40,
-        'maxOutputTokens' => 600,
+        'maxOutputTokens' => 1500,
         'stopSequences'   => []
     ],
     'safetySettings' => [

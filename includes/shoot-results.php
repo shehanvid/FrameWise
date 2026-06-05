@@ -61,7 +61,43 @@ $plan = [
     'gender' => $gender,
 ];
 
-// ── NOW it's safe to output HTML ───────────────────────────────────────────
+$equipment_val = isset($_POST['equipment']) ? json_encode($_POST['equipment']) : null;
+
+$stmt = $conn->prepare("
+    INSERT INTO shoot_results
+        (user_id, location, location_lat, location_lng, shoot_datetime,
+         shoot_type, mood, outfit_colour, gender, environment, backdrop, gear,
+         body_analysis, camera_type, experience, lighting_style, output_style,
+         equipment, orientation, platform, ai_notes)
+    VALUES
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
+
+    $uid          = $_SESSION['userid'] ?? null;
+    $lat          = $location_lat ? (float)$location_lat : null;
+    $lng          = $location_lng ? (float)$location_lng : null;
+    $shoot_dt     = (new DateTime($datetime))->format('Y-m-d H:i:s');
+    $gender       = $_POST['gender']        ?? 'female';
+    $body_json    = $_POST['body_analysis'] ?? null;
+    $camera       = $_POST['camera_type']   ?? null;
+    $experience   = $_POST['experience']    ?? null;
+    $lighting     = $_POST['lighting_style']?? null;
+    $out_style    = $_POST['output_style']  ?? null;
+    $orientation  = $_POST['orientation']   ?? null;
+    $platform     = $_POST['platform']      ?? null;
+    $ai_notes     = trim($_POST['ai_notes'] ?? '');
+
+    $stmt->bind_param(
+        "issssssssssssssssssss",  // 21 chars, all s
+        $uid, $location, $lat, $lng, $shoot_dt,
+        $shoot_type, $mood, $outfit, $gender, $environment, $backdrop, $gear,
+        $body_json, $camera, $experience, $lighting, $out_style,
+        $equipment_val, $orientation, $platform, $ai_notes
+    );
+
+    $stmt->execute();
+    $last_id = $conn->insert_id; 
+
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
@@ -957,6 +993,32 @@ const SHOOT_CONTEXT = {
     body_analysis: <?= json_encode(isset($_POST['body_analysis']) ? json_decode($_POST['body_analysis'], true) : null) ?>,
 };
 
+const conditionsToSave = {
+    result_id: <?= $last_id ?>,
+    sun_altitude: null, sun_azimuth: null,
+    shadow_direction: null, shadow_length: null,
+    golden_hour_start: null, golden_hour_end: null,
+    blue_hour_start: null, blue_hour_end: null,
+    is_golden_hour: 0, is_blue_hour: 0,
+    weather_temp: null, weather_condition: null,
+    weather_humidity: null, weather_wind: null,
+    weather_clouds: null, weather_rain_chance: null,
+    weather_score: null,
+    _sunDone: false, _weatherDone: false
+};
+
+function trySaveConditions() {
+    if (!conditionsToSave._sunDone || !conditionsToSave._weatherDone) return;
+    fetch('save-conditions.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conditionsToSave)
+    })
+    .then(r => r.text())
+    .then(t => console.log('save-conditions response:', t))
+    .catch(e => console.error('save-conditions error:', e));
+}
+
 let AVAILABLE_POSES = {};
 
 fetch('get-poses.php?gender=' + encodeURIComponent(<?= json_encode($gender) ?>))
@@ -1209,6 +1271,20 @@ function toggleShot(row) {
         ${renderCamSetting('◑', 'White balance',   wb,       '')}
     `;
 
+    // Save sun data
+    conditionsToSave.sun_altitude      = altitudeDeg.toFixed(2);
+    conditionsToSave.sun_azimuth       = azimuthDeg.toFixed(2);
+    conditionsToSave.shadow_direction  = shadowDeg.toFixed(2);
+    conditionsToSave.shadow_length     = shadowLen;
+    conditionsToSave.golden_hour_start = fmt(goldenStart);
+    conditionsToSave.golden_hour_end   = fmt(goldenEnd);
+    conditionsToSave.blue_hour_start   = fmt(blueStart);
+    conditionsToSave.blue_hour_end     = fmt(blueEnd);
+    conditionsToSave.is_golden_hour    = isGolden ? 1 : 0;
+    conditionsToSave.is_blue_hour      = isBlue   ? 1 : 0;
+    conditionsToSave._sunDone          = true;
+    trySaveConditions();
+
 })();
 
 // ── OpenWeather fetch ──────────────────────────────────────────────────────
@@ -1239,6 +1315,16 @@ function toggleShot(row) {
             const ws = Math.max(0, Math.min(100, 100 - d.clouds - (d.rain_chance * 0.5)));
             document.getElementById('weather-score-bar').style.width = Math.round(ws) + '%';
             document.getElementById('weather-score-val').textContent  = Math.round(ws);
+
+            conditionsToSave.weather_temp        = d.temp;
+            conditionsToSave.weather_condition   = d.description;
+            conditionsToSave.weather_humidity    = d.humidity;
+            conditionsToSave.weather_wind        = d.wind;
+            conditionsToSave.weather_clouds      = d.clouds;
+            conditionsToSave.weather_rain_chance = d.rain_chance;
+            conditionsToSave.weather_score       = Math.round(ws);
+            conditionsToSave._weatherDone        = true;
+            trySaveConditions();
         })
         .catch(() => {
             document.getElementById('weather-body').innerHTML = '<div style="color:#6b7280;font-size:12px;">Weather unavailable — check API key in includes/weather.php</div>';
@@ -1287,7 +1373,6 @@ function toggleShot(row) {
 (async function loadPoses() {
     try {
         const bodyAnalysis = <?= json_encode(json_decode($_POST['body_analysis'] ?? '{}', true)) ?>;
-
         const resp = await fetch('ai-pose-match.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1322,14 +1407,18 @@ function toggleShot(row) {
         if (data.poses && data.poses.length) {
             document.getElementById('pose-body').innerHTML = data.poses.map((p, i) => `
                 <div class="sp-pose-card" style="flex-direction:column;gap:8px;">
-                    <div style="
-                        width:100%;aspect-ratio:2/3;
-                        border-radius:8px;border:0.5px solid #1a1a1a;
-                        background:linear-gradient(135deg,#0d0d0d 0%,#161616 100%);
-                        display:flex;align-items:center;justify-content:center;
-                        font-family:'Bebas Neue',sans-serif;font-size:52px;
-                        color:#1e2030;user-select:none;
-                    ">0${i+1}</div>
+                    <img
+                        src="${p.image}"
+                        alt="${p.label}"
+                        style="
+                            width:100%;
+                            aspect-ratio:2/3;
+                            object-fit:cover;
+                            border-radius:8px;
+                            border:0.5px solid #1a1a1a;
+                            display:block;
+                        "
+                    >
                     <div>
                         <div class="sp-pose-num">0${i+1}</div>
                         <div class="sp-pose-name">${p.name}</div>
@@ -1339,6 +1428,16 @@ function toggleShot(row) {
                 </div>
             `).join('');
         }
+
+         fetch('save-plan.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                result_id: <?= $last_id ?>,
+                poses: data.poses
+            })
+        });
+
     } catch(e) {
         console.error('Pose fetch error:', e);
         document.getElementById('pose-body').innerHTML = 
