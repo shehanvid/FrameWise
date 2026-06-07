@@ -758,26 +758,30 @@ function setSelectedLabel(text, enableBtn) {
 function confirmMapLocation() {
   if (!selectedLabel) return;
 
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${selectedLatLng.lat}&lon=${selectedLatLng.lng}&format=json&zoom=10`)
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${selectedLatLng.lat}&lon=${selectedLatLng.lng}&format=json&zoom=18&addressdetails=1`)
     .then(r => r.json())
     .then(data => {
       const a = data.address || {};
-      const short = [
-        a.suburb || a.neighbourhood || a.village || a.town || a.city_district,
-        a.city   || a.town || a.county,
-        a.country
-      ].filter(Boolean).join(', ');
 
-      const label = short || selectedLabel;
-      const lat   = selectedLatLng.lat.toFixed(6);
-      const lng   = selectedLatLng.lng.toFixed(6);
+      // Build a priority list from most specific → least specific
+      const parts = [
+        a.amenity || a.tourism || a.leisure || a.shop || a.building || a.historic,  // POI name
+        a.road || a.pedestrian || a.footway || a.path,                               // street
+        a.suburb || a.neighbourhood || a.quarter || a.village,                       // neighbourhood
+        a.city_district || a.town || a.city || a.county,                             // city area
+        a.country                                                                     // country
+      ].filter(Boolean);
 
-      // Fill hidden inputs
+      // Take the first 2 meaningful parts
+      const label = parts.slice(0, 2).join(', ') || selectedLabel;
+
+      const lat = selectedLatLng.lat.toFixed(6);
+      const lng = selectedLatLng.lng.toFixed(6);
+
       document.getElementById('location').value     = label;
       document.getElementById('location_lat').value = lat;
       document.getElementById('location_lng').value = lng;
 
-      // Show the display box
       document.getElementById('location-display').style.display = 'block';
       document.getElementById('location-display-text').textContent  = label;
       document.getElementById('location-coords-text').textContent = `${lat}, ${lng}`;

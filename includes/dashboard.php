@@ -156,6 +156,24 @@ $r = $conn->prepare("
 ");
 $r->bind_param("i", $uid); $r->execute();
 $completion_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$r = $conn->prepare("
+    SELECT id, location, shoot_type, mood, outfit_colour,
+           shoot_datetime, weather_score,
+           (ai_plan IS NOT NULL) AS has_plan
+    FROM shoot_results
+    WHERE user_id = ?
+    ORDER BY shoot_datetime DESC
+");
+$r->bind_param("i", $uid);
+$r->execute();
+$all_shoots_raw = $r->get_result()->fetch_all(MYSQLI_ASSOC);
+
+foreach ($all_shoots_raw as &$row) {
+    $row['has_plan']      = (bool)$row['has_plan'];
+    $row['weather_score'] = (int)($row['weather_score'] ?? 0);
+}
+unset($row);
 ?>
 
 <link rel="stylesheet" href="../assets/css/dashboard-style.css">
@@ -296,26 +314,15 @@ $completion_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
                         <span><?= $total_shoots > 0 ? round(($completed / $total_shoots) * 100) : 0 ?>%</span>
                     </div>
                 </div>
-                <a href="index.php" class="db-quick-btn">
+                <a href="../index.php" class="db-quick-btn">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
                     New Shoot Plan
                 </a>
-                <a href="shoots.php" class="db-quick-btn">
+                <button onclick="openShootsModal()" class="db-quick-btn">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
                     View All Shoots
-                </a>
-                <a href="weather.php" class="db-quick-btn">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"/></svg>
-                    Check Weather
-                </a>
-                <a href="locations.php" class="db-quick-btn">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/></svg>
-                    Scout Location
-                </a>
-                <a href="color-harmony.php" class="db-quick-btn">
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197"/></svg>
-                    Colour Harmony
-                </a>
+                </button>
+
             </div>
         </div>
 
@@ -663,6 +670,57 @@ $completion_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
 
 </div>
 
+<div id="all-shoots-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+    <div style="background:#0d0d0d;border:0.5px solid #1f1f1f;border-radius:16px;width:90%;max-width:820px;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+
+        <!-- Modal Header -->
+        <div style="padding:18px 20px 14px;border-bottom:0.5px solid #1a1a1a;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:28px;height:28px;border-radius:8px;background:#0f1520;border:0.5px solid #1e3a5f;display:flex;align-items:center;justify-content:center;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="#3b82f6" stroke-width="1.5" width="14" height="14">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:500;color:#e5e7eb;">All Shoot Plans</div>
+                    <div style="font-size:11px;color:#4b5563;" id="modal-shoot-count">Loading…</div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <!-- Filter -->
+                <select id="modal-filter-type" onchange="filterModalShoots()" style="background:#111;border:0.5px solid #1f1f1f;border-radius:8px;color:#9ca3af;font-size:11px;padding:5px 8px;cursor:pointer;">
+                    <option value="">All types</option>
+                    <option value="portrait">Portrait</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="wedding">Wedding</option>
+                    <option value="street">Street</option>
+                    <option value="landscape">Landscape</option>
+                    <option value="product">Product</option>
+                </select>
+                <select id="modal-filter-status" onchange="filterModalShoots()" style="background:#111;border:0.5px solid #1f1f1f;border-radius:8px;color:#9ca3af;font-size:11px;padding:5px 8px;cursor:pointer;">
+                    <option value="">All status</option>
+                    <option value="done">Plan ready</option>
+                    <option value="pending">Pending</option>
+                </select>
+                <!-- Close -->
+                <button onclick="closeShootsModal()" style="background:#1a1a1a;border:0.5px solid #2a2a2a;border-radius:8px;color:#9ca3af;font-size:11px;padding:5px 10px;cursor:pointer;display:flex;align-items:center;gap:4px;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="11" height="11">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Close
+                </button>
+            </div>
+        </div>
+
+        <!-- Scrollable list -->
+        <div style="overflow-y:auto;flex:1;padding:12px 20px;" id="modal-shoots-list">
+            <div style="color:#4b5563;font-size:12px;padding:24px 0;text-align:center;">Loading shoots…</div>
+        </div>
+
+    </div>
+</div>
+
 <script>
 (function buildChart() {
     const monthlyData = <?= json_encode($monthly_data) ?>;
@@ -706,6 +764,104 @@ $completion_rows = $r->get_result()->fetch_all(MYSQLI_ASSOC);
         labelsEl.appendChild(lbl);
     });
 })();
+
+const TYPE_COLORS = <?= json_encode($type_colors) ?>;
+let allShoots = [];
+
+allShoots = <?= json_encode($all_shoots_raw) ?>;
+
+function openShootsModal() {
+    document.getElementById('all-shoots-modal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    renderModalShoots(allShoots);
+}
+
+function closeShootsModal() {
+    document.getElementById('all-shoots-modal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.getElementById('all-shoots-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeShootsModal();
+});
+
+function filterModalShoots() {
+    const type   = document.getElementById('modal-filter-type').value;
+    const status = document.getElementById('modal-filter-status').value;
+    let filtered = allShoots;
+    if (type)   filtered = filtered.filter(s => s.shoot_type === type);
+    if (status) filtered = filtered.filter(s => status === 'done' ? s.has_plan : !s.has_plan);
+    renderModalShoots(filtered);
+}
+
+function renderModalShoots(shoots) {
+    const list = document.getElementById('modal-shoots-list');
+    document.getElementById('modal-shoot-count').textContent = shoots.length + ' shoot' + (shoots.length !== 1 ? 's' : '');
+
+    if (shoots.length === 0) {
+        list.innerHTML = '<div style="color:#4b5563;font-size:12px;padding:32px 0;text-align:center;">No shoots match this filter.</div>';
+        return;
+    }
+
+    list.innerHTML = shoots.map((s, i) => {
+        const isLast   = i === shoots.length - 1;
+        const col      = TYPE_COLORS[s.shoot_type] ?? TYPE_COLORS['default'];
+        const isPast   = new Date(s.shoot_datetime) < new Date();
+        const hasPlan  = s.has_plan;
+        const score    = parseInt(s.weather_score) || 0;
+        const scoreCol = score >= 80 ? '#22c55e' : score >= 60 ? '#f59e0b' : score > 0 ? '#e87070' : null;
+
+        const d    = new Date(s.shoot_datetime);
+        const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+        return `
+        <div style="padding:12px 0;border-bottom:${isLast ? 'none' : '0.5px solid #141414'};display:flex;align-items:center;gap:12px;">
+
+            <!-- Type badge -->
+            <div style="flex-shrink:0;width:36px;height:36px;border-radius:10px;background:${col}18;border:0.5px solid ${col}33;display:flex;align-items:center;justify-content:center;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="${col}" stroke-width="1.5" width="15" height="15">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+                </svg>
+            </div>
+
+            <!-- Main info -->
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap;">
+                    <span style="font-size:12px;font-weight:500;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">${s.location}</span>
+                    <span style="font-size:10px;background:${col}18;color:${col};border:0.5px solid ${col}33;border-radius:5px;padding:1px 6px;">${s.shoot_type}</span>
+                    ${hasPlan
+                        ? `<span style="font-size:10px;background:#0a1a10;color:#22c55e;border:0.5px solid #0f3d2044;border-radius:5px;padding:1px 6px;">Plan ready</span>`
+                        : `<span style="font-size:10px;background:#1a1209;color:#f59e0b;border:0.5px solid #3a2d1044;border-radius:5px;padding:1px 6px;">Pending</span>`
+                    }
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span style="font-size:11px;color:#4b5563;">${date} · ${time}</span>
+                    <span style="font-size:11px;color:#4b5563;">${s.mood ? s.mood.charAt(0).toUpperCase() + s.mood.slice(1) + ' mood' : ''}</span>
+                    ${s.outfit_colour ? `<span style="font-size:11px;color:#4b5563;">Outfit: ${s.outfit_colour}</span>` : ''}
+                </div>
+            </div>
+
+            <!-- Score -->
+            ${scoreCol ? `
+            <div style="flex-shrink:0;text-align:center;min-width:36px;">
+                <div style="font-size:14px;font-weight:500;color:${scoreCol};">${score}</div>
+                <div style="font-size:9px;color:#4b5563;">score</div>
+            </div>` : ''}
+
+            <!-- View button -->
+            <a href="view-result.php?id=${s.id}" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#0f1520;border:0.5px solid #1e3a5f;border-radius:8px;padding:6px 12px;font-size:11px;color:#60a5fa;text-decoration:none;white-space:nowrap;">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="11" height="11">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"/>
+                </svg>
+                View
+            </a>
+
+        </div>`;
+    }).join('');
+}
+
 </script>
 
 <?php include 'footer.php'; ?>

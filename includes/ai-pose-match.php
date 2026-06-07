@@ -1,9 +1,15 @@
 <?php
 header('Content-Type: application/json');
 
+error_log("=== ai-pose-match.php START ===");
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    error_log("ERROR: Not a POST request");
     http_response_code(405); exit;
 }
+
+require 'dbh.inc.php';
+error_log("DB connected OK");
 
 // Load .env
 $envPath = __DIR__ . '/../.env';
@@ -13,18 +19,28 @@ if (file_exists($envPath)) {
         [$k, $v] = explode('=', $line, 2);
         $_ENV[trim($k)] = trim($v);
     }
+    error_log(".env loaded OK");
+} else {
+    error_log("WARNING: .env file not found at: " . $envPath);
 }
 
+$apiKey = $_ENV['GEMINI_API_KEY'] ?? '';
+error_log("Gemini API key present: " . (!empty($apiKey) ? 'YES (starts with ' . substr($apiKey, 0, 8) . '...)' : 'NO - MISSING'));
+
 $data = json_decode(file_get_contents('php://input'), true);
+error_log("Raw input: " . file_get_contents('php://input'));
 
 if (!$data || !isset($data['body_type'])) {
+    error_log("ERROR: Invalid or missing data. data=" . json_encode($data));
     http_response_code(400);
     echo json_encode(['error' => 'Invalid or missing data']);
     exit;
 }
 
+error_log("Input data OK. body_type=" . ($data['body_type'] ?? 'null') . " gender=" . ($data['gender'] ?? 'null'));
+
 $defaults = [
-    'gender' => 'female',
+    'gender'             => 'female',
     'estimated_height'   => 'unknown',
     'posture'            => 'unknown',
     'face_symmetry'      => 'unknown',
@@ -51,40 +67,57 @@ $defaults = [
 ];
 $data = array_merge($defaults, $data);
 
-// 1. Build pose data from files
-$gender   = $data['gender'] ?? 'female';
-$gender   = in_array($gender, ['male', 'female']) ? $gender : 'female';
-$posesDir = __DIR__ . '/../assets/poses/' . $gender . '/';
-$poseData     = [];
+$gender = $data['gender'] ?? 'female';
+error_log("Gender: " . $gender);
+
+$stmt = $conn->prepare("
+    SELECT * FROM poses WHERE gender = ? OR gender = 'unisex'
+");
+$stmt->bind_param("s", $gender);
+$stmt->execute();
+$result = $stmt->get_result();
+$poses = $result->fetch_all(MYSQLI_ASSOC);
+
+error_log("Poses fetched from DB: " . count($poses));
+
+if (count($poses) === 0) {
+    error_log("ERROR: No poses found in DB for gender=" . $gender);
+    echo json_encode(['error' => 'No poses found in database', 'poses' => []]);
+    exit;
+}
+
+$poseData    = [];
 $availableIds = [];
+$poseLines   = '';
 
-foreach (scandir($posesDir) as $file) {
-    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-    if (!in_array($ext, ['jpg','jpeg','png','webp'])) continue;
-
-    $id               = pathinfo($file, PATHINFO_FILENAME);
-    $availableIds[]   = $id;
-    $poseData[$id]    = [
-        'name'        => ucwords(str_replace('-', ' ', $id)),
-        'description' => '',
-        'tag'         => '',
-    ];
+foreach ($poses as $pose) {
+    $availableIds[]            = $pose['pose_id'];
+    $poseData[$pose['pose_id']] = $pose;
+    $poseLines .= "
+    ID: {$pose['pose_id']}
+    Name: {$pose['name']}
+    Description: {$pose['description']}
+    Category: {$pose['category']}
+    Position: {$pose['body_position']}
+    Mood: {$pose['mood']}
+    Suitable For: {$pose['suitable_for']}
+    Difficulty: {$pose['difficulty']}
+    Tags: {$pose['tags']}
+    ";
 }
 
-// 2. Build poseLines string
-$poseLines = '';
-foreach ($availableIds as $id) {
-    $label      = ucwords(str_replace('-', ' ', $id));
-    $meta       = $poseData[$id] ?? ['description' => '', 'tag' => ''];
-    $poseLines .= "{$id} | {$label}" .
-        ($meta['description'] ? " | {$meta['description']}" : '') . "\n";
-}
+error_log("Available pose IDs: " . implode(', ', $availableIds));
 
-// 3. Build the full prompt as one string
 $prompt = "You are a professional photography pose director with deep knowledge of body types, face shapes, and shoot styles.
 
-AVAILABLE POSES (these are the ONLY poses you can choose from):
+AVAILABLE POSES:
+
 {$poseLines}
+
+IMPORTANT:
+- You MUST ONLY choose pose IDs from the list above.
+- Never invent pose IDs.
+- Return exactly 7 unique pose IDs.
 
 SHOOT DETAILS:
 - Shoot type: {$data['shoot_type']}
@@ -114,29 +147,29 @@ MODEL BODY ANALYSIS (from MediaPipe):
 - Angles to avoid: {$data['avoid_angles']}
 
 TASK:
-Choose exactly 5 pose IDs from the list above that will produce the most flattering, on-brand results for this specific model and shoot.
+Choose exactly 7 pose IDs from the list above that will produce the most flattering, on-brand results for this specific model and shoot.
 
 Think through:
 1. Which poses complement this body type and face shape?
 2. Which poses match the shoot type and mood?
 3. Which poses suit the photographer's experience level?
 4. Which poses work well for the target platform's aspect ratio?
-5. Are the 5 poses varied enough (mix of standing, seated, movement, close-up)?
+5. Are the 7 poses varied enough (mix of standing, seated, movement, close-up)?
 
-Return ONLY a valid JSON array of exactly 5 pose IDs. No explanation. No markdown. No extra text.
+Return ONLY a valid JSON array of exactly 7 pose IDs. No explanation. No markdown. No extra text.
 Example output: [\"classic-three-quarter\",\"s-curve\",\"window-light-profile\",\"seated-editorial\",\"profile-silhouette\"]";
 
-// 4. Call Gemini API
-$apiKey  = $_ENV['GEMINI_API_KEY'] ?? '';
+error_log("Calling Gemini API...");
+
 $payload = json_encode([
     'contents'         => [['parts' => [['text' => $prompt]]]],
     'generationConfig' => [
         'temperature'     => 0.2,
-        'maxOutputTokens' => 80,
+        'maxOutputTokens' => 20*7,
     ]
 ]);
 
-$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $apiKey;
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' . $apiKey;
 $ch  = curl_init($url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
@@ -145,38 +178,80 @@ curl_setopt_array($ch, [
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
     CURLOPT_TIMEOUT        => 15,
 ]);
-$response = curl_exec($ch);
+$response   = curl_exec($ch);
+$curlError  = curl_error($ch);
+$httpCode   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
+error_log("Gemini HTTP status: " . $httpCode);
+error_log("Gemini cURL error: " . ($curlError ?: 'none'));
+error_log("Gemini raw response: " . $response);
+
+if ($curlError) {
+    error_log("ERROR: cURL failed - " . $curlError);
+    echo json_encode(['error' => 'Gemini cURL error: ' . $curlError, 'poses' => []]);
+    exit;
+}
+
 $decoded = json_decode($response, true);
+
+if (!$decoded) {
+    error_log("ERROR: Could not decode Gemini response as JSON");
+    echo json_encode(['error' => 'Gemini response not valid JSON', 'poses' => []]);
+    exit;
+}
+
+if (isset($decoded['error'])) {
+    error_log("ERROR: Gemini API error - " . json_encode($decoded['error']));
+    echo json_encode(['error' => 'Gemini API error: ' . ($decoded['error']['message'] ?? 'unknown'), 'poses' => []]);
+    exit;
+}
+
 $rawText = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? '[]';
 $rawText = trim(preg_replace('/```json|```/', '', $rawText));
+error_log("Gemini parsed text: " . $rawText);
+
 $poseIds = json_decode($rawText, true) ?? [];
+error_log("Decoded pose IDs from Gemini: " . json_encode($poseIds));
 
-// 5. Only keep IDs that have an actual image file
-$poseIds = array_filter($poseIds, fn($id) => in_array($id, $availableIds));
+// Filter to only valid IDs
+$validPoseIds = array_filter($poseIds, fn($id) => in_array($id, $availableIds));
+error_log("Valid pose IDs after filter: " . json_encode(array_values($validPoseIds)));
+error_log("Invalid IDs rejected: " . json_encode(array_values(array_diff($poseIds, $availableIds))));
 
-// 6. Build selected poses response
 $selectedPoses = [];
-foreach ($poseIds as $id) {
-    if (isset($poseData[$id])) {
-        $selectedPoses[] = array_merge(
-            ['id' => $id, 'image' => "assets/poses/{$data['gender']}/{$id}.jpg"],
-            $poseData[$id]
-        );
-    }
+foreach ($validPoseIds as $id) {
+    if (!isset($poseData[$id])) continue;
+    $selectedPoses[] = [
+        'id'          => $id,
+        'name'        => $poseData[$id]['name'],
+        'description' => $poseData[$id]['description'],
+        'category'    => $poseData[$id]['category'],
+        'tags'        => $poseData[$id]['tags'],
+        'image'       => "/FrameWise/assets/poses/{$gender}/" . $poseData[$id]['image_file']
+    ];
 }
 
-// 7. Fallback: if AI returned garbage, send first 5
-if (empty($selectedPoses)) {
-    $selectedPoses = array_slice(
-        array_map(
-            fn($id, $meta) => array_merge(['id' => $id, 'image' => "assets/poses/{$data['gender']}/{$id}.jpg"], $meta),
-            array_keys($poseData),
-            array_values($poseData)
-        ),
-        0, 5
-    );
+error_log("Selected poses after validation: " . count($selectedPoses));
+
+// Fallback
+if (count($selectedPoses) < 7) {
+    error_log("WARNING: Not enough valid poses (" . count($selectedPoses) . ") — using fallback shuffle");
+    shuffle($poses);
+    $selectedPoses = [];
+    foreach (array_slice($poses, 0, 7) as $pose) {
+        $selectedPoses[] = [
+            'id'          => $pose['pose_id'],
+            'name'        => $pose['name'],
+            'description' => $pose['description'],
+            'category'    => $pose['category'],
+            'tags'        => $pose['tags'],
+            'image'       => "/FrameWise/assets/poses/{$gender}/" . $pose['image_file']
+        ];
+    }
+    error_log("Fallback poses: " . json_encode(array_column($selectedPoses, 'id')));
 }
+
+error_log("=== ai-pose-match.php END — returning " . count($selectedPoses) . " poses ===");
 
 echo json_encode(['poses' => $selectedPoses]);

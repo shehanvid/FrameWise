@@ -1,0 +1,948 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@700&display=swap');
+
+/* ─────────────────────────────────────────────
+   Reset & base
+   ───────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* ─────────────────────────────────────────────
+   Top bar
+   ───────────────────────────────────────────── */
+.sp-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sp-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #161616;
+  border: 0.5px solid #2a2a2a;
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: #9ca3af;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+}
+
+.sp-back-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.sp-session-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1c1c1c;
+  border: 0.5px solid #2e2e2e;
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: #e5e7eb;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.sp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: spPulse 2s infinite;
+}
+
+@keyframes spPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .3; }
+}
+
+.sp-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  color: #0a0a0a;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.sp-export-btn:hover {
+  background: #2563eb;
+}
+
+
+/* ─────────────────────────────────────────────
+   Meta strip
+   ───────────────────────────────────────────── */
+.sp-meta-strip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.sp-meta-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #111;
+  border: 0.5px solid #222;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.sp-meta-pill span {
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+
+/* ─────────────────────────────────────────────
+   Card grid
+   ───────────────────────────────────────────── */
+.sp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.sp-card {
+  background: #111;
+  border: 0.5px solid #1e1e1e;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+
+.sp-card:hover {
+  border-color: #2a2a2a;
+}
+
+.sp-card.wide {
+  grid-column: span 2;
+}
+
+.sp-card-header {
+  padding: 14px 16px 10px;
+  border-bottom: 0.5px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sp-card-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sp-card-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sp-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f0ede8;
+}
+
+.sp-card-sub {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+.sp-card-body {
+  padding: 14px 16px;
+}
+
+
+/* ─────────────────────────────────────────────
+   Weather card
+   ───────────────────────────────────────────── */
+.sp-weather-big {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  color: #fff;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.sp-weather-cond {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-bottom: 12px;
+}
+
+.sp-weather-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sp-weather-stat {
+  background: #0d0d0d;
+  border: 0.5px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.sp-weather-stat-label {
+  font-size: 10px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 3px;
+}
+
+.sp-weather-stat-val {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e5e7eb;
+}
+
+
+/* ─────────────────────────────────────────────
+   Shoot score card
+   ───────────────────────────────────────────── */
+.sp-score-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 0;
+}
+
+.sp-score-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sp-score-ring svg {
+  transform: rotate(-90deg);
+}
+
+.sp-score-val {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  color: #fff;
+}
+
+.sp-score-details {
+  flex: 1;
+}
+
+.sp-score-label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.sp-score-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.sp-score-bar-label {
+  font-size: 11px;
+  color: #6b7280;
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.sp-score-bar-track {
+  flex: 1;
+  height: 3px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sp-score-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.sp-score-bar-val {
+  font-size: 11px;
+  color: #9ca3af;
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+
+/* ─────────────────────────────────────────────
+   Golden / blue hour card
+   ───────────────────────────────────────────── */
+.sp-hour-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 0.5px solid #161616;
+}
+
+.sp-hour-row:last-child {
+  border-bottom: none;
+}
+
+.sp-hour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sp-hour-name {
+  font-size: 12px;
+  color: #e5e7eb;
+  margin-left: 8px;
+  flex: 1;
+}
+
+.sp-hour-time {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.sp-hour-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  margin-left: 8px;
+}
+
+/* timeline under golden hour */
+.sp-tl-track {
+  height: 4px;
+  background: #1a1a1a;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 14px;
+}
+
+.sp-tl-fill {
+  height: 100%;
+  border-radius: 2px;
+  position: absolute;
+}
+
+.sp-tl-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.sp-tl-label {
+  font-size: 10px;
+  color: #6b7280;
+}
+
+
+/* ─────────────────────────────────────────────
+   Sun / compass card
+   ───────────────────────────────────────────── */
+.sp-compass {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.sp-compass-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 0.5px solid #222;
+  background: #0d0d0d;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sp-compass-label {
+  position: absolute;
+  font-size: 10px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.sp-compass-n { top: 6px;    left: 50%; transform: translateX(-50%); }
+.sp-compass-s { bottom: 6px; left: 50%; transform: translateX(-50%); }
+.sp-compass-e { right: 8px;  top: 50%;  transform: translateY(-50%); }
+.sp-compass-w { left: 8px;   top: 50%;  transform: translateY(-50%); }
+
+.sp-compass-center {
+  width: 8px;
+  height: 8px;
+  background: #f59e0b;
+  border-radius: 50%;
+  position: relative;
+  z-index: 2;
+}
+
+.sp-sun-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sp-sun-stat {
+  text-align: center;
+  background: #0d0d0d;
+  border: 0.5px solid #1a1a1a;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.sp-sun-stat-label {
+  font-size: 10px;
+  color: #6b7280;
+  margin-bottom: 2px;
+}
+
+.sp-sun-stat-val    { font-size: 13px; color: #f59e0b; font-weight: 500; }
+.sp-shadow-stat-val { font-size: 13px; color: #60a5fa; font-weight: 500; }
+
+
+/* ─────────────────────────────────────────────
+   Camera settings card
+   ───────────────────────────────────────────── */
+.sp-cam-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 0.5px solid #161616;
+}
+
+.sp-cam-setting:last-child {
+  border-bottom: none;
+}
+
+.sp-cam-label {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sp-cam-val {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3b82f6;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: .04em;
+}
+
+.sp-cam-badge {
+  font-size: 10px;
+  background: #0f1520;
+  border: 0.5px solid #1e3a5f;
+  color: #60a5fa;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-left: 6px;
+}
+
+
+/* ─────────────────────────────────────────────
+   Pose cards (horizontal scroll strip)
+   ───────────────────────────────────────────── */
+.sp-pose-card {
+  background: #0d0d0d;
+  border: 0.5px solid #1a1a1a;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.sp-pose-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: #1e2030;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 22px;
+}
+
+.sp-pose-name {
+  font-size: 12px;
+  color: #e5e7eb;
+  font-weight: 500;
+  margin-bottom: 3px;
+}
+
+.sp-pose-desc {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.sp-pose-tag {
+  display: inline-flex;
+  font-size: 9px;
+  background: #130d1f;
+  border: 0.5px solid #3d1f7a44;
+  color: #a78bfa;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-top: 5px;
+}
+
+/* scrollbar inside pose strip */
+#pose-body::-webkit-scrollbar         { height: 4px; }
+#pose-body::-webkit-scrollbar-track   { background: #0d0d0d; border-radius: 2px; }
+#pose-body::-webkit-scrollbar-thumb   { background: #2a2a2a; border-radius: 2px; }
+#pose-body::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+
+#pose-body .sp-pose-card {
+  min-width: 160px;
+  max-width: 160px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+}
+
+
+/* ─────────────────────────────────────────────
+   Shot / pose checklist
+   ───────────────────────────────────────────── */
+.sp-shot-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 0.5px solid #161616;
+  cursor: pointer;
+}
+
+.sp-shot-item:last-child {
+  border-bottom: none;
+}
+
+.sp-shot-cb {
+  width: 16px;
+  height: 16px;
+  border: 0.5px solid #2a2a2a;
+  border-radius: 4px;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all .2s;
+}
+
+.sp-shot-cb.done {
+  background: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.sp-shot-cb svg {
+  width: 9px;
+  height: 9px;
+  color: #fff;
+  opacity: 0;
+  transition: opacity .15s;
+}
+
+.sp-shot-cb.done svg {
+  opacity: 1;
+}
+
+.sp-shot-text {
+  font-size: 12px;
+  color: #9ca3af;
+  transition: all .2s;
+  user-select: none;
+}
+
+.sp-shot-text.done {
+  color: #374151;
+  text-decoration: line-through;
+}
+
+
+/* ─────────────────────────────────────────────
+   Director tips card
+   ───────────────────────────────────────────── */
+.sp-tip {
+  display: flex;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 0.5px solid #161616;
+}
+
+.sp-tip:last-child {
+  border-bottom: none;
+}
+
+.sp-tip-icon {
+  width: 28px;
+  height: 28px;
+  background: #161209;
+  border: 0.5px solid #3a2d10;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sp-tip-icon svg {
+  width: 14px;
+  height: 14px;
+  color: #f59e0b;
+}
+
+.sp-tip-title {
+  font-size: 12px;
+  color: #e5e7eb;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.sp-tip-text {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+
+/* ─────────────────────────────────────────────
+   Chatbot
+   ───────────────────────────────────────────── */
+.sp-chatbot-wrap {
+  margin-top: 24px;
+  background: #111;
+  border: 0.5px solid #1e1e1e;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.sp-chatbot-header {
+  padding: 16px 20px;
+  border-bottom: 0.5px solid #1a1a1a;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sp-chatbot-header-icon {
+  width: 36px;
+  height: 36px;
+  background: #160d1a;
+  border: 0.5px solid #4a1a6e;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sp-chatbot-header-icon svg {
+  width: 17px;
+  height: 17px;
+  color: #c084fc;
+}
+
+.sp-chatbot-header-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f0ede8;
+}
+
+.sp-chatbot-header-sub {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.sp-chatbot-header-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #1c1c1c;
+  border: 0.5px solid #2e2e2e;
+  border-radius: 100px;
+  padding: 4px 10px;
+  font-size: 10px;
+  color: #9ca3af;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* message list */
+.sp-chat-messages {
+  padding: 16px 20px;
+  min-height: 260px;
+  max-height: 440px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  scroll-behavior: smooth;
+}
+
+.sp-chat-messages::-webkit-scrollbar       { width: 4px; }
+.sp-chat-messages::-webkit-scrollbar-track { background: transparent; }
+.sp-chat-messages::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+/* individual messages */
+.sp-msg {
+  display: flex;
+  gap: 8px;
+  max-width: 86%;
+}
+
+.sp-msg.user { align-self: flex-end;  flex-direction: row-reverse; }
+.sp-msg.ai   { align-self: flex-start; }
+
+.sp-msg-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sp-msg.ai   .sp-msg-avatar { background: #160d1a; border: 0.5px solid #4a1a6e; }
+.sp-msg.ai   .sp-msg-avatar svg { width: 14px; height: 14px; color: #c084fc; }
+.sp-msg.user .sp-msg-avatar { background: #0f1520; border: 0.5px solid #1e3a5f; color: #60a5fa; font-size: 10px; }
+
+.sp-msg-bubble {
+  padding: 10px 13px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.sp-msg.ai   .sp-msg-bubble { background: #0d0d0d; border: 0.5px solid #1a1a1a; color: #d1d5db; border-top-left-radius: 4px; }
+.sp-msg.user .sp-msg-bubble { background: #0f1520; border: 0.5px solid #1e3a5f; color: #bfdbfe; border-top-right-radius: 4px; }
+
+/* typing dots */
+.sp-typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 0;
+}
+
+.sp-typing span {
+  width: 5px;
+  height: 5px;
+  background: #4b5563;
+  border-radius: 50%;
+  animation: spTyping 1.2s infinite;
+}
+
+.sp-typing span:nth-child(2) { animation-delay: .2s; }
+.sp-typing span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes spTyping {
+  0%, 80%, 100% { opacity: .3; transform: scale(1); }
+  40%            { opacity: 1;  transform: scale(1.2); }
+}
+
+/* suggestion chips */
+.sp-chat-suggestions {
+  padding: 0 20px 14px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sp-suggestion-btn {
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.sp-suggestion-btn:hover {
+  border-color: #a855f7;
+  color: #c084fc;
+  background: #0d0a14;
+}
+
+/* input row */
+.sp-chat-input-bar {
+  padding: 12px 16px;
+  border-top: 0.5px solid #1a1a1a;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.sp-chat-textarea {
+  flex: 1;
+  background: #0d0d0d;
+  border: 0.5px solid #222;
+  border-radius: 12px;
+  color: #e5e7eb;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  padding: 10px 14px;
+  outline: none;
+  resize: none;
+  max-height: 120px;
+  min-height: 42px;
+  overflow-y: auto;
+  transition: border-color .2s;
+  line-height: 1.5;
+}
+
+.sp-chat-textarea:focus       { border-color: #a855f7; }
+.sp-chat-textarea::placeholder { color: #4b5563; }
+
+.sp-chat-send {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  background: #a855f7;
+  border: none;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.sp-chat-send:hover    { background: #9333ea; }
+.sp-chat-send:disabled { background: #1a1a1a; cursor: not-allowed; }
+.sp-chat-send svg      { width: 16px; height: 16px; color: #fff; }
+
+
+/* ─────────────────────────────────────────────
+   Lightbox
+   ───────────────────────────────────────────── */
+#pose-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+#pose-lightbox.active {
+  display: flex;
+}
+
+#pose-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 0.5px solid #2a2a2a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+#pose-lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: #1a1a1a;
+  border: 0.5px solid #2a2a2a;
+  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+#pose-lightbox-close:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+#pose-lightbox-caption {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  border: 0.5px solid #1e1e1e;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #e5e7eb;
+  white-space: nowrap;
+}
+
+
+/* ─────────────────────────────────────────────
+   Responsive
+   ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .sp-card.wide           { grid-column: span 1; }
+  .sp-grid                { grid-template-columns: 1fr; }
+  .sp-topbar              { flex-direction: column; align-items: flex-start; }
+}

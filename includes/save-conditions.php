@@ -25,6 +25,8 @@ $fields = [
     'weather_clouds'     => 'd',
     'weather_rain_chance'=> 'd',
     'weather_score'      => 'd',
+    'color_harmony'      => 's', 
+    'director_tips'      => 's',
 ];
 
 $setClauses = [];
