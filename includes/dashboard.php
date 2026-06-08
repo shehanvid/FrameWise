@@ -212,10 +212,6 @@ unset($row);
                 Total Shoots
             </div>
             <div class="db-stat-value"><?= $total_shoots ?></div>
-            <div class="db-stat-change up">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                +<?= $this_month ?> this month
-            </div>
         </div>
 
         <div class="db-stat-card">
@@ -225,10 +221,6 @@ unset($row);
                 Completed
             </div>
             <div class="db-stat-value"><?= $completed ?></div>
-            <div class="db-stat-change up">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                <?= round(($completed / max($total_shoots, 1)) * 100) ?>% success rate
-            </div>
         </div>
 
         <!-- PENDING SHOOTS (replaces AI Plans Generated) -->
@@ -239,10 +231,6 @@ unset($row);
                 Pending Shoots
             </div>
             <div class="db-stat-value"><?= $pending ?></div>
-            <div class="db-stat-change <?= $pending > 0 ? 'ai' : 'up' ?>">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/></svg>
-                <?= $pending > 0 ? "$pending awaiting AI plan" : 'All plans generated' ?>
-            </div>
         </div>
 
         <div class="db-stat-card">
@@ -252,10 +240,6 @@ unset($row);
                 Avg. Shoot Score
             </div>
             <div class="db-stat-value"><?= $avg_score ?: '—' ?></div>
-            <div class="db-stat-change up">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="12" height="12"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-                Based on weather score
-            </div>
         </div>
 
     </div>

@@ -149,9 +149,8 @@ function activePref(string $field, string $value): string {
 
 .pref-radio-btn label {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
   padding: 12px 8px;
   background: #0d0d0d;
   border: 0.5px solid #222;
@@ -159,8 +158,6 @@ function activePref(string $field, string $value): string {
   color: #6b7280;
   font-size: 12px;
   font-weight: 400;
-  letter-spacing: 0;
-  text-transform: none;
   cursor: pointer;
   transition: all .2s;
   text-align: center;
@@ -202,9 +199,8 @@ function activePref(string $field, string $value): string {
 
 .pref-style-card label {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   padding: 10px 6px;
   background: #0d0d0d;
   border: 0.5px solid #222;
@@ -444,7 +440,7 @@ $equipment_db  = getEquipment($conn);
         <select name="camera_type">
           <?php foreach ($camera_types as $item): ?>
             <option value="<?= $item['value'] ?>" <?= oldPref('camera_type') === $item['value'] ? 'selected' : '' ?>>
-              <?= $item['emoji'] ?> <?= $item['label'] ?>
+              <?= $item['label'] ?>
             </option>
           <?php endforeach; ?>
         </select>
@@ -463,7 +459,6 @@ $equipment_db  = getEquipment($conn);
             <input type="radio" name="experience" id="exp-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
               <?= activePref('experience', $item['value']) ? 'checked' : '' ?>>
             <label for="exp-<?= $item['value'] ?>">
-              <span class="radio-icon"><?= $item['emoji'] ?></span>
               <?= $item['label'] ?>
             </label>
           </div>
@@ -478,7 +473,7 @@ $equipment_db  = getEquipment($conn);
         <select name="lighting_style">
           <?php foreach ($lighting_opts as $item): ?>
             <option value="<?= $item['value'] ?>" <?= oldPref('lighting_style') === $item['value'] ? 'selected' : '' ?>>
-              <?= $item['emoji'] ?> <?= $item['label'] ?>
+              <?= $item['label'] ?>
             </option>
           <?php endforeach; ?>
         </select>
@@ -500,7 +495,6 @@ $equipment_db  = getEquipment($conn);
             <input type="radio" name="output_style" id="style-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
               <?= $savedStyle === $item['value'] ? 'checked' : '' ?>>
             <label for="style-<?= $item['value'] ?>">
-              <span class="style-icon"><?= $item['emoji'] ?></span>
               <?= $item['label'] ?>
             </label>
           </div>
@@ -525,7 +519,7 @@ $equipment_db  = getEquipment($conn);
                   <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
                 </svg>
               </span>
-              <?= $item['emoji'] ?> <?= $item['label'] ?>
+              <?= $item['label'] ?>
             </label>
           </div>
         <?php endforeach; ?>
@@ -544,7 +538,7 @@ $equipment_db  = getEquipment($conn);
             <input type="radio" name="orientation" id="orient-<?= $item['value'] ?>" value="<?= $item['value'] ?>"
               <?= $savedOrientation === $item['value'] ? 'checked' : '' ?>>
             <label for="orient-<?= $item['value'] ?>">
-              <?= $item['emoji'] ?> <?= $item['label'] ?>
+              <?= $item['label'] ?>
             </label>
           </div>
         <?php endforeach; ?>
@@ -558,7 +552,7 @@ $equipment_db  = getEquipment($conn);
         <select name="platform">
           <?php foreach ($platforms as $item): ?>
             <option value="<?= $item['value'] ?>" <?= oldPref('platform') === $item['value'] ? 'selected' : '' ?>>
-              <?= $item['emoji'] ?> <?= $item['label'] ?>
+              <?= $item['label'] ?>
             </option>
           <?php endforeach; ?>
         </select>

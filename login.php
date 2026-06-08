@@ -20,13 +20,8 @@ if (isset($_SESSION["username"])) {
 <div class="login-wrap">
 
     <div class="login-brand">
-        <div class="login-brand-name">Frame<span class="login-brand-dot">W</span>ise</div>
+        <div class="login-brand-name">FrameWise</div>
         <div class="login-brand-sub">Photography Planning Studio</div>
-    </div>
-
-    <div class="login-badge">
-        <div class="login-badge-dot"></div>
-        Secure login
     </div>
 
     <div class="login-card">

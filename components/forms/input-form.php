@@ -170,12 +170,13 @@ function selected(string $field, string $value): string {
           $moods_data     = getMoods($conn);
           $savedMood = $_POST['mood'] ?? '';
           foreach ($moods_data as $m):
-            $val = $m['value'];
+              $val = $m['value'];
+              $bg  = htmlspecialchars($m['bg_gradient'] ?? 'linear-gradient(135deg,#1a1a1a,#2a2a2a)');
           ?>
           <div class="backdrop-tile <?= $savedMood === $val ? 'active' : '' ?>"
               data-mood="<?= $val ?>"
               onclick="selectMood(this)">
-            <div class="tile-bg bg-mood-<?= $m['value'] ?>">
+            <div class="tile-bg" style="background:<?= $bg ?>;">
               <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:22px;opacity:0.6;"><?= $m['emoji'] ?></div>
             </div>
             <div class="tile-label"><?= $m['label'] ?></div>
