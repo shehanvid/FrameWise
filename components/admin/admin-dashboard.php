@@ -139,7 +139,6 @@ $done_stats = $conn->query("
 ")->fetch_all(MYSQLI_ASSOC);
 ?>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>assets/css/dashboard-style.css">
 <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/admin-dashboard-style.css">
 
 <div class="db-main">

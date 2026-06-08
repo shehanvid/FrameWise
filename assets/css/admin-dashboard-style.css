@@ -361,6 +361,233 @@
 .flash-msg.ok  { border-color: #22c55e44; color: #22c55e; }
 .flash-msg.err { border-color: #ef444444; color: #ef4444; }
 
-@media (max-width: 1100px) { .options-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 900px)  { .mgmt-grid { grid-template-columns: 1fr; } }
-@media (max-width: 640px)  { .options-grid { grid-template-columns: 1fr; } }
+/* ─── Page layout ─────────────────────────────────────────── */
+
+.db-main {
+    padding: 24px 28px 60px;
+}
+
+.db-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.db-page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px;
+    letter-spacing: .04em;
+    color: #fff;
+    line-height: 1;
+}
+
+.db-page-sub {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+/* ─── Stat cards ──────────────────────────────────────────── */
+
+.db-stats-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.db-stat-card {
+    background: #111;
+    border: 0.5px solid #1e1e1e;
+    border-radius: 14px;
+    padding: 14px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+}
+.db-stat-card:hover { border-color: #2a2a2a; }
+
+.db-stat-accent {
+    position: absolute;
+    top: 0; right: 0;
+    width: 60px; height: 60px;
+    border-radius: 0 14px 0 60px;
+    opacity: .08;
+    pointer-events: none;
+}
+
+.db-stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.db-stat-label svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.db-stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    line-height: 1;
+    color: #fff;
+}
+
+/* ─── Generic card ────────────────────────────────────────── */
+
+.db-card {
+    background: #111;
+    border: 0.5px solid #1e1e1e;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color .2s;
+}
+.db-card:hover { border-color: #252525; }
+
+.db-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 0.5px solid #161616;
+}
+
+.db-card-head-left { display: flex; align-items: center; gap: 10px; }
+
+.db-card-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: transparent;
+}
+.db-card-icon svg { width: 16px; height: 16px; }
+
+.db-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #f0ede8;
+}
+
+.db-card-sub { font-size: 10px; color: #6b7280; margin-top: 2px; }
+
+.db-card-body { padding: 16px 18px; }
+
+/* ─── Analytics 4-column grid ─────────────────────────────── */
+
+.db-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+/* ─── Mood rows ───────────────────────────────────────────── */
+
+.db-mood-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 0.5px solid #111;
+}
+.db-mood-row:last-child { border-bottom: none; }
+
+.db-mood-swatch {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.db-mood-name { font-size: 12px; color: #e5e7eb; flex: 1; }
+.db-mood-count { font-size: 11px; color: #e5e7eb; }
+
+/* ─── Location rows ───────────────────────────────────────── */
+
+.db-location-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 0.5px solid #111;
+}
+.db-location-item:last-child { border-bottom: none; }
+
+.db-location-rank {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    color: #252525;
+    width: 24px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.db-location-name  { font-size: 12px; color: #e5e7eb; font-weight: 500; }
+.db-location-sub   { font-size: 10px; color: #6b7280; margin-top: 1px; }
+
+.db-location-badge {
+    font-size: 10px;
+    border: 1px solid #c084fc;
+    color: #c084fc;
+    border-radius: 5px;
+    padding: 3px 8px;
+    white-space: nowrap;
+}
+
+/* ─── Donut chart ─────────────────────────────────────────── */
+
+.db-donut-wrap {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding-top: 8px;
+}
+
+.db-donut-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.db-donut-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.db-donut-legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.db-donut-label { font-size: 11px; color: #e5e7eb; }
+.db-donut-pct   { font-size: 12px; font-weight: 600; margin-top: 1px; }
+
+/* ─── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+    .options-grid  { grid-template-columns: repeat(2, 1fr); }
+    .db-grid-4     { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .mgmt-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .db-main   { padding: 16px; }
+    .db-grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+    .options-grid { grid-template-columns: 1fr; }
+    .db-grid-4    { grid-template-columns: 1fr; }
+}
