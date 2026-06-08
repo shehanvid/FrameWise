@@ -83,10 +83,6 @@ function selected(string $field, string $value): string {
   <!-- ── Form ───────────────────────────────────────────────────────────── -->
   <div class="card">
     <div class="card-header">
-      <div class="header-badge">
-        <div class="dot"></div>
-        Studio AI
-      </div>
       <div class="adv-title">Photo Shoot<br>Planner</div>
       <p>Fill in the details to generate your personalised shoot plan</p>
       <div class="progress-bar">

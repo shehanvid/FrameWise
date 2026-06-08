@@ -65,18 +65,18 @@
                     <!-- Action buttons — full width row at bottom -->
                     <div style="display:flex;gap:6px;">
                         ${s.phone ? `
-                        <a href="tel:${s.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#0a1a10;border:0.5px solid #0f3d20;border-radius:8px;padding:7px 10px;font-size:11px;color:#22c55e;text-decoration:none;">
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="11" height="11">
+                        <a href="tel:${s.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #22c55e;border-radius:8px;padding:7px 10px;font-size:11px;color:#22c55e;text-decoration:none;">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="1.5" width="11" height="11">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 6.75z"/>
                             </svg>
                             Call
                         </a>` : `
-                        <span style="flex:1;display:flex;align-items:center;justify-content:center;background:#111;border:0.5px solid #222;border-radius:8px;padding:7px 10px;font-size:11px;color:#4b5563;">
+                        <span style="flex:1;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #374151;border-radius:8px;padding:7px 10px;font-size:11px;color:#4b5563;">
                             No phone
                         </span>`}
 
-                        <a href="${s.maps_url}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#0f1520;border:0.5px solid #1e3a5f;border-radius:8px;padding:7px 10px;font-size:11px;color:#60a5fa;text-decoration:none;">
-                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="11" height="11">
+                        <a href="${s.maps_url}" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #60a5fa;border-radius:8px;padding:7px 10px;font-size:11px;color:#60a5fa;text-decoration:none;">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="#60a5fa" stroke-width="1.5" width="11" height="11">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
                             </svg>
                             Open Maps

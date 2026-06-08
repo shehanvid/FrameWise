@@ -69,8 +69,8 @@ function stars(rating) {
 function openBadge(open) {
     if (open === null) return '';
     return open
-        ? '<span style="font-size:9px;background:#0a1a10;border:0.5px solid #22c55e44;color:#22c55e;border-radius:4px;padding:2px 6px;margin-left:6px;">Open</span>'
-        : '<span style="font-size:9px;background:#1a0a0a;border:0.5px solid #ef444444;color:#ef4444;border-radius:4px;padding:2px 6px;margin-left:6px;">Closed</span>';
+        ? '<span style="font-size:9px;background:transparent;border:1px solid #22c55e;color:#22c55e;border-radius:4px;padding:2px 6px;margin-left:6px;">Open</span>'
+        : '<span style="font-size:9px;background:transparent;border:1px solid #ef4444;color:#ef4444;border-radius:4px;padding:2px 6px;margin-left:6px;">Closed</span>';
 }
 
 // ── Lightbox ──────────────────────────────────

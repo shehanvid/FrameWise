@@ -422,10 +422,6 @@ $equipment_db  = getEquipment($conn);
 
   <!-- Header -->
   <div class="pref-header">
-    <div class="pref-badge">
-      <div class="pref-dot"></div>
-      AI Powered
-    </div>
     <h1>Advanced AI<br>Preferences</h1>
     <p>Help the AI personalize your shoot recommendations.</p>
   </div>

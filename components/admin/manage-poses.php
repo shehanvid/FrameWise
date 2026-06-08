@@ -306,14 +306,18 @@ body {
                 <?php foreach ($poses as $p):
                     $diff = strtolower($p['difficulty'] ?? 'easy');
                     $dmap = [
-                        'easy'   => ['bg'=>'#14532d22','color'=>'#4ade80','border'=>'#16653422'],
-                        'medium' => ['bg'=>'#713f1222','color'=>'#fbbf24','border'=>'#92400e22'],
-                        'hard'   => ['bg'=>'#7f1d1d22','color'=>'#f87171','border'=>'#991b1b22'],
+                        'easy'   => ['color' => '#4ade80'],
+                        'medium' => ['color' => '#fbbf24'],
+                        'hard'   => ['color' => '#f87171'],
                     ];
                     $dc = $dmap[$diff] ?? $dmap['easy'];
                     $tags = array_filter(explode(',', $p['tags'] ?? ''));
-                    $gmap = ['male'=>['#60a5fa','#0d1f3a'],'female'=>['#f472b6','#2a0d1f'],'unisex'=>['#a78bfa','#1a0d3a']];
-                    $gc = $gmap[strtolower($p['gender'] ?? '')] ?? ['#6b7280','#1a1a1a'];
+                    $gmap = [
+                        'male'   => '#60a5fa',
+                        'female' => '#f472b6',
+                        'unisex' => '#a78bfa',
+                    ];
+                    $gc = $gmap[strtolower($p['gender'] ?? '')] ?? '#6b7280';
                 ?>
                 <tr id="pose-row-<?= $p['id'] ?>">
                     <td>
@@ -337,12 +341,12 @@ body {
                     </td>
                     <td><span style="font-size:11px;color:#9ca3af;"><?= ucfirst(htmlspecialchars($p['category'] ?? '—')) ?></span></td>
                     <td>
-                        <span class="mp-badge" style="background:<?= $gc[1] ?>;color:<?= $gc[0] ?>;border-color:<?= $gc[0] ?>33;">
+                        <span class="mp-badge" style="background:transparent;color:<?= $gc ?>;border:1px solid <?= $gc ?>;">
                             <?= ucfirst(htmlspecialchars($p['gender'] ?? '—')) ?>
                         </span>
                     </td>
                     <td>
-                        <span class="mp-badge" style="background:<?= $dc['bg'] ?>;color:<?= $dc['color'] ?>;border-color:<?= $dc['border'] ?>;">
+                        <span class="mp-badge" style="background:transparent;color:<?= $dc['color'] ?>;border:1px solid <?= $dc['color'] ?>;">
                             <?= ucfirst($diff) ?>
                         </span>
                     </td>
@@ -589,13 +593,13 @@ function appendPoseRow(p) {
     if (!tbody) return;
     const diff = (p.difficulty || 'easy').toLowerCase();
     const dmap = {
-        easy:   { bg:'#14532d22', color:'#4ade80', border:'#16653422' },
-        medium: { bg:'#713f1222', color:'#fbbf24', border:'#92400e22' },
-        hard:   { bg:'#7f1d1d22', color:'#f87171', border:'#991b1b22' },
+        easy:   { color: '#4ade80' },
+        medium: { color: '#fbbf24' },
+        hard:   { color: '#f87171' },
     };
     const dc = dmap[diff] || dmap.easy;
-    const gmap = { male:['#60a5fa','#0d1f3a'], female:['#f472b6','#2a0d1f'], unisex:['#a78bfa','#1a0d3a'] };
-    const gc = gmap[(p.gender||'').toLowerCase()] || ['#6b7280','#1a1a1a'];
+    const gmap = { male: '#60a5fa', female: '#f472b6', unisex: '#a78bfa' };
+    const gc = gmap[(p.gender||'').toLowerCase()] || '#6b7280';
     const tags = (p.tags||'').split(',').filter(Boolean);
     const tagHtml = tags.slice(0,3).map(t=>`<span class="mp-tag">${escHtml(t.trim())}</span>`).join('')
         + (tags.length > 3 ? `<span class="mp-tag" style="color:#4b5563;">+${tags.length-3}</span>` : '');
@@ -609,8 +613,8 @@ function appendPoseRow(p) {
     tr.innerHTML = `
         <td><div style="display:flex;align-items:center;gap:10px;">${thumbHtml}<div><div class="mp-pose-name">${escHtml(p.name)}</div><div class="mp-pose-id">${escHtml(p.pose_id)}</div></div></div></td>
         <td><span style="font-size:11px;color:#9ca3af;">${escHtml(p.category||'—')}</span></td>
-        <td><span class="mp-badge" style="background:${gc[1]};color:${gc[0]};border-color:${gc[0]}33;">${escHtml(p.gender||'—')}</span></td>
-        <td><span class="mp-badge" style="background:${dc.bg};color:${dc.color};border-color:${dc.border};">${diff.charAt(0).toUpperCase()+diff.slice(1)}</span></td>
+        <td><span class="mp-badge" style="background:transparent;color:${gc};border:1px solid ${gc};">${escHtml(p.gender||'—')}</span></td>
+        <td><span class="mp-badge" style="background:transparent;color:${dc.color};border:1px solid ${dc.color};">${diff.charAt(0).toUpperCase()+diff.slice(1)}</span></td>
         <td><span style="font-size:11px;color:#9ca3af;">${escHtml(p.body_position||'—')}</span></td>
         <td><div class="mp-tags">${tagHtml}</div></td>
         <td style="font-size:10px;color:#4b5563;white-space:nowrap;">${today}</td>

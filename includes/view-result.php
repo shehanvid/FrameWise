@@ -85,10 +85,6 @@ include 'header.php';
             </svg>
             Back to planner
         </a>
-        <div class="sp-session-badge">
-            <div class="sp-dot"></div>
-            Shoot plan ready
-        </div>
     </div>
     <button class="sp-export-btn" onclick="window.print()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="13" height="13">
@@ -128,7 +124,7 @@ include 'header.php';
     <!-- WEATHER -->
     <div class="sp-card" id="weather-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#1a1209;border:0.5px solid #3a2d10;">
+            <div class="sp-card-icon" style="border: 1px solid #f59e0b;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
                 </svg>
@@ -136,11 +132,7 @@ include 'header.php';
             <div>
                 <div class="sp-card-title">Weather Conditions</div>
                 <div class="sp-card-sub" id="weather-sub">
-                    <?php if ($weather_saved): ?>
-                        Saved · <?= htmlspecialchars($plan['location']) ?>
-                    <?php else: ?>
-                        Fetching live data…
-                    <?php endif; ?>
+                    <?= htmlspecialchars($plan['location']) ?>
                 </div>
             </div>
         </div>
@@ -163,7 +155,7 @@ include 'header.php';
     <!-- SHOOT SCORE -->
     <div class="sp-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#0a1a10;border:0.5px solid #0f3d20;">
+            <div class="sp-card-icon" style="border: 1px solid #22c55e;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
@@ -208,7 +200,7 @@ include 'header.php';
     <!-- GOLDEN HOUR -->
     <div class="sp-card" id="golden-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#1e0f00;border:0.5px solid #4a2d00;">
+            <div class="sp-card-icon" style="border: 1px solid #fb923c;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#fb923c" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
                 </svg>
@@ -216,11 +208,7 @@ include 'header.php';
             <div>
                 <div class="sp-card-title">Golden &amp; Blue Hour</div>
                 <div class="sp-card-sub">
-                    <?php if ($conditions_saved): ?>
-                        Saved · shoot location
-                    <?php else: ?>
-                        SunCalc · shoot location
-                    <?php endif; ?>
+                    for the Shoot Location
                 </div>
             </div>
         </div>
@@ -280,7 +268,7 @@ include 'header.php';
     <!-- SUN DIRECTION -->
     <div class="sp-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#1a1209;border:0.5px solid #3a2d10;">
+            <div class="sp-card-icon" style="border: 1px solid #fbbf24;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#fbbf24" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
                 </svg>
@@ -334,7 +322,7 @@ include 'header.php';
     <!-- CAMERA SETTINGS -->
     <div class="sp-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#0f1520;border:0.5px solid #1e3a5f;">
+            <div class="sp-card-icon" style="border: 1px solid #60a5fa;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#60a5fa" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
@@ -353,7 +341,7 @@ include 'header.php';
     <!-- NEARBY SALONS -->
     <div class="sp-card" id="salons-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#0a1a10;border:0.5px solid #0f3d20;">
+            <div class="sp-card-icon" style="border: 1px solid #22c55e;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
                 </svg>
@@ -371,7 +359,7 @@ include 'header.php';
     <!-- POSE RECOMMENDATIONS -->
     <div class="sp-card wide">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#160d1a;border:0.5px solid #3d1f4a;">
+            <div class="sp-card-icon" style="border: 1px solid #a78bfa;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#a78bfa" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                 </svg>
@@ -406,7 +394,7 @@ include 'header.php';
     <!-- POSE CHECKLIST -->
     <div class="sp-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#160d1a;border:0.5px solid #3d1f4a;">
+            <div class="sp-card-icon" style="border: 1px solid #a78bfa;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#a78bfa" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
                 </svg>
@@ -439,7 +427,7 @@ include 'header.php';
     <!-- AI DIRECTOR TIPS -->
     <div class="sp-card">
         <div class="sp-card-header">
-            <div class="sp-card-icon" style="background:#1a1209;border:0.5px solid #3a2d10;">
+            <div class="sp-card-icon" style="border: 1px solid #f59e0b;">
                 <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
@@ -476,19 +464,14 @@ include 'header.php';
 <!-- CHATBOT -->
 <div class="sp-chatbot-wrap" style="margin-bottom:100px;">
     <div class="sp-chatbot-header">
-        <div class="sp-chatbot-header-icon">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <div class="sp-chatbot-header-icon" style="border: 1px solid #a855f7;">
+            <svg fill="none" viewBox="0 0 24 24" stroke="#a855f7" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/>
             </svg>
         </div>
         <div>
             <div class="sp-chatbot-header-title">AI Photography Director</div>
-            <div class="sp-chatbot-header-sub">Ask anything about your shoot — poses, lighting, camera, creative direction</div>
-        </div>
-        <div class="sp-chatbot-header-badge">
-            <div class="sp-dot" style="background:#a855f7;animation:spPulse 2s infinite;"></div>
-            Live
         </div>
     </div>
     <div class="sp-chat-messages" id="sp-chat-messages">
@@ -506,12 +489,6 @@ include 'header.php';
                 What do you want to explore?
             </div>
         </div>
-    </div>
-    <div class="sp-chat-suggestions" id="sp-suggestions">
-        <button class="sp-suggestion-btn" onclick="sendSuggestion(this)">Best poses for <?= htmlspecialchars($plan['shoot_type']) ?> shoot?</button>
-        <button class="sp-suggestion-btn" onclick="sendSuggestion(this)">How do I use the golden hour light?</button>
-        <button class="sp-suggestion-btn" onclick="sendSuggestion(this)">What lens should I use today?</button>
-        <button class="sp-suggestion-btn" onclick="sendSuggestion(this)">Color grading tips for <?= htmlspecialchars($plan['mood']) ?> mood?</button>
     </div>
     <div class="sp-chat-input-bar">
         <textarea id="sp-chat-input" class="sp-chat-textarea"

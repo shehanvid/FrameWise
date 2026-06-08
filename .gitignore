@@ -1,3 +1,2 @@
 # Environment variables - never commit these
 .env
-/assets/poses

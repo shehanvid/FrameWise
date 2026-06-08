@@ -228,7 +228,7 @@ foreach ($validPoseIds as $id) {
         'description' => $poseData[$id]['description'],
         'category'    => $poseData[$id]['category'],
         'tags'        => $poseData[$id]['tags'],
-        'image'       => "/FrameWise/assets/poses/{$gender}/" . $poseData[$id]['image_file']
+        'image'       => "/FrameWise/assets/poses/" . $poseData[$id]['image_file']
     ];
 }
 
@@ -246,7 +246,7 @@ if (count($selectedPoses) < 7) {
             'description' => $pose['description'],
             'category'    => $pose['category'],
             'tags'        => $pose['tags'],
-            'image'       => "/FrameWise/assets/poses/{$gender}/" . $pose['image_file']
+            'image'       => "/FrameWise/assets/poses/" . $pose['image_file']
         ];
     }
     error_log("Fallback poses: " . json_encode(array_column($selectedPoses, 'id')));
