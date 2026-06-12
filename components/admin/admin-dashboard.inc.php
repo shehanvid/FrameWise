@@ -44,7 +44,7 @@ if ($action === 'delete_user') {
         exit();
     }
 
-    // Check if target user is an admin
+
     $check = $conn->prepare("SELECT isAdmin FROM users WHERE usersId = ?");
     $check->bind_param("i", $id);
     $check->execute();
@@ -100,7 +100,7 @@ if ($action === 'add') {
         ];
         $color = $colors[array_rand($colors)];
 
-        // Generate matching bg_gradient from the same color
+
         $hex = ltrim($color, '#');
         $r = hexdec(substr($hex, 0, 2));
         $g = hexdec(substr($hex, 2, 2));

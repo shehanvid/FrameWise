@@ -18,19 +18,19 @@ if (!is_numeric($lat) || !is_numeric($lng)) {
     exit;
 }
 
-// Parse shoot date/time
+
 $targetDate = $datetime ? date('Y-m-d', strtotime($datetime)) : date('Y-m-d');
 $targetHour = $datetime ? (int)date('H', strtotime($datetime)) : (int)date('H');
 error_log('datetime: ' . ($_GET['datetime'] ?? 'MISSING'));
 
-// Check forecast range
+
 $daysAhead = (strtotime($targetDate) - strtotime('today')) / 86400;
 if ($daysAhead > 16) {
     echo json_encode(['error' => 'Forecast only available within 16 days']);
     exit;
 }
 
-// ── 1. Fetch hourly forecast from Open-Meteo ───────────────────────────────
+
 $weatherUrl = sprintf(
     'https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s'
     . '&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,'
@@ -67,9 +67,9 @@ if (!isset($weather['hourly'])) {
     exit;
 }
 
-// ── 2. Extract values for the shoot hour ──────────────────────────────────
+
 $hourly = $weather['hourly'];
-$idx    = $targetHour; // 0–23
+$idx    = $targetHour; 
 
 $wmoCode    = (int)($hourly['weather_code'][$idx]              ?? 0);
 $clouds     = (int)($hourly['cloud_cover'][$idx]               ?? 0);
@@ -78,7 +78,7 @@ $rainChance = (int)($hourly['precipitation_probability'][$idx] ?? 0);
 $humidity   = (int)($hourly['relative_humidity_2m'][$idx]      ?? 0);
 $temp       = (float)($hourly['temperature_2m'][$idx]          ?? 0);
 
-// ── 3. Reverse-geocode via Nominatim ──────────────────────────────────────
+
 $location   = 'Your location';
 $geocodeUrl = sprintf(
     'https://nominatim.openstreetmap.org/reverse?lat=%s&lon=%s&format=json&zoom=10',
@@ -105,7 +105,7 @@ if ($geoRaw) {
     if ($parts) $location = implode(', ', $parts);
 }
 
-// ── 4. WMO code → description ─────────────────────────────────────────────
+
 function decodeWMO(int $code): string {
     $map = [
         0=>'Clear sky', 1=>'Mainly clear', 2=>'Partly cloudy', 3=>'Overcast',
@@ -119,7 +119,7 @@ function decodeWMO(int $code): string {
     return $map[$code] ?? 'Unknown conditions';
 }
 
-// ── 5. Suitability hint ───────────────────────────────────────────────────
+
 function shootSuitability(int $wmoCode, int $clouds, float $wind, int $rainChance): string {
     if ($wmoCode >= 95)             return 'Avoid shooting — storm risk';
     if ($wmoCode >= 61)             return 'Poor — rain likely';
@@ -131,7 +131,7 @@ function shootSuitability(int $wmoCode, int $clouds, float $wind, int $rainChanc
     return 'Overcast — even, flat light';
 }
 
-// ── 6. Respond ────────────────────────────────────────────────────────────
+
 echo json_encode([
     'location'    => $location,
     'temp'        => $temp,

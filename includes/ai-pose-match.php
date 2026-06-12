@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require 'dbh.inc.php';
 error_log("DB connected OK");
 
-// Load .env
+
 $envPath = __DIR__ . '/../.env';
 if (file_exists($envPath)) {
     foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
@@ -214,7 +214,7 @@ error_log("Gemini parsed text: " . $rawText);
 $poseIds = json_decode($rawText, true) ?? [];
 error_log("Decoded pose IDs from Gemini: " . json_encode($poseIds));
 
-// Filter to only valid IDs
+
 $validPoseIds = array_filter($poseIds, fn($id) => in_array($id, $availableIds));
 error_log("Valid pose IDs after filter: " . json_encode(array_values($validPoseIds)));
 error_log("Invalid IDs rejected: " . json_encode(array_values(array_diff($poseIds, $availableIds))));
@@ -234,7 +234,7 @@ foreach ($validPoseIds as $id) {
 
 error_log("Selected poses after validation: " . count($selectedPoses));
 
-// Fallback
+
 if (count($selectedPoses) < 7) {
     error_log("WARNING: Not enough valid poses (" . count($selectedPoses) . ") — using fallback shuffle");
     shuffle($poses);

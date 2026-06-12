@@ -5,7 +5,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405); exit;
 }
 
-// Load .env
+
 $envPath = __DIR__ . '/../.env';
 if (file_exists($envPath)) {
     foreach (file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
@@ -27,7 +27,7 @@ if (!$lat || !$lng) {
     echo json_encode(['error' => 'Missing coordinates']); exit;
 }
 
-// ── 1. Check DB cache first ───────────────────────────────────────────────
+
 if ($result_id) {
     $stmt = $conn->prepare("SELECT nearby_salons FROM shoot_results WHERE id = ? AND user_id = ?");
     $uid  = $_SESSION['userid'] ?? 0;
@@ -44,7 +44,7 @@ if ($result_id) {
     }
 }
 
-// ── 2. No cache — hit Google Places API ──────────────────────────────────
+
 $apiKey = $_ENV['GOOGLE_PLACES_KEY'] ?? '';
 if (!$apiKey) {
     echo json_encode(['error' => 'Missing Google Places API key']); exit;
@@ -82,7 +82,7 @@ $result = json_decode($resp, true);
 error_log('[Salons] HTTP: ' . $httpCode . ' | Response: ' . $resp);
 
 if (empty($result['places'])) {
-    // Still save empty array so we don't hammer the API on every reload
+
     if ($result_id) {
         $empty = json_encode([]);
         $uid   = $_SESSION['userid'] ?? 0;
@@ -94,7 +94,7 @@ if (empty($result['places'])) {
     exit;
 }
 
-// ── 3. Build salon list ───────────────────────────────────────────────────
+
 $salons = [];
 
 foreach ($result['places'] as $place) {
@@ -124,7 +124,7 @@ foreach ($result['places'] as $place) {
 
 usort($salons, fn($a, $b) => $a['distance'] - $b['distance']);
 
-// ── 4. Save to DB ─────────────────────────────────────────────────────────
+
 if ($result_id) {
     $uid        = $_SESSION['userid'] ?? 0;
     $salons_json = json_encode($salons);

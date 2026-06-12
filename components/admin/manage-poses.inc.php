@@ -16,12 +16,10 @@ ob_end_clean();
 
 $action = $_POST['action'] ?? '';
 
-// ── Helper: generate slug-style pose_id from name ─────────────────────────
 function makePoseId(string $name, mysqli $conn): string {
     $base = strtolower(preg_replace('/[^a-z0-9]+/i', '-', trim($name)));
     $base = trim($base, '-');
 
-    // Ensure uniqueness
     $candidate = $base;
     $i = 2;
     while (true) {
@@ -35,9 +33,6 @@ function makePoseId(string $name, mysqli $conn): string {
     return $candidate;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// ADD POSE
-// ════════════════════════════════════════════════════════════════════════════
 if ($action === 'add_pose') {
 
     $name            = trim($_POST['name']                ?? '');
@@ -52,7 +47,6 @@ if ($action === 'add_pose') {
     $best_face       = trim($_POST['best_for_face_shapes']?? '');
     $tags            = trim($_POST['tags']                ?? '');
 
-    // Validate required fields
     if ($name === '') {
         echo json_encode(['success' => false, 'error' => 'Name is required']);
         exit();
@@ -71,13 +65,12 @@ if ($action === 'add_pose') {
         $difficulty = 'easy';
     }
 
-    // ── Image upload ───────────────────────────────────────────────────────
+    
     $image_file = '';
     if (!empty($_FILES['image']['name'])) {
         $file    = $_FILES['image'];
         $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
-        // Validate MIME type
         $finfo    = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
@@ -87,7 +80,7 @@ if ($action === 'add_pose') {
             exit();
         }
 
-        if ($file['size'] > 5 * 1024 * 1024) { // 5 MB limit
+        if ($file['size'] > 5 * 1024 * 1024) { 
             echo json_encode(['success' => false, 'error' => 'Image too large. Max 5 MB.']);
             exit();
         }
@@ -97,13 +90,11 @@ if ($action === 'add_pose') {
             mkdir($uploadDir, 0755, true);
         }
 
-        // Preserve original filename, sanitise it
         $originalName = pathinfo($file['name'], PATHINFO_FILENAME);
         $ext          = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $safeBase     = preg_replace('/[^a-z0-9\-_\s]/i', '', $originalName);
         $safeBase     = trim($safeBase);
 
-        // Avoid collisions
         $filename  = $safeBase . '.' . $ext;
         $destPath  = $uploadDir . $filename;
         $counter   = 1;
@@ -119,11 +110,9 @@ if ($action === 'add_pose') {
 
         $image_file = $filename;
     }
-
-    // ── Generate pose_id ───────────────────────────────────────────────────
+    
     $pose_id = makePoseId($name, $conn);
 
-    // ── Insert into DB ─────────────────────────────────────────────────────
     $stmt = $conn->prepare("
         INSERT INTO poses
             (pose_id, gender, name, description, category, body_position,
@@ -161,7 +150,6 @@ if ($action === 'add_pose') {
             ]
         ]);
     } else {
-        // Clean up uploaded file if DB insert failed
         if ($image_file && file_exists($uploadDir . $image_file)) {
             unlink($uploadDir . $image_file);
         }
@@ -170,9 +158,6 @@ if ($action === 'add_pose') {
     exit();
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// DELETE POSE
-// ════════════════════════════════════════════════════════════════════════════
 if ($action === 'delete_pose') {
     $id = (int)($_POST['id'] ?? 0);
 
@@ -181,7 +166,6 @@ if ($action === 'delete_pose') {
         exit();
     }
 
-    // Fetch image filename first so we can delete the file
     $check = $conn->prepare("SELECT image_file FROM poses WHERE id = ?");
     $check->bind_param("i", $id);
     $check->execute();
@@ -196,7 +180,6 @@ if ($action === 'delete_pose') {
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute() && $stmt->affected_rows > 0) {
-        // Remove image file from disk
         if (!empty($row['image_file'])) {
             $filePath = $_SERVER['DOCUMENT_ROOT'] . '/FrameWise/assets/poses/' . $row['image_file'];
             if (file_exists($filePath)) {

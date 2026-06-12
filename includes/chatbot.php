@@ -49,7 +49,7 @@ if (file_exists($envPath)) {
 
 $apiKey = $_ENV['GEMINI_API_KEY'] ?? '';
 
-// ── Predicted camera settings based on sun altitude & shoot context ───────────
+
 function predictCameraSettings(array $ctx): array {
     $sunAltitude  = (float)($ctx['sun_altitude_deg'] ?? -1);
     $shootType    = strtolower($ctx['shoot_type']    ?? 'portrait');
@@ -61,7 +61,7 @@ function predictCameraSettings(array $ctx): array {
     $orientation  = strtolower($ctx['orientation']   ?? 'portrait');
     $gender = strtolower($ctx['gender'] ?? 'female');
 
-    // ── Base settings by sun altitude ─────────────────────────────────────
+
     if ($sunAltitude < 0) {
         $aperture = 'f/2.0'; $shutter = '1/200s'; $iso = '800'; $wb = '3200K';
         $lightNote = 'Sun below horizon — use flash or continuous artificial light';
@@ -88,7 +88,7 @@ function predictCameraSettings(array $ctx): array {
         $lightQuality = 'overhead';
     }
 
-    // ── Focal length by shoot type ─────────────────────────────────────────
+
     $focalMap = [
         'portrait'  => '85mm',
         'fashion'   => '85mm',
@@ -102,22 +102,22 @@ function predictCameraSettings(array $ctx): array {
     ];
     $focal = $focalMap[$shootType] ?? '50mm';
 
-    // ── Aperture override by shoot type ───────────────────────────────────
+
     if ($shootType === 'landscape' || $shootType === 'product') {
         $aperture = ($lightQuality === 'overhead' || $lightQuality === 'high_sun') ? 'f/11' : 'f/8';
     }
     if ($shootType === 'street') {
-        $aperture = 'f/5.6'; // zone focus range
+        $aperture = 'f/5.6'; 
     }
 
-    // ── Mood nudges ───────────────────────────────────────────────────────
+
     if (in_array($mood, ['dramatic', 'moody'])) {
         $iso = (string)min(3200, (int)$iso * 2);
-        $wb  = (int)$wb > 4000 ? ((int)$wb - 500) . 'K' : $wb; // cooler WB
+        $wb  = (int)$wb > 4000 ? ((int)$wb - 500) . 'K' : $wb; 
     }
     if (in_array($mood, ['airy', 'natural'])) {
         $iso = (string)max(100, (int)$iso / 2);
-        $wb  = (int)$wb < 6000 ? ((int)$wb + 300) . 'K' : $wb; // warmer/neutral WB
+        $wb  = (int)$wb < 6000 ? ((int)$wb + 300) . 'K' : $wb; 
     }
     if ($mood === 'warm') {
         $wb = (int)$wb < 5500 ? ((int)$wb + 500) . 'K' : $wb;
@@ -126,7 +126,7 @@ function predictCameraSettings(array $ctx): array {
         $wb = (int)$wb > 4500 ? ((int)$wb - 500) . 'K' : $wb;
     }
 
-    // ── Lighting style nudges ─────────────────────────────────────────────
+
     if ($lightStyle === 'studio') {
         $iso = '100'; $wb = '5500K';
         $lightNote .= '. Studio lighting assumed — use sync speed ≤1/200s if using flash.';
@@ -140,10 +140,10 @@ function predictCameraSettings(array $ctx): array {
         $lightNote .= '. Butterfly: key light directly above camera axis, pointed down at 45°.';
     }
 
-    // ── Camera type adjustments ───────────────────────────────────────────
+
     if (str_contains($cameraType, 'phone') || str_contains($cameraType, 'mobile')) {
-        $iso     = (string)min(800, (int)$iso);   // phones struggle with high ISO
-        $shutter = '1/500s';                       // avoid motion blur on phone sensors
+        $iso     = (string)min(800, (int)$iso);   
+        $shutter = '1/500s';                       
         $focal   = '24–52mm eq. (native lens)';
     }
     if (str_contains($cameraType, 'mirrorless')) {
@@ -154,7 +154,7 @@ function predictCameraSettings(array $ctx): array {
         $lightNote .= '. Film: rate it 1 stop under box speed for richer shadows.';
     }
 
-    // ── Experience level adjustments ─────────────────────────────────────
+
     $experienceTips = '';
     if ($experience === 'beginner') {
         $experienceTips = 'Tip for beginners: shoot in Aperture Priority (Av/A) mode — set aperture and let the camera choose shutter. Use Auto-ISO with a max of ' . $iso . '.';
@@ -164,7 +164,7 @@ function predictCameraSettings(array $ctx): array {
         $experienceTips = 'Full Manual recommended. Use spot metering on the catchlights, bracket ±1 stop.';
     }
 
-    // ── Platform / output style ───────────────────────────────────────────
+
     $platformNote = '';
     if (str_contains($platform, 'instagram')) {
         $platformNote = 'Instagram: shoot 4:5 ratio (portrait) or 1:1 (square). Leave breathing room on sides for Stories crop.';
@@ -176,7 +176,7 @@ function predictCameraSettings(array $ctx): array {
         $platformNote = 'TikTok: shoot 9:16 vertical. Keep the subject in the upper-center third.';
     }
 
-    // ── Orientation notes ─────────────────────────────────────────────────
+
     $orientationNote = '';
     if ($orientation === 'landscape') {
         $orientationNote = 'Landscape/horizontal framing: use the lower third for subject placement to emphasise environment.';
@@ -198,7 +198,7 @@ function predictCameraSettings(array $ctx): array {
     ];
 }
 
-// ── Build body analysis section ───────────────────────────────────────────
+
 $bodyAnalysisSection = '';
 $bodyAnalysis = $context['body_analysis'] ?? null;
 if (is_string($bodyAnalysis)) $bodyAnalysis = json_decode($bodyAnalysis, true);
@@ -223,7 +223,7 @@ MODEL PHYSICAL ANALYSIS (MediaPipe):
 - Pose coaching hints: {$poseHints}";
 }
 
-// ── Build equipment list ──────────────────────────────────────────────────
+
 $equipmentList = '';
 if (!empty($context['equipment']) && is_array($context['equipment'])) {
     $equipmentList = implode(', ', $context['equipment']);
@@ -231,10 +231,10 @@ if (!empty($context['equipment']) && is_array($context['equipment'])) {
     $equipmentList = $context['equipment'];
 }
 
-// ── Predict camera settings ───────────────────────────────────────────────
+
 $cam = predictCameraSettings($context);
 
-// ── Assemble full system prompt ───────────────────────────────────────────
+
 $systemPrompt = "You are an elite photography director and cinematographer with 20+ years of experience 
 across fashion, portrait, wedding, street, and commercial photography.
 
@@ -306,7 +306,7 @@ RESPONSE STYLE:
 - Under 400 words unless a full breakdown is explicitly requested
 - Always tie advice back to THIS specific shoot context (location, mood, model analysis, platform)";
 
-// ── Convert chat history to Gemini format ─────────────────────────────────
+
 $geminiContents = [];
 
 $geminiContents[] = [
@@ -331,7 +331,7 @@ foreach ($messages as $msg) {
     ];
 }
 
-// ── Call Gemini API ───────────────────────────────────────────────────────
+
 $payload = json_encode([
     'contents'         => $geminiContents,
     'generationConfig' => [
@@ -383,7 +383,7 @@ $reply   = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? null;
 
 if (!$reply) {
     $finishReason = $decoded['candidates'][0]['finishReason'] ?? 'UNKNOWN';
-    // Temporary debug — remove after fixing
+
     echo json_encode([
         'error' => "No response generated. Reason: $finishReason",
         'debug_raw' => $decoded

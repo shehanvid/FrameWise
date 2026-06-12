@@ -191,7 +191,6 @@ body::before {
     height: 15px;
 }
 
-/* Password strength */
 .pwd-strength {
     display: flex;
     align-items: center;
@@ -317,6 +316,109 @@ body::before {
     border: 0.5px solid #0f3d20;
     color: #4ade80;
 }
+
+.btn-send-otp {
+    position: absolute;
+    right: 8px;
+    height: 28px;
+    padding: 0 10px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s, opacity .2s;
+}
+
+.btn-send-otp:hover { background: #2563eb; }
+.btn-send-otp:disabled { opacity: .45; cursor: not-allowed; }
+.btn-send-otp.verified { background: #16a34a; color: #fff; }
+
+#email { padding-right: 110px !important; }
+
+.field-otp {
+    display: none;
+    margin-bottom: 14px;
+}
+
+.field-otp.visible { display: block; }
+
+.btn-confirm-otp {
+    position: absolute;
+    right: 8px;
+    height: 28px;
+    padding: 0 10px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: #0a0a0a;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .2s, opacity .2s;
+}
+
+.btn-confirm-otp:hover { background: #2563eb; }
+.btn-confirm-otp:disabled { opacity: .45; cursor: not-allowed; }
+
+#otpInput {
+    padding-right: 90px !important;
+    letter-spacing: 4px;
+    font-size: 15px !important;
+}
+
+.otp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+}
+
+.otp-status {
+    font-size: 11px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.otp-status.ok   { color: #22c55e; }
+.otp-status.fail { color: #ef4444; }
+
+.resend-link {
+    font-size: 11px;
+    color: #3b82f6;
+    cursor: pointer;
+    text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: 'DM Sans', sans-serif;
+    transition: color .2s;
+}
+
+.resend-link:hover    { color: #60a5fa; }
+.resend-link:disabled { opacity: .4; cursor: not-allowed; text-decoration: none; }
+
+.email-verified-badge {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #22c55e;
+    letter-spacing: .04em;
+}
+
+.email-verified-badge.show { display: flex; }
+.email-verified-badge svg  { width: 13px; height: 13px; flex-shrink: 0; }
 
 @media (max-width: 480px) {
     .login-card {

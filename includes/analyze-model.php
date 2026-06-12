@@ -1,39 +1,4 @@
 <?php
-/**
- * analyze-model.php  (MediaPipe version)
- *
- * MediaPipe now runs entirely in the browser (WASM).
- * This endpoint receives the already-extracted landmark metrics
- * from the client and returns derived pose hints + structured attributes,
- * so the rest of the app (shoot-results.php, AI chatbot) still gets
- * the same JSON shape it always expected.
- *
- * POST body (JSON):
- * {
- *   "face_shape"        : "oval" | "round" | "square" | "heart" | "diamond" | "oblong",
- *   "face_symmetry"     : "high" | "medium" | "natural",
- *   "jawline"           : "sharp" | "soft" | "round",
- *   "forehead"          : "wide" | "medium" | "narrow",
- *   "shoulder_width"    : "narrow" | "medium" | "broad",
- *   "waist_definition"  : "defined" | "moderate" | "minimal",
- *   "hip_ratio"         : "narrow" | "balanced" | "wide",
- *   "body_type"         : "hourglass" | "pear" | "apple" | "rectangle" | "inverted_triangle" | "athletic",
- *   "leg_proportion"    : "short" | "average" | "long",
- *   "neck_length"       : "short" | "medium" | "long",
- *   "posture"           : "upright" | "slightly_forward" | "relaxed",
- *   "overall_presence"  : "petite" | "balanced" | "commanding" | "statuesque",
- *   "recommended_angles": [...],
- *   "avoid_angles"      : [...],
- *   "confidence"        : "high" | "medium" | "low",
- *   // optionally passed through as-is:
- *   "estimated_height"  : "petite" | "average" | "tall",
- *   "arm_length"        : "short" | "average" | "long",
- *   "skin_tone"         : "fair"|"light"|"medium"|"tan"|"deep",
- *   "hair_length"       : string,
- *   "hair_texture"      : string
- * }
- */
-
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -56,14 +21,14 @@ if (!$data || !isset($data['body_type'])) {
     exit;
 }
 
-// ── Derive pose hints ─────────────────────────────────────────────────────
+
 $data['pose_hints'] = derivePoseHints($data);
 
-// ── Echo enriched JSON back ───────────────────────────────────────────────
+
 echo json_encode($data);
 
 
-// ─────────────────────────────────────────────────────────────────────────
+
 function derivePoseHints(array $a): array
 {
     $hints = [];

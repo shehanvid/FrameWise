@@ -50,12 +50,12 @@ if (isset($_SESSION["username"])) {
                     </svg>
                     Something went wrong. Please try again.
                 </div>
-            <?php elseif ($_GET["error"] === "none"): ?>
+            <?php elseif ($_GET["error"] === "pwdreset"): ?>
                 <div class="login-alert success">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
-                    Account created — you can now log in.
+                    Password updated, you can now sign in.
                 </div>
             <?php endif; ?>
         <?php endif; ?>
@@ -89,6 +89,10 @@ if (isset($_SESSION["username"])) {
                         </svg>
                     </button>
                 </div>
+            </div>
+
+            <div style="text-align:right; margin-top:-8px; margin-bottom:14px;">
+                <a href="includes/forgot-password.php" style="font-size:12px; color:#3b82f6; text-decoration:none;">Forgot password?</a>
             </div>
 
             <button type="submit" name="submit" class="login-btn">

@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require 'dbh.inc.php';
 
-// ── Process form data ──────────────────────────────────────────────────────
+
 $location     = trim($_POST['location']     ?? '');
 $location_lat = trim($_POST['location_lat'] ?? '');
 $location_lng = trim($_POST['location_lng'] ?? '');
