@@ -1,18 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@700&display=swap');
 
-/* ─────────────────────────────────────────────
-   Reset & base
-   ───────────────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-
-/* ─────────────────────────────────────────────
-   Top bar
-   ───────────────────────────────────────────── */
 .sp-topbar {
   display: flex;
   align-items: center;
@@ -96,10 +89,6 @@
   background: #2563eb;
 }
 
-
-/* ─────────────────────────────────────────────
-   Meta strip
-   ───────────────────────────────────────────── */
 .sp-meta-strip {
   display: flex;
   gap: 10px;
@@ -124,10 +113,6 @@
   font-weight: 500;
 }
 
-
-/* ─────────────────────────────────────────────
-   Card grid
-   ───────────────────────────────────────────── */
 .sp-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -190,10 +175,6 @@
   padding: 14px 16px;
 }
 
-
-/* ─────────────────────────────────────────────
-   Weather card
-   ───────────────────────────────────────────── */
 .sp-weather-big {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 52px;
@@ -235,10 +216,6 @@
   color: #e5e7eb;
 }
 
-
-/* ─────────────────────────────────────────────
-   Shoot score card
-   ───────────────────────────────────────────── */
 .sp-score-wrap {
   display: flex;
   align-items: center;
@@ -311,10 +288,6 @@
   flex-shrink: 0;
 }
 
-
-/* ─────────────────────────────────────────────
-   Golden / blue hour card
-   ───────────────────────────────────────────── */
 .sp-hour-row {
   display: flex;
   align-items: center;
@@ -354,7 +327,7 @@
   margin-left: 8px;
 }
 
-/* timeline under golden hour */
+
 .sp-tl-track {
   height: 4px;
   background: #1a1a1a;
@@ -380,11 +353,6 @@
   font-size: 10px;
   color: #6b7280;
 }
-
-
-/* ─────────────────────────────────────────────
-   Sun / compass card
-   ───────────────────────────────────────────── */
 .sp-compass {
   display: flex;
   justify-content: center;
@@ -448,10 +416,6 @@
 .sp-sun-stat-val    { font-size: 13px; color: #f59e0b; font-weight: 500; }
 .sp-shadow-stat-val { font-size: 13px; color: #60a5fa; font-weight: 500; }
 
-
-/* ─────────────────────────────────────────────
-   Camera settings card
-   ───────────────────────────────────────────── */
 .sp-cam-setting {
   display: flex;
   align-items: center;
@@ -490,10 +454,6 @@
   margin-left: 6px;
 }
 
-
-/* ─────────────────────────────────────────────
-   Pose cards (horizontal scroll strip)
-   ───────────────────────────────────────────── */
 .sp-pose-card {
   background: #0d0d0d;
   border: 0.5px solid #1a1a1a;
@@ -537,7 +497,7 @@
   margin-top: 5px;
 }
 
-/* scrollbar inside pose strip */
+
 #pose-body::-webkit-scrollbar         { height: 4px; }
 #pose-body::-webkit-scrollbar-track   { background: #0d0d0d; border-radius: 2px; }
 #pose-body::-webkit-scrollbar-thumb   { background: #2a2a2a; border-radius: 2px; }
@@ -550,10 +510,6 @@
   scroll-snap-align: start;
 }
 
-
-/* ─────────────────────────────────────────────
-   Shot / pose checklist
-   ───────────────────────────────────────────── */
 .sp-shot-item {
   display: flex;
   align-items: center;
@@ -609,10 +565,6 @@
   text-decoration: line-through;
 }
 
-
-/* ─────────────────────────────────────────────
-   Director tips card
-   ───────────────────────────────────────────── */
 .sp-tip {
   display: flex;
   gap: 10px;
@@ -655,10 +607,6 @@
   line-height: 1.45;
 }
 
-
-/* ─────────────────────────────────────────────
-   Chatbot
-   ───────────────────────────────────────────── */
 .sp-chatbot-wrap {
   margin-top: 24px;
   background: #111;
@@ -720,7 +668,7 @@
   text-transform: uppercase;
 }
 
-/* message list */
+
 .sp-chat-messages {
   padding: 16px 20px;
   min-height: 260px;
@@ -736,7 +684,7 @@
 .sp-chat-messages::-webkit-scrollbar-track { background: transparent; }
 .sp-chat-messages::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
 
-/* individual messages */
+
 .sp-msg {
   display: flex;
   gap: 8px;
@@ -773,7 +721,7 @@
 .sp-msg.ai   .sp-msg-bubble { background: #0d0d0d; border: 0.5px solid #1a1a1a; color: #d1d5db; border-top-left-radius: 4px; }
 .sp-msg.user .sp-msg-bubble { background: #0f1520; border: 0.5px solid #1e3a5f; color: #bfdbfe; border-top-right-radius: 4px; }
 
-/* typing dots */
+
 .sp-typing {
   display: flex;
   gap: 4px;
@@ -797,7 +745,7 @@
   40%            { opacity: 1;  transform: scale(1.2); }
 }
 
-/* suggestion chips */
+
 .sp-chat-suggestions {
   padding: 0 20px 14px;
   display: flex;
@@ -823,7 +771,7 @@
   background: #0d0a14;
 }
 
-/* input row */
+
 .sp-chat-input-bar {
   padding: 12px 16px;
   border-top: 0.5px solid #1a1a1a;
@@ -871,11 +819,6 @@
 .sp-chat-send:hover    { background: #9333ea; }
 .sp-chat-send:disabled { background: #1a1a1a; cursor: not-allowed; }
 .sp-chat-send svg      { width: 16px; height: 16px; color: #fff; }
-
-
-/* ─────────────────────────────────────────────
-   Lightbox
-   ───────────────────────────────────────────── */
 #pose-lightbox {
   display: none;
   position: fixed;
@@ -937,10 +880,6 @@
   white-space: nowrap;
 }
 
-
-/* ─────────────────────────────────────────────
-   Responsive
-   ───────────────────────────────────────────── */
 @media (max-width: 640px) {
   .sp-card.wide           { grid-column: span 1; }
   .sp-grid                { grid-template-columns: 1fr; }

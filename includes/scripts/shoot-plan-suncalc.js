@@ -1,18 +1,4 @@
-// ─────────────────────────────────────────────
-//  shoot-plan-suncalc.js
-//  Calculates sun position, golden/blue hour,
-//  camera settings, and shoot score.
-//  Runs once on page load — pure client-side,
-//  no API calls needed.
-//
-//  Depends on:
-//    - SunCalc  (loaded before this file)
-//    - shoot-plan-utils.js  (degToCard, altitudeDesc)
-//    - SHOOT_CONTEXT, RESULT_ID, CONDITIONS_SAVED  (inline PHP vars)
-// ─────────────────────────────────────────────
-
 (function initSunCalc() {
-
     const lat       = parseFloat(SHOOT_CONTEXT.lat  || '6.9271');
     const lng       = parseFloat(SHOOT_CONTEXT.lng  || '79.8612');
     const dt        = new Date(SHOOT_CONTEXT.raw_datetime);
@@ -21,7 +7,6 @@
 
     if (isNaN(lat) || isNaN(lng)) return;
 
-    // ── Sun position ────────────────────────────────────────────────────
     const pos         = SunCalc.getPosition(dt, lat, lng);
     const azimuthDeg  = (pos.azimuth * 180 / Math.PI + 180) % 360;
     const altitudeDeg = pos.altitude * 180 / Math.PI;
@@ -30,7 +15,7 @@
         ? (1 / Math.tan(pos.altitude)).toFixed(1) + '× height'
         : 'No shadow';
 
-    // Update compass & stat labels
+
     document.getElementById('sun-azimuth').textContent  = degToCard(azimuthDeg);
     document.getElementById('sun-altitude').textContent = altitudeDesc(altitudeDeg);
     document.getElementById('shadow-dir').textContent   = degToCard(shadowDeg);
@@ -42,7 +27,7 @@
     document.getElementById('sun-arrow').style.transform    = `rotate(${azimuthDeg}deg)`;
     document.getElementById('shadow-arrow').style.transform = `rotate(${shadowDeg}deg)`;
 
-    // ── Lighting score (sun altitude → quality) ─────────────────────────
+
     const sunScore = altitudeDeg < 0  ? 10
                    : altitudeDeg < 6  ? 72
                    : altitudeDeg < 15 ? 98
@@ -53,7 +38,7 @@
     document.getElementById('lighting-score-bar').style.width = sunScore + '%';
     document.getElementById('lighting-score-val').textContent  = sunScore;
 
-    // ── Gear / preference score ──────────────────────────────────────────
+
     const equipment  = SHOOT_CONTEXT.equipment  || [];
     const experience = SHOOT_CONTEXT.experience || '';
     const lighting   = SHOOT_CONTEXT.lighting_style || '';
@@ -92,7 +77,7 @@
     document.getElementById('sun-score-bar').style.width = prefScore + '%';
     document.getElementById('sun-score-val').textContent  = prefScore;
 
-    // ── Overall shoot score ──────────────────────────────────────────────
+
     const wsVal   = parseInt(document.getElementById('weather-score-val').textContent) || 80;
     const overall = Math.min(100, Math.round(
         sunScore  * 0.30 +
@@ -109,7 +94,7 @@
     ring.setAttribute('stroke-dashoffset', circ - (circ * overall / 100));
     ring.setAttribute('stroke', ringColor);
 
-    // ── Golden / blue hour ───────────────────────────────────────────────
+
     const times       = SunCalc.getTimes(dt, lat, lng);
     const fmt         = t => t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const now         = dt.getTime();
@@ -159,7 +144,7 @@
         `;
     }
 
-    // ── Camera settings (always rendered from live sun altitude) ─────────
+
     let aperture, shutter, iso, focal, wb, apertureBadge, isoBadge, lightNote, lightQuality;
 
     if      (altitudeDeg < 0)  { aperture='f/2.0'; shutter='1/200s';  iso='800';  apertureBadge='Low light';   isoBadge='Boosted';    wb='3200K'; lightQuality='#6b7280'; lightNote='Sun below horizon — use flash or continuous artificial light'; }
@@ -209,7 +194,7 @@
         ${camRow('◑', 'White balance', wb,      '')}
     `;
 
-    // ── Persist to DB (first visit only) ─────────────────────────────────
+
     if (!CONDITIONS_SAVED) {
         fetch('save-conditions.php', {
             method:  'POST',

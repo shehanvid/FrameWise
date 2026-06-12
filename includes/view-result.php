@@ -14,7 +14,7 @@ if (!$id) {
     exit();
 }
 
-// ── Fetch shoot result ─────────────────────────────────────────────────────
+
 $stmt = $conn->prepare("SELECT * FROM shoot_results WHERE id = ? AND user_id = ?");
 $uid  = $_SESSION['userid'];
 $stmt->bind_param("ii", $id, $uid);
@@ -26,7 +26,7 @@ if (!$row) {
     exit();
 }
 
-// ── Parse stored data ──────────────────────────────────────────────────────
+
 $dt_obj        = new DateTime($row['shoot_datetime']);
 $date_display  = $dt_obj->format('l, F j Y \a\t g:i A');
 $gender        = $row['gender'] ?? 'female';
@@ -34,7 +34,7 @@ $body_analysis = $row['body_analysis'] ? json_decode($row['body_analysis'], true
 $equipment     = $row['equipment']     ? json_decode($row['equipment'],     true) : [];
 $ai_plan       = $row['ai_plan']       ? json_decode($row['ai_plan'],       true) : [];
 
-// ── Shot list helper ───────────────────────────────────────────────────────
+
 function getShotListLocal(string $shoot_type): array {
     $lists = [
         'portrait'  => ['Wide establishing shot','Medium 3/4 body','Close-up face','Eye-level gaze','Over-shoulder look','Environmental context','Candid laugh','Detail — hands/accessories'],
@@ -50,7 +50,7 @@ function getShotListLocal(string $shoot_type): array {
 
 $shot_list = getShotListLocal($row['shoot_type']);
 
-// ── Flags — did we already save these to DB? ───────────────────────────────
+
 $conditions_saved = !is_null($row['sun_altitude']);
 $weather_saved    = !is_null($row['weather_temp']);
 $poses_saved      = !empty($ai_plan);
@@ -58,7 +58,7 @@ $tips_saved       = !is_null($row['director_tips']);
 
 $director_tips    = $tips_saved ? json_decode($row['director_tips'], true) : null;
 
-// Convenience display values used in the HTML below
+
 $plan = [
     'location'   => $row['location'],
     'datetime'   => $date_display,
@@ -76,7 +76,7 @@ include 'header.php';
 <div class="w-full flex justify-center px-4 pt-20 pb-10">
 <div class="w-full max-w-screen-xl mx-auto">
 
-<!-- TOP BAR -->
+
 <div class="sp-topbar">
     <div class="sp-topbar-left">
         <a href="../index.php" class="sp-back-btn">
@@ -94,7 +94,7 @@ include 'header.php';
     </button>
 </div>
 
-<!-- META STRIP -->
+
 <div class="sp-meta-strip">
     <div class="sp-meta-pill">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="12" height="12">
@@ -118,10 +118,10 @@ include 'header.php';
     </div>
 </div>
 
-<!-- CARD GRID -->
+
 <div class="sp-grid" id="sp-grid">
 
-    <!-- WEATHER -->
+    
     <div class="sp-card" id="weather-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #f59e0b;">
@@ -152,7 +152,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- SHOOT SCORE -->
+    
     <div class="sp-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #22c55e;">
@@ -197,7 +197,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- GOLDEN HOUR -->
+    
     <div class="sp-card" id="golden-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #fb923c;">
@@ -265,7 +265,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- SUN DIRECTION -->
+    
     <div class="sp-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #fbbf24;">
@@ -319,7 +319,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- CAMERA SETTINGS -->
+    
     <div class="sp-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #60a5fa;">
@@ -338,7 +338,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- NEARBY SALONS -->
+    
     <div class="sp-card" id="salons-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #22c55e;">
@@ -356,7 +356,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- POSE RECOMMENDATIONS -->
+    
     <div class="sp-card wide">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #a78bfa;">
@@ -391,7 +391,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- POSE CHECKLIST -->
+    
     <div class="sp-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #a78bfa;">
@@ -424,7 +424,7 @@ include 'header.php';
         </div>
     </div>
 
-    <!-- AI DIRECTOR TIPS -->
+    
     <div class="sp-card">
         <div class="sp-card-header">
             <div class="sp-card-icon" style="border: 1px solid #f59e0b;">
@@ -459,9 +459,9 @@ include 'header.php';
         </div>
     </div>
 
-</div><!-- /sp-grid -->
+</div>
 
-<!-- CHATBOT -->
+
 <div class="sp-chatbot-wrap" style="margin-bottom:100px;">
     <div class="sp-chatbot-header">
         <div class="sp-chatbot-header-icon" style="border: 1px solid #a855f7;">
@@ -504,7 +504,7 @@ include 'header.php';
     </div>
 </div>
 
-<!-- LIGHTBOX -->
+
 <div id="pose-lightbox" onclick="closeLightbox(event)">
     <div id="pose-lightbox-close" onclick="document.getElementById('pose-lightbox').classList.remove('active')">✕</div>
     <img id="pose-lightbox-img" src="" alt="">
@@ -514,13 +514,13 @@ include 'header.php';
 </div>
 </div>
 
-<!-- ── External libs ──────────────────────────────────────────────────── -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
 
-<!-- ── PHP → JS bridge (must come before the module scripts) ─────────── -->
+
 <script>
-// Page-level flags
+
 const RESULT_ID        = <?= $id ?>;
 const CONDITIONS_SAVED = <?= $conditions_saved ? 'true' : 'false' ?>;
 const WEATHER_SAVED    = <?= $weather_saved    ? 'true' : 'false' ?>;
@@ -529,7 +529,7 @@ const TIPS_SAVED       = <?= $tips_saved       ? 'true' : 'false' ?>;
 const SAVED_TIPS       = <?= json_encode($director_tips) ?>;
 const USER_INITIAL     = <?= json_encode(strtoupper(substr($_SESSION['username'] ?? 'U', 0, 1))) ?>;
 
-// Full shoot context — read by all modules
+
 const SHOOT_CONTEXT = {
     location:       <?= json_encode($row['location']) ?>,
     lat:            <?= json_encode($row['location_lat']) ?>,
@@ -552,7 +552,7 @@ const SHOOT_CONTEXT = {
 };
 </script>
 
-<!-- ── App modules (order matters) ───────────────────────────────────── -->
+
 <script src="scripts/shoot-plan.js"></script>
 <script src="scripts/shoot-plan-suncalc.js"></script>
 <script src="scripts/shoot-plan-weather.js"></script>

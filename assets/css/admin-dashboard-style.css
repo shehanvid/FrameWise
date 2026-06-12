@@ -361,7 +361,7 @@
 .flash-msg.ok  { border-color: #22c55e44; color: #22c55e; }
 .flash-msg.err { border-color: #ef444444; color: #ef4444; }
 
-/* ─── Page layout ─────────────────────────────────────────── */
+
 
 .db-main {
     padding: 24px 28px 60px;
@@ -390,7 +390,7 @@
     margin-top: 4px;
 }
 
-/* ─── Stat cards ──────────────────────────────────────────── */
+
 
 .db-stats-grid {
     display: grid;
@@ -436,7 +436,7 @@
     color: #fff;
 }
 
-/* ─── Generic card ────────────────────────────────────────── */
+
 
 .db-card {
     background: #111;
@@ -479,7 +479,7 @@
 
 .db-card-body { padding: 16px 18px; }
 
-/* ─── Analytics 4-column grid ─────────────────────────────── */
+
 
 .db-grid-4 {
     display: grid;
@@ -488,7 +488,7 @@
     margin-bottom: 20px;
 }
 
-/* ─── Mood rows ───────────────────────────────────────────── */
+
 
 .db-mood-row {
     display: flex;
@@ -508,7 +508,7 @@
 .db-mood-name { font-size: 12px; color: #e5e7eb; flex: 1; }
 .db-mood-count { font-size: 11px; color: #e5e7eb; }
 
-/* ─── Location rows ───────────────────────────────────────── */
+
 
 .db-location-item {
     display: flex;
@@ -540,7 +540,7 @@
     white-space: nowrap;
 }
 
-/* ─── Donut chart ─────────────────────────────────────────── */
+
 
 .db-donut-wrap {
     display: flex;
@@ -571,7 +571,7 @@
 .db-donut-label { font-size: 11px; color: #e5e7eb; }
 .db-donut-pct   { font-size: 12px; font-weight: 600; margin-top: 1px; }
 
-/* ─── Responsive ──────────────────────────────────────────── */
+
 
 @media (max-width: 1100px) {
     .options-grid  { grid-template-columns: repeat(2, 1fr); }

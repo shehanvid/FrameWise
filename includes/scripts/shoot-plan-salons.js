@@ -36,7 +36,7 @@
             return;
         }
 
-        // ── Limit to 3 ──────────────────────────────────────────────────
+
         const salons = data.salons.slice(0, 3);
         document.getElementById('salons-sub').textContent = salons.length + ' found · within 3 km';
 
@@ -45,24 +45,24 @@
             return `
                 <div style="padding:10px 0;border-bottom:${isLast ? 'none' : '0.5px solid #161616'};">
 
-                    <!-- Name + badge -->
+                    
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
                         <span style="font-size:13px;color:#e5e7eb;font-weight:500;">${s.name.replace(/</g, '&lt;')}</span>
                         ${openBadge(s.open)}
                     </div>
 
-                    <!-- Address -->
+                    
                     <div style="font-size:11px;color:#6b7280;margin-bottom:4px;line-height:1.4;">
                         ${s.address.replace(/</g, '&lt;')}
                     </div>
 
-                    <!-- Stars + distance -->
+                    
                     <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
                         ${stars(s.rating)}
                         <span style="font-size:10px;color:#4b5563;">· ${distLabel(s.distance)} away</span>
                     </div>
 
-                    <!-- Action buttons — full width row at bottom -->
+                    
                     <div style="display:flex;gap:6px;">
                         ${s.phone ? `
                         <a href="tel:${s.phone}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #22c55e;border-radius:8px;padding:7px 10px;font-size:11px;color:#22c55e;text-decoration:none;">

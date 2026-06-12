@@ -1,7 +1,4 @@
 <?php
-// ─── Base URL ────────────────────────────────────────────────────────────────
-// Define this once here (or move it to a shared config.php and require it).
-// Every link in this file uses BASE_URL so the navbar works from any page.
 if (!defined('BASE_URL')) {
     define('BASE_URL', '/FrameWise/');
 }
@@ -11,7 +8,7 @@ if (!defined('BASE_URL')) {
 
   <h1 style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.04em;color:#fff;line-height:1;">FRAMEWISE</h1>
 
-  <!-- Desktop nav -->
+  
   <div class="hidden sm:flex items-center gap-2">
     <?php if ((isset($_SESSION["username"])) && ($_SESSION["isAdmin"] == 1)): ?>
         <a href="<?= BASE_URL ?>includes/dashboard.php" class="mr-2 text-sm hover:text-white text-white/70 transition">Dashboard</a>
@@ -26,7 +23,7 @@ if (!defined('BASE_URL')) {
     <?php endif; ?>
   </div>
 
-  <!-- Mobile hamburger -->
+  
   <button class="sm:hidden flex flex-col justify-center gap-1.5 p-1 z-[110]" onclick="toggleDrawer()" aria-label="Toggle menu">
     <span class="block w-5 h-0.5 bg-white/80 transition-all duration-300" id="ham-1"></span>
     <span class="block w-5 h-0.5 bg-white/80 transition-all duration-300" id="ham-2"></span>
@@ -35,14 +32,14 @@ if (!defined('BASE_URL')) {
 
 </nav>
 
-<!-- Backdrop -->
+
 <div
   id="drawer-backdrop"
   onclick="toggleDrawer()"
   class="sm:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] opacity-0 pointer-events-none transition-opacity duration-300"
 ></div>
 
-<!-- Drawer -->
+
 <div
   id="mobile-drawer"
   class="sm:hidden fixed top-0 right-0 h-full w-72 z-[100] flex flex-col
@@ -50,13 +47,13 @@ if (!defined('BASE_URL')) {
          translate-x-full transition-transform duration-300 ease-in-out"
 >
 
-  <!-- Drawer header -->
+  
   <div class="flex items-center justify-between px-5 py-5 border-b border-white/10">
     <h1 style="font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:.04em;color:#fff;line-height:1;">FRAMEWISE</h1>
     <button onclick="toggleDrawer()" class="text-white/60 hover:text-white transition text-xl leading-none">&times;</button>
   </div>
 
-  <!-- Drawer links -->
+  
   <nav class="flex flex-col gap-1 px-4 py-5 flex-1">
 
     <?php if ((isset($_SESSION["username"])) && ($_SESSION["isAdmin"] == 1)): ?>

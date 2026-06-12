@@ -1,16 +1,5 @@
-// ─────────────────────────────────────────────
-//  shoot-plan-poses.js
-//  Fetches AI-matched poses and renders them
-//  in both the pose strip and the checklist.
-//  Skips the fetch if poses are already in DB.
-//
-//  Depends on:
-//    - POSES_SAVED, RESULT_ID, SHOOT_CONTEXT  (inline PHP vars)
-// ─────────────────────────────────────────────
-
 async function loadPoses() {
 
-    // Already saved — PHP rendered the cards, nothing to do
     if (POSES_SAVED) return;
 
     const bodyAnalysis = SHOOT_CONTEXT.body_analysis || {};
@@ -24,7 +13,7 @@ async function loadPoses() {
         experience:       SHOOT_CONTEXT.experience,
         platform:         SHOOT_CONTEXT.platform,
         lighting_style:   SHOOT_CONTEXT.lighting_style,
-        // Body analysis fields — fall back to 'unknown' if not present
+
         body_type:          bodyAnalysis.body_type          ?? 'unknown',
         face_shape:         bodyAnalysis.face_shape         ?? 'unknown',
         face_symmetry:      bodyAnalysis.face_symmetry      ?? 'unknown',
@@ -55,7 +44,7 @@ async function loadPoses() {
         if (data.error) throw new Error(data.error);
         if (!data.poses || !data.poses.length) throw new Error('Empty poses array');
 
-        // ── Render pose strip ────────────────────────────────────────────
+
         document.getElementById('pose-body').innerHTML = data.poses.map((p, i) => `
             <div class="sp-pose-card" style="flex-direction:column;gap:8px;">
                 <img src="${p.image}" alt="${p.name}"
@@ -70,7 +59,7 @@ async function loadPoses() {
             </div>
         `).join('');
 
-        // ── Render checklist ─────────────────────────────────────────────
+
         document.getElementById('pose-checklist-sub').textContent  = `${data.poses.length} poses planned`;
         document.getElementById('pose-checklist-body').innerHTML   = data.poses.map(p => `
             <div class="sp-shot-item" onclick="toggleShot(this)">
@@ -83,7 +72,7 @@ async function loadPoses() {
             </div>
         `).join('');
 
-        // ── Persist to DB ────────────────────────────────────────────────
+
         fetch('save-plan.php', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -97,5 +86,5 @@ async function loadPoses() {
     }
 }
 
-// Kick off on page load
+
 loadPoses();

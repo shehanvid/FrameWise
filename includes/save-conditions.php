@@ -6,7 +6,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 $id    = intval($input['result_id'] ?? 0);
 if (!$id) { http_response_code(400); exit; }
 
-// Build SET clause dynamically — only update non-null fields
+
 $fields = [
     'sun_altitude'       => 's',
     'sun_azimuth'        => 's',

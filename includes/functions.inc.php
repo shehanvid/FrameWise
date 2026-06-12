@@ -89,7 +89,7 @@ function createUser($conn, $name, $email, $username, $pwd){
     mysqli_stmt_bind_param($stmt, "ssss", $name, $email, $username, $hashedPwd);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
-    // Unset the session variables
+
     unset($_SESSION["name"]);
     unset($_SESSION["email"]);
     unset($_SESSION["uid"]);
@@ -129,44 +129,11 @@ function loginUser($conn, $username, $pwd){
         $_SESSION["username"] = $uidExists["usersName"];
         $_SESSION["isAdmin"] = $uidExists["isAdmin"];
         $_SESSION["email"]= $uidExists["usersEmail"];
-        $_SESSION["usersImg"]=$uidExists["usersImg"]; // Store isAdmin status in session
+        $_SESSION["usersImg"]=$uidExists["usersImg"]; 
         header("Location:../index.php");
         exit();
     }
 }
-
-
-/*function loginUser($conn, $username, $pwd){
-    $uidExists = uidExists($conn, $username, $username);
-    if ($uidExists === false) {
-        header("Location:../login.php?error=wronglogin");
-        exit();
-    }
-    $pwdHashed = $uidExists["usersPwd"];
-    $checkPwd = password_verify($pwd, $pwdHashed);
-
-    if($checkPwd === false) {
-        header("Location:../login.php?error=wronglogin");
-        exit();
-    } else if ($checkPwd === true) {
-        session_start();
-        $_SESSION["userid"] = $uidExists["usersId"];
-        $_SESSION["useruid"] = $uidExists["usersUid"];
-        $_SESSION["username"] = $uidExists["usersName"];
-        header("Location:http://localhost/FilmFocus/index.php#reviews");
-        exit();
-    }
-}*/
-
-
-
-
-
-//FUNCTIONS THAT I USED IN INDEX.PHP
-
-
-
-
 
 if((isset($_SESSION["username"]))&&($_SESSION["isAdmin"]==1))
 {  
@@ -176,7 +143,6 @@ else if (isset($_SESSION["username"]))
 {
     
 } 
-
 
 function getShootTypes($conn) {
     $result = mysqli_query($conn, "SELECT * FROM shoot_types ORDER BY id");

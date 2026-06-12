@@ -1,16 +1,5 @@
-// ─────────────────────────────────────────────
-//  shoot-plan-weather.js
-//  Fetches live weather for the shoot location
-//  and updates the weather card + score bar.
-//  Skips everything if data is already in DB.
-//
-//  Depends on:
-//    - WEATHER_SAVED, RESULT_ID, SHOOT_CONTEXT (inline PHP vars)
-// ─────────────────────────────────────────────
-
 (function fetchWeather() {
 
-    // Already saved — PHP rendered the card, nothing to do
     if (WEATHER_SAVED) return;
 
     const lat = SHOOT_CONTEXT.lat;
@@ -29,7 +18,6 @@
         .then(d => {
             if (d.error) throw new Error(d.error);
 
-            // ── Update weather card ──────────────────────────────────────
             document.getElementById('weather-sub').textContent = 'Live data · ' + d.location;
             document.getElementById('weather-body').innerHTML  = `
                 <div class="sp-weather-big">${Math.round(d.temp)}°</div>
@@ -54,12 +42,12 @@
                 </div>
             `;
 
-            // ── Update score bar ─────────────────────────────────────────
+
             const ws = Math.max(0, Math.min(100, 100 - d.clouds - (d.rain_chance * 0.5)));
             document.getElementById('weather-score-bar').style.width = Math.round(ws) + '%';
             document.getElementById('weather-score-val').textContent  = Math.round(ws);
 
-            // ── Save to DB ───────────────────────────────────────────────
+
             fetch('save-conditions.php', {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -72,7 +60,7 @@
                     weather_clouds:     d.clouds,
                     weather_rain_chance: d.rain_chance,
                     weather_score:      Math.round(ws),
-                    // Pass nulls so the sun fields are not overwritten
+
                     sun_altitude: null, sun_azimuth: null,
                     shadow_direction: null, shadow_length: null,
                     golden_hour_start: null, golden_hour_end: null,

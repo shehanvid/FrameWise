@@ -1,17 +1,4 @@
-// ─────────────────────────────────────────────
-//  shoot-plan-chatbot.js
-//  Powers the AI photography director chatbot
-//  and the AI director tips card.
-//
-//  Depends on:
-//    - TIPS_SAVED, SAVED_TIPS, RESULT_ID, SHOOT_CONTEXT  (inline PHP vars)
-// ─────────────────────────────────────────────
-
-// Keeps the full conversation so the AI has context on each message
 const chatHistory = [];
-
-
-// ── Input helpers ─────────────────────────────────────────────────────────
 
 function sendSuggestion(btn) {
     document.getElementById('sp-chat-input').value = btn.textContent;
@@ -20,7 +7,7 @@ function sendSuggestion(btn) {
 }
 
 
-// ── Message rendering ─────────────────────────────────────────────────────
+
 
 function appendMsg(role, html) {
     const wrap   = document.getElementById('sp-chat-messages');
@@ -37,7 +24,7 @@ function appendMsg(role, html) {
                     d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
             </svg>`;
     } else {
-        // Show the first letter of the logged-in user's name
+
         av.textContent = USER_INITIAL;
     }
 
@@ -78,7 +65,7 @@ function appendTyping() {
 }
 
 
-// ── Main send function ────────────────────────────────────────────────────
+
 
 async function sendChatMessage() {
     const input = document.getElementById('sp-chat-input');
@@ -117,7 +104,7 @@ async function sendChatMessage() {
         document.getElementById('sp-typing-indicator')?.remove();
         chatHistory.push({ role: 'assistant', content: reply });
 
-        // Simple markdown: bold and line breaks
+
         const formatted = reply
             .replace(/</g, '&lt;')
             .replace(/\n/g, '<br>')
@@ -135,11 +122,11 @@ async function sendChatMessage() {
 }
 
 
-// ── Director tips ─────────────────────────────────────────────────────────
+
 
 async function loadDirectorTips() {
 
-    // Serve from DB cache if available — PHP already rendered it
+
     if (TIPS_SAVED && SAVED_TIPS && SAVED_TIPS.length) return;
 
     const prompt = `You must respond in EXACTLY this format, nothing else:
@@ -173,7 +160,7 @@ Give 4 director tips for: ${SHOOT_CONTEXT.shoot_type} shoot, ${SHOOT_CONTEXT.moo
 
         if (data.error) throw new Error(data.error);
 
-        // Parse the structured TITLE / TIP blocks
+
         const blocks = (data.reply || '').trim().split(/---+/).map(b => b.trim()).filter(Boolean);
         const tips   = blocks.map(block => {
             const titleMatch = block.match(/TITLE:\s*(.+)/i);
@@ -186,7 +173,7 @@ Give 4 director tips for: ${SHOOT_CONTEXT.shoot_type} shoot, ${SHOOT_CONTEXT.moo
 
         if (!tips.length) throw new Error('No tips parsed');
 
-        // ── Render tips ──────────────────────────────────────────────────
+
         document.getElementById('tips-body').innerHTML = tips.map(t => `
             <div class="sp-tip">
                 <div class="sp-tip-icon">
@@ -202,7 +189,7 @@ Give 4 director tips for: ${SHOOT_CONTEXT.shoot_type} shoot, ${SHOOT_CONTEXT.moo
             </div>
         `).join('');
 
-        // ── Persist to DB ────────────────────────────────────────────────
+
         fetch('save-conditions.php', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -219,5 +206,5 @@ Give 4 director tips for: ${SHOOT_CONTEXT.shoot_type} shoot, ${SHOOT_CONTEXT.moo
     }
 }
 
-// Kick off on page load
+
 loadDirectorTips();

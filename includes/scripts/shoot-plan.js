@@ -1,9 +1,3 @@
-// ─────────────────────────────────────────────
-//  shoot-plan-utils.js
-//  Small helpers used across the other modules
-// ─────────────────────────────────────────────
-
-// Toggle a shot/pose checklist row on or off
 function toggleShot(row) {
     const cb  = row.querySelector('.sp-shot-cb');
     const txt = row.querySelector('.sp-shot-text');
@@ -11,13 +5,11 @@ function toggleShot(row) {
     txt.classList.toggle('done');
 }
 
-// Auto-grow a textarea as the user types
 function autoResize(el) {
     el.style.height = 'auto';
     el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
-// Send on Enter, new line on Shift+Enter
 function handleChatKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -25,7 +17,6 @@ function handleChatKey(e) {
     }
 }
 
-// Convert a compass bearing (0-360°) to a cardinal direction label
 function degToCard(d) {
     const cards = [
         'North', 'North-Northeast', 'Northeast', 'East-Northeast',
@@ -36,7 +27,6 @@ function degToCard(d) {
     return cards[Math.round(d / 22.5) % 16];
 }
 
-// Turn a sun altitude in degrees into a plain-English description
 function altitudeDesc(deg) {
     if (deg < 0)  return 'Below horizon';
     if (deg < 10) return 'Very low ('  + deg.toFixed(1) + '°)';
@@ -46,12 +36,10 @@ function altitudeDesc(deg) {
     return 'Overhead (' + deg.toFixed(1) + '°)';
 }
 
-// Format a distance in metres — show km once it's ≥ 1 000 m
 function distLabel(m) {
     return m >= 1000 ? (m / 1000).toFixed(1) + ' km' : m + ' m';
 }
 
-// Build a five-star HTML string for a given numeric rating
 function stars(rating) {
     if (!rating) return '';
     const full  = Math.floor(rating);
@@ -65,7 +53,6 @@ function stars(rating) {
     );
 }
 
-// Small open/closed pill badge for salon listings
 function openBadge(open) {
     if (open === null) return '';
     return open
@@ -73,7 +60,6 @@ function openBadge(open) {
         : '<span style="font-size:9px;background:transparent;border:1px solid #ef4444;color:#ef4444;border-radius:4px;padding:2px 6px;margin-left:6px;">Closed</span>';
 }
 
-// ── Lightbox ──────────────────────────────────
 function openLightbox(src, name) {
     document.getElementById('pose-lightbox-img').src        = src;
     document.getElementById('pose-lightbox-caption').textContent = name;
@@ -89,7 +75,6 @@ function closeLightbox(e) {
     }
 }
 
-// Close lightbox on Escape key
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         document.getElementById('pose-lightbox').classList.remove('active');

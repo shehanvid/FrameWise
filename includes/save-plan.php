@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'dbh.inc.php'; // your db connection
+require 'dbh.inc.php'; 
 
 $input    = json_decode(file_get_contents('php://input'), true);
 $id       = intval($input['result_id'] ?? 0);

@@ -13,7 +13,7 @@ function activePref(string $field, string $value): string {
 ?>
 
 <style>
-/* ── AI Preferences Panel ─────────────────────────────────────────────────── */
+
 .pref-card {
   background: #111;
   border: 0.5px solid #2a2a2a;
@@ -23,7 +23,7 @@ function activePref(string $field, string $value): string {
   font-family: 'DM Sans', sans-serif;
 }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
+
 .pref-header {
   padding: 2rem 2rem 1.5rem;
   border-bottom: 0.5px solid #1e1e1e;
@@ -68,7 +68,7 @@ function activePref(string $field, string $value): string {
   font-weight: 300;
 }
 
-/* ── Body ────────────────────────────────────────────────────────────────── */
+
 .pref-body {
   padding: 1.75rem 2rem 2rem;
   display: flex;
@@ -76,7 +76,7 @@ function activePref(string $field, string $value): string {
   gap: 1.5rem;
 }
 
-/* ── Field ───────────────────────────────────────────────────────────────── */
+
 .pref-field {
   display: flex;
   flex-direction: column;
@@ -91,7 +91,7 @@ function activePref(string $field, string $value): string {
   text-transform: uppercase;
 }
 
-/* ── Select ──────────────────────────────────────────────────────────────── */
+
 .pref-select-wrap {
   position: relative;
 }
@@ -130,7 +130,7 @@ function activePref(string $field, string $value): string {
   color: #6b7280;
 }
 
-/* ── Radio Group ─────────────────────────────────────────────────────────── */
+
 .pref-radio-group {
   display: flex;
   gap: 8px;
@@ -179,7 +179,7 @@ function activePref(string $field, string $value): string {
   color: #e5e7eb;
 }
 
-/* ── Output Style Cards ──────────────────────────────────────────────────── */
+
 .pref-style-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -233,7 +233,7 @@ function activePref(string $field, string $value): string {
   background: #111;
 }
 
-/* ── Checkbox Group ──────────────────────────────────────────────────────── */
+
 .pref-checkbox-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -306,7 +306,7 @@ function activePref(string $field, string $value): string {
   color: #e5e7eb;
 }
 
-/* ── Pill Toggle ─────────────────────────────────────────────────────────── */
+
 .pref-pill-group {
   display: flex;
   gap: 0;
@@ -358,7 +358,7 @@ function activePref(string $field, string $value): string {
   color: #e5e7eb;
 }
 
-/* ── Textarea ────────────────────────────────────────────────────────────── */
+
 .pref-textarea {
   width: 100%;
   background: #0d0d0d;
@@ -400,7 +400,7 @@ function activePref(string $field, string $value): string {
 .pref-submit-btn:active { transform: translateY(0); }
 .pref-submit-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+
 @media (max-width: 640px) {
   .pref-header, .pref-body { padding: 1.25rem 1.1rem; }
   .pref-style-grid { grid-template-columns: repeat(3, 1fr); }
@@ -420,16 +420,16 @@ $equipment_db  = getEquipment($conn);
 
 <div class="pref-card">
 
-  <!-- Header -->
+  
   <div class="pref-header">
     <h1>Advanced AI<br>Preferences</h1>
     <p>Help the AI personalize your shoot recommendations.</p>
   </div>
 
-  <!-- Body -->
+  
   <div class="pref-body">
 
-    <!-- 1. Camera Type -->
+    
     <div class="pref-field">
       <div class="pref-label">Camera Type</div>
       <div class="pref-select-wrap">
@@ -446,7 +446,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 2. Experience Level -->
+    
     <div class="pref-field">
       <div class="pref-label">Experience Level</div>
       <div class="pref-radio-group">
@@ -462,7 +462,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 3. Preferred Lighting Style -->
+    
     <div class="pref-field">
       <div class="pref-label">Preferred Lighting Style</div>
       <div class="pref-select-wrap">
@@ -479,7 +479,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 4. Desired Output Style -->
+    
     <div class="pref-field">
       <div class="pref-label">Desired Output Style</div>
       <div class="pref-style-grid">
@@ -498,7 +498,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 5. Available Equipment -->
+    
     <div class="pref-field">
       <div class="pref-label">Available Equipment</div>
       <div class="pref-checkbox-group">
@@ -522,7 +522,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 7. Preferred Shot Orientation -->
+    
     <div class="pref-field">
       <div class="pref-label">Preferred Shot Orientation</div>
       <div class="pref-pill-group">
@@ -541,7 +541,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 8. Content Platform -->
+    
     <div class="pref-field">
       <div class="pref-label">Content Platform</div>
       <div class="pref-select-wrap">
@@ -558,7 +558,7 @@ $equipment_db  = getEquipment($conn);
       </div>
     </div>
 
-    <!-- 9. Additional Notes -->
+    
     <div class="pref-field">
       <div class="pref-label">Additional Notes</div>
       <textarea
@@ -567,5 +567,5 @@ $equipment_db  = getEquipment($conn);
         placeholder="Describe your creative vision, inspiration, or special requirements…"
       ><?= oldPref('ai_notes') ?></textarea>
     </div>
-  </div><!-- /pref-body -->
-</div><!-- /pref-card -->
+  </div>
+</div>

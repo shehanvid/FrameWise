@@ -1,4 +1,4 @@
-/* ── Reset ───────────────────────────────────────────────────────────────── */
+
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -20,7 +20,7 @@ body {
   margin-bottom: 1.5rem;
 }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
+
 .card-header {
   padding: 2rem 2rem 1.5rem;
   border-bottom: 0.5px solid #1e1e1e;
@@ -64,17 +64,17 @@ body {
 }
 .card-header p { font-size: 13px; color: #9ca3af; margin-top: 6px; font-weight: 300; }
 
-/* ── Progress bar ────────────────────────────────────────────────────────── */
+
 .progress-bar { height: 2px; background: #1a1a1a; margin-top: 1.25rem; border-radius: 2px; overflow: hidden; }
 .progress-fill { height: 100%; background: linear-gradient(90deg,#3b82f6,#60a5fa); border-radius: 2px; width: 0%; transition: width .4s ease; }
 .progress-meta { display: flex; justify-content: space-between; margin-top: 6px; }
 .progress-meta span { font-size: 10px; color: #6b7280; letter-spacing: .06em; text-transform: uppercase; }
 #progress-pct { color: #3b82f6   ; }
 
-/* ── Body ────────────────────────────────────────────────────────────────── */
+
 .card-body { padding: 1.75rem 2rem 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* ── Field ───────────────────────────────────────────────────────────────── */
+
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 
@@ -133,7 +133,7 @@ select option { background: #111; }
   color: #ffffff;
 }
 
-/* ── Mood grid ───────────────────────────────────────────────────────────── */
+
 .backdrop-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -179,7 +179,7 @@ select option { background: #111; }
   top: 5px; right: 5px;
   width: 16px; height: 16px;
   background: #3b82f6;
-  color: #fff;        /* add this line */
+  color: #fff;        
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -203,7 +203,7 @@ select option { background: #111; }
   transform: scale(1);
 }
 
-/* Mood gradients */
+
 .bg-mood-warm     { background: linear-gradient(135deg, #3d1f00 0%, #7a3b00 50%, #c8690a 100%); }
 .bg-mood-cool     { background: linear-gradient(135deg, #001a3d 0%, #003d7a 50%, #0a6ac8 100%); }
 .bg-mood-dramatic { background: linear-gradient(135deg, #1a0a2e 0%, #3d1060 50%, #6b0f8a 100%); }
@@ -211,7 +211,7 @@ select option { background: #111; }
 .bg-mood-moody    { background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #2a2040 100%); }
 .bg-mood-airy     { background: linear-gradient(135deg, #1a2a3a 0%, #2a4a6a 50%, #6a9abf 100%); }
 
-/* ── Color swatches ──────────────────────────────────────────────────────── */
+
 .color-swatches { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
 
 .swatch {
@@ -229,7 +229,7 @@ select option { background: #111; }
 .swatch-row .input-wrap { flex: 1; }
 .swatch-row input { padding-left: 12px !important; }
 
-/* ── Upload ──────────────────────────────────────────────────────────────── */
+
 .upload-area {
   background: #0d0d0d;
   border: 0.5px dashed #252525;
@@ -258,7 +258,7 @@ select option { background: #111; }
 
 .upload-sub { font-size: 11px; color: #6b7280; margin-top: 3px; }
 
-/* ── Dress auto-detect ───────────────────────────────────────────────────── */
+
 .dress-upload-wrap {
   position: relative;
   display: flex;
@@ -341,10 +341,10 @@ select option { background: #111; }
 
 .dress-result-tag svg { color: #22c55e; flex-shrink: 0; }
 
-/* ── Divider ─────────────────────────────────────────────────────────────── */
+
 .divider { height: 0.5px; background: #1a1a1a; }
 
-/* ── Submit ──────────────────────────────────────────────────────────────── */
+
 .submit-btn {
   width: 100%;
   background: #3b82f6   ;
@@ -370,7 +370,7 @@ select option { background: #111; }
 
 .submit-btn svg { width: 16px; height: 16px; }
 
-/* ── Errors ──────────────────────────────────────────────────────────────── */
+
 .error-box {
   background: #1e0c0c;
   border: 0.5px solid #5a1a1a;
@@ -382,7 +382,7 @@ select option { background: #111; }
 .error-box p { font-size: 12px; color: #e87070; margin-bottom: 2px; }
 .error-box p:last-child { margin-bottom: 0; }
 
-/* ── Result card ─────────────────────────────────────────────────────────── */
+
 .result-card {
   background: #111;
   border: 0.5px solid #2a2a2a;
@@ -426,7 +426,7 @@ select option { background: #111; }
   gap:1.25rem;
 }
 
-/* ── Adv pill toggle ─────────────────────────────────────────────────────── */
+
 .adv-pill {
   background: #0d0d0d;
   border: 0.5px solid #222;
@@ -447,7 +447,7 @@ select option { background: #111; }
 .adv-pill:hover { border-color: #6b7280; color: #e5e7eb; }
 .adv-pill.active { border-color: #a855f7; background: #130d1f; color: #a855f7; }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
+
 @media (max-width: 640px) {
   body {
     padding: 1rem 0.75rem;
@@ -494,7 +494,7 @@ select option { background: #111; }
   input[type="text"],
   input[type="datetime-local"],
   select {
-    font-size: 16px; /* prevents iOS zoom on focus */
+    font-size: 16px; 
   }
 }
 

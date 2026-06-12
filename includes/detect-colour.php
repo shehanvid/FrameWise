@@ -85,7 +85,7 @@ if ($curlError) {
     exit;
 }
 
-// Parse Gemini response and return in a simple format
+
 $decoded = json_decode($response, true);
 $text = $decoded['candidates'][0]['content']['parts'][0]['text'] ?? 'unknown';
 $text = strtolower(trim($text));

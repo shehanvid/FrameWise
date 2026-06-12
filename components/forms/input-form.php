@@ -1,13 +1,13 @@
 
 <?php
-// ─── Process form submission ───────────────────────────────────────────────
+
 $errors   = [];
 $success  = false;
 $plan     = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // ── Sanitise & validate ──────────────────────────────────────────────
+
     $location   = trim($_POST['location']   ?? '');
     $location_lat = trim($_POST['location_lat'] ?? '');
     $location_lng = trim($_POST['location_lng'] ?? '');
@@ -24,11 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($shoot_type === '') $errors[] = 'Shoot type is required.';
     if ($mood       === '') $errors[] = 'Mood is required.';
 
-    // ── Generate plan if no errors ───────────────────────────────────────
+
     if (empty($errors)) {
         $success = true;
 
-        // Format date nicely
+
         $dt_obj       = new DateTime($datetime);
         $date_display = $dt_obj->format('l, F j Y \a\t g:i A');
 
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+
 function old(string $field, string $default = ''): string {
     return htmlspecialchars($_POST[$field] ?? $default);
 }
@@ -69,7 +69,7 @@ function selected(string $field, string $value): string {
   <?php endif; ?>
 
   <?php if ($success && $plan): ?>
-  <!-- ── Result ──────────────────────────────────────────────────────────── -->
+  
   <div class="result-card">
     <div class="result-header">
       <div class="result-header-icon">
@@ -80,7 +80,7 @@ function selected(string $field, string $value): string {
       <div>
 
   <?php else: ?>
-  <!-- ── Form ───────────────────────────────────────────────────────────── -->
+  
   <div class="card">
     <div class="card-header">
       <div class="adv-title">Photo Shoot<br>Planner</div>
@@ -95,7 +95,7 @@ function selected(string $field, string $value): string {
     </div>
 
     <div class="card-body">
-      <!-- Location + DateTime -->
+      
       <div class="field-row">
         <div class="field">
           <label>Location</label>
@@ -114,13 +114,13 @@ function selected(string $field, string $value): string {
             Pick on Map
           </button>
 
-          <!-- Hidden display box, shown after map selection -->
+          
           <div id="location-display" style="display:none; margin-top:8px; background:#0d0d0d; border:0.5px solid #3b82f6; border-radius:10px; padding:10px 12px; font-size:12px; color:#9ca3af;">
             <div style="color:#e5e7eb; font-size:13px;" id="location-display-text">—</div>
             <div style="margin-top:3px; font-size:11px; color:#6b7280;" id="location-coords-text">—</div>
           </div>
 
-          <!-- Hidden inputs carrying both values to PHP -->
+          
           <input type="hidden" name="location" id="location" value="<?= old('location') ?>">
           <input type="hidden" name="location_lat" id="location_lat" value="<?= old('location_lat') ?>">
           <input type="hidden" name="location_lng" id="location_lng" value="<?= old('location_lng') ?>">
@@ -136,7 +136,7 @@ function selected(string $field, string $value): string {
         </div>
       </div>
 
-      <!-- Shoot Type -->
+      
       <div class="field">
         <label for="shoot_type">Shoot Type</label>
         <div class="input-wrap">
@@ -158,7 +158,7 @@ function selected(string $field, string $value): string {
         </div>
       </div>
 
-      <!-- Mood -->
+      
       <div class="field">
         <label>Mood</label>
         <div class="backdrop-grid">
@@ -187,7 +187,7 @@ function selected(string $field, string $value): string {
         <input type="hidden" name="mood" id="mood" value="<?= old('mood') ?>">
       </div>
 
-      <!-- Outfit Colour -->
+      
       <div class="field">
         <label for="outfit">Outfit Colour</label>
         <div class="swatch-row">
@@ -195,7 +195,7 @@ function selected(string $field, string $value): string {
             <input type="text" id="outfit" name="outfit" placeholder="e.g. cream, forest green…" value="<?= old('outfit') ?>">
           </div>
 
-          <!-- 👗 Dress image picker button -->
+          
           <div class="dress-upload-wrap" title="Upload dress to auto-detect colour">
             <input type="file" id="dress-image-input" accept="image/*" style="display:none">
             <button type="button" class="dress-upload-btn" id="dress-upload-btn" onclick="document.getElementById('dress-image-input').click()">
@@ -205,9 +205,9 @@ function selected(string $field, string $value): string {
               </svg>
               <span id="dress-btn-label">Auto-detect</span>
             </button>
-            <!-- Spinner -->
+            
             <div id="dress-spinner" style="display:none" class="dress-spinner"></div>
-            <!-- Tiny preview with X button -->
+            
             <div id="dress-preview-wrap" style="display:none; position:relative; flex-shrink:0;">
               <img id="dress-preview" src="" alt="" class="dress-preview" style="display:block;">
               <button
@@ -243,7 +243,7 @@ function selected(string $field, string $value): string {
           <?php endforeach; ?>
         </div>
 
-        <!-- AI result tag -->
+        
         <div id="dress-result-tag" class="dress-result-tag" style="display:none">
           <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
@@ -252,7 +252,7 @@ function selected(string $field, string $value): string {
         </div>
       </div>
 
-      <!-- Gender Toggle -->
+      
       <div class="field">
         <label>Model Gender</label>
         <div style="display:flex; gap:0; border:0.5px solid #222; border-radius:10px; overflow:hidden;">
@@ -286,7 +286,7 @@ function selected(string $field, string $value): string {
 
       <div class="divider"></div>
 
-      <!-- Image Upload -->
+      
        <div class="field">
         <label>Model Image</label>
  
@@ -299,7 +299,7 @@ function selected(string $field, string $value): string {
           <div class="upload-sub">JPG, PNG, WEBP &mdash; max 10 MB</div>
         </div>
  
-        <!-- Analysis status bar (hidden until upload) -->
+        
         <div id="analysis-status" style="display:none; margin-top:10px;">
           <div style="
             display:flex; align-items:center; gap:8px;
@@ -308,7 +308,7 @@ function selected(string $field, string $value): string {
           ">
             <div id="analysis-spinner" class="dress-spinner" style="display:none;"></div>
             <div id="analysis-status-icon" style="display:none; width:14px; height:14px; flex-shrink:0;">
-              <!-- filled by JS -->
+              
             </div>
             <div style="flex:1;">
               <div style="font-size:12px; color:#9ca3af;" id="analysis-status-text">Analyzing body proportions…</div>
@@ -317,14 +317,14 @@ function selected(string $field, string $value): string {
           </div>
         </div>
 
-        <!-- Hidden input to carry analysis JSON to PHP -->
+        
         <input type="hidden" name="body_analysis" id="body_analysis_input" value="">
       </div>
     </div>
   </div>
   <?php endif; ?>
 
-<!-- ── Map Modal ──────────────────────────────────────────────────────────── -->
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
@@ -347,7 +347,7 @@ function selected(string $field, string $value): string {
     display: flex;
     flex-direction: column;
   ">
-    <!-- Modal header -->
+    
     <div style="
       display: flex;
       align-items: center;
@@ -371,7 +371,7 @@ function selected(string $field, string $value): string {
       ">&times;</button>
     </div>
 
-    <!-- Search bar -->
+    
     <div style="padding: 0.75rem 1.25rem; border-bottom: 0.5px solid #1e1e1e; flex-shrink:0; display:flex; gap:8px;">
       <div style="position:relative; flex:1;">
         <svg style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:#6b7280;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="14" height="14">
@@ -419,10 +419,10 @@ function selected(string $field, string $value): string {
       </button>
     </div>
 
-    <!-- Map -->
+    
     <div id="leaflet-map" style="flex:1; min-height:340px;"></div>
 
-    <!-- Selected location bar -->
+    
     <div style="
       padding: 0.75rem 1.25rem;
       border-top: 0.5px solid #1e1e1e;
@@ -447,7 +447,7 @@ function selected(string $field, string $value): string {
 </div>
 
 <script>
-// ── Mood toggle ────────────────────────────────────────────────────────────
+
 function selectMood(tile) {
   document.querySelectorAll('[data-mood]').forEach(t => t.classList.remove('active'));
   tile.classList.add('active');
@@ -455,7 +455,7 @@ function selectMood(tile) {
   updateProgress();
 }
 
-// ── Swatch pick ────────────────────────────────────────────────────────────
+
 function pickSwatch(el, color) {
   document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
   el.classList.add('selected');
@@ -463,7 +463,7 @@ function pickSwatch(el, color) {
   updateProgress();
 }
 
-// ── File upload ────────────────────────────────────────────────────────────
+
 function handleFile(input) {
   const area = document.getElementById('upload-area');
   const text = document.getElementById('upload-text');
@@ -475,37 +475,37 @@ function handleFile(input) {
   updateProgress();
 }
 
-// ── Dress colour auto-detect ───────────────────────────────────────────────
+
 function lockOutfitField(lock) {
   const outfitInput  = document.getElementById('outfit');
   const swatchWrap   = document.getElementById('swatch-wrap');
   const swatches     = document.querySelectorAll('.swatch');
 
   if (lock) {
-    // Disable text input
+
     outfitInput.setAttribute('readonly', true);
     outfitInput.style.opacity = '0.5';
     outfitInput.style.cursor  = 'not-allowed';
-    // Disable swatches
+
     swatchWrap.style.opacity       = '0.4';
     swatchWrap.style.pointerEvents = 'none';
   } else {
-    // Re-enable text input
+
     outfitInput.removeAttribute('readonly');
     outfitInput.style.opacity = '';
     outfitInput.style.cursor  = '';
-    // Re-enable swatches
+
     swatchWrap.style.opacity       = '';
     swatchWrap.style.pointerEvents = '';
   }
 }
 
 function clearDressDetection() {
-  // Clear input & swatches
+
   document.getElementById('outfit').value = '';
   document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
 
-  // Hide preview & clear btn
+
   const wrap    = document.getElementById('dress-preview-wrap');
   const preview = document.getElementById('dress-preview');
   const clearBtn = document.getElementById('dress-clear-btn');
@@ -513,29 +513,29 @@ function clearDressDetection() {
   preview.src            = '';
   clearBtn.style.display = 'none';
 
-  // Hide result tag
+
   const tag = document.getElementById('dress-result-tag');
   tag.style.display = 'none';
 
-  // Reset button
+
   const btn   = document.getElementById('dress-upload-btn');
   const label = document.getElementById('dress-btn-label');
   btn.classList.remove('success', 'loading');
   label.textContent = 'Auto-detect';
 
-  // Reset file input so same file can be re-picked
+
   document.getElementById('dress-image-input').value = '';
 
-  // Unlock outfit field
+
   lockOutfitField(false);
 
   updateProgress();
 }
 
-// X button click
+
 document.getElementById('dress-clear-btn').addEventListener('click', clearDressDetection);
 
-// Show/hide X on hover over preview wrap
+
 const previewWrap = document.getElementById('dress-preview-wrap');
 previewWrap.addEventListener('mouseenter', () => {
   document.getElementById('dress-clear-btn').style.display = 'flex';
@@ -556,7 +556,7 @@ document.getElementById('dress-image-input').addEventListener('change', async fu
   const tag      = document.getElementById('dress-result-tag');
   const tagText  = document.getElementById('dress-result-text');
 
-  // Show preview thumbnail
+
   const reader = new FileReader();
   reader.onload = e => {
     preview.src        = e.target.result;
@@ -564,7 +564,7 @@ document.getElementById('dress-image-input').addEventListener('change', async fu
   };
   reader.readAsDataURL(file);
 
-  // Loading state
+
   btn.classList.add('loading');
   label.textContent     = 'Detecting…';
   spinner.style.display = 'block';
@@ -598,24 +598,24 @@ document.getElementById('dress-image-input').addEventListener('change', async fu
       tagText.style.color     = '#f59e0b';
       tag.style.display       = 'inline-flex';
       spinner.style.display   = 'none';
-      // Don't lock if detection failed
+
       return;
     }
 
-    // Fill outfit input & lock field
+
     document.getElementById('outfit').value = detected;
     lockOutfitField(true);
     updateProgress();
 
-    // Clear any swatch selection
+
     document.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
 
-    // Show result tag
+
     tagText.textContent = 'Detected: ' + detected;
     tagText.style.color = '';
     tag.style.display   = 'inline-flex';
 
-    // Success state
+
     btn.classList.remove('loading');
     btn.classList.add('success');
     label.textContent = 'Re-detect';
@@ -632,7 +632,7 @@ document.getElementById('dress-image-input').addEventListener('change', async fu
   }
 });
 
-// ── Progress bar ───────────────────────────────────────────────────────────
+
 function updateProgress() {
   const fields = [
     document.getElementById('location')?.value,
@@ -660,7 +660,7 @@ updateProgress();
 </script>
 
 <script>
-// ── Map Modal ──────────────────────────────────────────────────────────────
+
 let mapInstance   = null;
 let mapMarker     = null;
 let selectedLatLng = null;
@@ -671,12 +671,12 @@ function openMapModal() {
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
-  // Init map only once
+
   if (!mapInstance) {
     mapInstance = L.map('leaflet-map', { zoomControl: true }).setView([20, 0], 2);
     mapInstance.options.maxZoom = 20;
 
-    // Dark tile layer (CartoDB Dark Matter — free, no key)
+
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 20
@@ -687,7 +687,7 @@ function openMapModal() {
     });
   }
 
-  // Fix Leaflet tile rendering after display:none → flex
+
   setTimeout(() => mapInstance.invalidateSize(), 50);
 }
 
@@ -696,12 +696,12 @@ function closeMapModal() {
   document.body.style.overflow = '';
 }
 
-// Close on backdrop click
+
 document.getElementById('map-modal').addEventListener('click', function(e) {
   if (e.target === this) closeMapModal();
 });
 
-// Close on Escape
+
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     const modal = document.getElementById('map-modal');
@@ -727,10 +727,10 @@ function placeMarker(lat, lng) {
 
   selectedLatLng = { lat, lng };
 
-  // Set label as coords while reverse geocoding
+
   setSelectedLabel('Fetching address…', false);
 
-  // Reverse geocode with Nominatim (free, no key)
+
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
     .then(r => r.json())
     .then(data => {
@@ -760,16 +760,16 @@ function confirmMapLocation() {
     .then(data => {
       const a = data.address || {};
 
-      // Build a priority list from most specific → least specific
+
       const parts = [
-        a.amenity || a.tourism || a.leisure || a.shop || a.building || a.historic,  // POI name
-        a.road || a.pedestrian || a.footway || a.path,                               // street
-        a.suburb || a.neighbourhood || a.quarter || a.village,                       // neighbourhood
-        a.city_district || a.town || a.city || a.county,                             // city area
-        a.country                                                                     // country
+        a.amenity || a.tourism || a.leisure || a.shop || a.building || a.historic,  
+        a.road || a.pedestrian || a.footway || a.path,                               
+        a.suburb || a.neighbourhood || a.quarter || a.village,                       
+        a.city_district || a.town || a.city || a.county,                             
+        a.country                                                                     
       ].filter(Boolean);
 
-      // Take the first 2 meaningful parts
+
       const label = parts.slice(0, 2).join(', ') || selectedLabel;
 
       const lat = selectedLatLng.lat.toFixed(6);
@@ -801,7 +801,7 @@ function confirmMapLocation() {
     });
 }
 
-// Debounce timer
+
 let searchTimer = null;
 
 function searchMapLocation() {
@@ -825,7 +825,7 @@ function clearSuggestions() {
   if (box) box.innerHTML = '';
 }
 
-// Auto-suggest as user types
+
 document.getElementById('map-search-input').addEventListener('input', function () {
   clearTimeout(searchTimer);
   const query = this.value.trim();
@@ -856,7 +856,7 @@ document.getElementById('map-search-input').addEventListener('input', function (
           box.appendChild(item);
         });
       });
-  }, 350); // wait 350ms after user stops typing
+  }, 350); 
 });
 
 function locateMe() {
@@ -874,10 +874,10 @@ function locateMe() {
   );
 }
 
-// ── Body analysis state ───────────────────────────────────────────────────
+
 let bodyAnalysisData = null;
  
-// ── Override handleFile to also trigger analysis ──────────────────────────
+
 function handleFile(input) {
   const area = document.getElementById('upload-area');
   const text = document.getElementById('upload-text');
@@ -897,7 +897,7 @@ async function triggerBodyAnalysis(file) {
   const statusSub  = document.getElementById('analysis-status-sub');
   const panel      = document.getElementById('body-analysis-panel');
  
-  // Reset
+
   panel.style.display   = 'none';
   statusWrap.style.display = 'flex';
   spinner.style.display    = 'block';
@@ -931,7 +931,7 @@ async function triggerBodyAnalysis(file) {
     bodyAnalysisData = data;
     document.getElementById('body_analysis_input').value = JSON.stringify(data);
  
-    // Success state
+
     spinner.style.display    = 'none';
     statusIcon.style.display = 'block';
     statusIcon.innerHTML     = `<svg fill="none" viewBox="0 0 24 24" stroke="#22c55e" stroke-width="2.5" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
@@ -963,7 +963,7 @@ function clearBodyAnalysis() {
   document.getElementById('body_analysis_input').value = '';
   document.getElementById('analysis-status').style.display = 'none';
 
-  // Reset upload area
+
   const area = document.getElementById('upload-area');
   const text = document.getElementById('upload-text');
   area.classList.remove('has-file');
@@ -976,7 +976,7 @@ function clearBodyAnalysis() {
   updateProgress();
 }
  
-// ── Utility: format snake_case to Title Case ──────────────────────────────
+
 function fmt(str) {
   if (!str) return '—';
   return str.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -984,7 +984,7 @@ function fmt(str) {
 </script>
 
 <script type="module">
-// ─── 1. Imports ──────────────────────────────────────────────────────────────
+
 import {
   FaceLandmarker,
   PoseLandmarker,
@@ -992,13 +992,13 @@ import {
   DrawingUtils
 } from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
  
-// ─── 2. State ─────────────────────────────────────────────────────────────────
+
 let faceLandmarker = null;
 let poseLandmarker = null;
 let modelsLoading  = false;
 let modelsReady    = false;
  
-// ─── 3. Lazy-load models (called on first image upload) ──────────────────────
+
 async function loadModels() {
   if (modelsReady || modelsLoading) return;
   modelsLoading = true;
@@ -1013,7 +1013,7 @@ async function loadModels() {
         baseOptions: {
           modelAssetPath:
             'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
-          delegate: 'GPU'   // falls back to CPU automatically
+          delegate: 'GPU'   
         },
         outputFaceBlendshapes: true,
         outputFacialTransformationMatrixes: true,
@@ -1039,7 +1039,7 @@ async function loadModels() {
   }
 }
  
-// ─── 4. Main analysis entry point ─────────────────────────────────────────────
+
 window.triggerBodyAnalysis = async function(file) {
   const statusWrap = document.getElementById('analysis-status');
   const spinner    = document.getElementById('analysis-spinner');
@@ -1047,7 +1047,7 @@ window.triggerBodyAnalysis = async function(file) {
   const statusText = document.getElementById('analysis-status-text');
   const statusSub  = document.getElementById('analysis-status-sub');
  
-  // Reset UI
+
   statusWrap.style.display = 'flex';
   spinner.style.display    = 'block';
   statusIcon.style.display = 'none';
@@ -1056,12 +1056,12 @@ window.triggerBodyAnalysis = async function(file) {
   statusSub.textContent    = 'First run downloads ~8 MB of WASM — subsequent runs are instant';
  
   try {
-    // ── 4a. Load models ──────────────────────────────────────────────────
+
     await loadModels();
     statusText.textContent = 'Running face & pose detection…';
     statusSub.textContent  = 'Powered by MediaPipe · runs entirely in your browser';
  
-    // ── 4b. Draw image to offscreen canvas ───────────────────────────────
+
     const img = await fileToImage(file);
     const canvas  = document.createElement('canvas');
     canvas.width  = img.naturalWidth;
@@ -1069,7 +1069,7 @@ window.triggerBodyAnalysis = async function(file) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0);
  
-    // ── 4c. Run landmarkers ───────────────────────────────────────────────
+
     const [faceResult, poseResult] = await Promise.all([
       faceLandmarker.detect(canvas),
       poseLandmarker.detect(canvas)
@@ -1078,25 +1078,25 @@ window.triggerBodyAnalysis = async function(file) {
     const hasFace = faceResult.faceLandmarks && faceResult.faceLandmarks.length > 0 &&
     (() => {
         const lm = faceResult.faceLandmarks[0];
-        // Check a spread of reliable face landmarks: nose tip (1), 
-        // chin (152), left cheek (234), right cheek (454)
+
+
         const keyFaceIdx = [1, 152, 234, 454];
-        // FaceLandmarker doesn't expose visibility scores the same way PoseLandmarker does,
-        // so instead we check that landmarks are within a reasonable face region
-        // (all within canvas bounds and not collapsed to a single point)
+
+
+
         const xs = keyFaceIdx.map(i => lm[i].x);
         const ys = keyFaceIdx.map(i => lm[i].y);
         const spreadX = Math.max(...xs) - Math.min(...xs);
         const spreadY = Math.max(...ys) - Math.min(...ys);
-        // If face landmarks are collapsed (< 5% spread), it's not a real face detection
+
         return spreadX > 0.05 && spreadY > 0.05;
     })();
     const hasPose = poseResult.landmarks && poseResult.landmarks.length > 0 &&
     (() => {
         const lm = poseResult.landmarks[0];
-        const keyBodyIdx = [11, 12, 23, 24]; // shoulders + hips
+        const keyBodyIdx = [11, 12, 23, 24]; 
         const avgVis = keyBodyIdx.reduce((s, i) => s + (lm[i].visibility ?? 0), 0) / keyBodyIdx.length;
-        return avgVis > 0.3; // at least 30% confident on core body landmarks
+        return avgVis > 0.3;
     })();
  
     if (!hasFace && !hasPose) {
@@ -1104,11 +1104,11 @@ window.triggerBodyAnalysis = async function(file) {
       return;
     }
  
-    // ── 4d. Extract attributes ────────────────────────────────────────────
+
     const faceAttrs = hasFace ? extractFaceAttributes(faceResult, canvas) : {};
     const poseAttrs = hasPose ? extractPoseAttributes(poseResult, canvas) : {};
  
-    // ── 4e. Merge & derive body type ──────────────────────────────────────
+
     const attrs = {
       ...defaultAttrs(),
       ...faceAttrs,
@@ -1120,7 +1120,7 @@ window.triggerBodyAnalysis = async function(file) {
     attrs.recommended_angles = recommendAngles(attrs);
     attrs.avoid_angles       = avoidAngles(attrs);
  
-    // ── 4f. Ask PHP to add pose_hints (same endpoint, lighter role) ───────
+
     let finalAttrs = attrs;
     try {
       const resp = await fetch('includes/analyze-model.php', {
@@ -1129,11 +1129,11 @@ window.triggerBodyAnalysis = async function(file) {
         body: JSON.stringify(attrs)
       });
       if (resp.ok) finalAttrs = await resp.json();
-    } catch (_) { /* offline fallback — use attrs as-is */ }
+    } catch (_) {  }
  
     if (!finalAttrs.pose_hints) finalAttrs.pose_hints = derivePoseHintsClient(attrs);
  
-    // ── 4g. Store & render ────────────────────────────────────────────────
+
     window.bodyAnalysisData = finalAttrs;
     document.getElementById('body_analysis_input').value = JSON.stringify(finalAttrs);
  
@@ -1149,7 +1149,7 @@ window.triggerBodyAnalysis = async function(file) {
   }
 };
  
-// ─── 5. Image file → HTMLImageElement ────────────────────────────────────────
+
 function fileToImage(file) {
   return new Promise((res, rej) => {
     const url = URL.createObjectURL(file);
@@ -1160,7 +1160,7 @@ function fileToImage(file) {
   });
 }
  
-// ─── 6. Face attribute extraction from 478-point mesh ────────────────────────
+
 function extractFaceAttributes(result, canvas) {
     const lm = result.faceLandmarks[0];
     const W  = canvas.width;
@@ -1176,8 +1176,8 @@ function extractFaceAttributes(result, canvas) {
     const faceHeight  = dist(foreheadTop, chin);
     const cheekWidth  = dist(cheekL, cheekR);
 
-    // Guard: if the detected face region is implausibly small
-    // (less than 4% of image width), landmarks are unreliable
+
+
     const MIN_FACE_PX = W * 0.04;
     if (cheekWidth < MIN_FACE_PX || faceHeight < MIN_FACE_PX) {
         return {
@@ -1223,7 +1223,7 @@ function extractFaceAttributes(result, canvas) {
     return { face_shape, face_symmetry, jawline, forehead, posture };
 }
  
-// ─── 7. Pose attribute extraction from 33-point skeleton ─────────────────────
+
 function extractPoseAttributes(result, canvas) {
     const lm = result.landmarks[0];
     const W  = canvas.width;
@@ -1239,13 +1239,13 @@ function extractPoseAttributes(result, canvas) {
         nose:           0,
     };
 
-    const VIS_THRESHOLD = 0.35; // landmark must be at least 35% confident
+    const VIS_THRESHOLD = 0.35; 
 
     const p   = (k) => ({ x: lm[IDX[k]].x * W, y: lm[IDX[k]].y * H });
     const vis = (k) => lm[IDX[k]].visibility ?? 0;
     const ok  = (...keys) => keys.every(k => vis(k) > VIS_THRESHOLD);
 
-    // --- Shoulder width (needs both shoulders) ---
+
     let shoulder_width = 'unknown';
     if (ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
         const shoulderW = dist(p('leftShoulder'), p('rightShoulder'));
@@ -1254,7 +1254,7 @@ function extractPoseAttributes(result, canvas) {
         shoulder_width  = ratio > 1.25 ? 'broad' : ratio > 0.90 ? 'medium' : 'narrow';
     }
 
-    // --- Hip ratio (needs hips + shoulders) ---
+
     let hip_ratio = 'unknown';
     if (ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
         const shoulderW = dist(p('leftShoulder'), p('rightShoulder'));
@@ -1263,7 +1263,7 @@ function extractPoseAttributes(result, canvas) {
         hip_ratio       = ratio > 1.10 ? 'wide' : ratio > 0.85 ? 'balanced' : 'narrow';
     }
 
-    // --- Waist definition (needs shoulders + hips) ---
+
     let waist_definition = 'unknown';
     if (ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
         const shoulderW = dist(p('leftShoulder'), p('rightShoulder'));
@@ -1272,7 +1272,7 @@ function extractPoseAttributes(result, canvas) {
         waist_definition = diff > 0.15 ? 'defined' : diff > 0.07 ? 'moderate' : 'minimal';
     }
 
-    // --- Leg proportion (needs hips + ankles) ---
+
     let leg_proportion = 'unknown';
     if (ok('leftHip', 'rightHip', 'leftAnkle', 'rightAnkle', 'nose')) {
         const midHip    = mid(p('leftHip'),    p('rightHip'));
@@ -1283,7 +1283,7 @@ function extractPoseAttributes(result, canvas) {
         leg_proportion  = legRatio > 0.55 ? 'long' : legRatio < 0.46 ? 'short' : 'average';
     }
 
-    // --- Neck length (needs shoulders + nose) ---
+
     let neck_length = 'unknown';
     if (ok('leftShoulder', 'rightShoulder', 'nose')) {
         const midShoulder = mid(p('leftShoulder'), p('rightShoulder'));
@@ -1296,7 +1296,7 @@ function extractPoseAttributes(result, canvas) {
         }
     }
 
-    // --- Arm length (needs shoulders + wrists) ---
+
     let arm_length = 'unknown';
     if (ok('leftShoulder', 'leftWrist') && ok('leftShoulder', 'rightShoulder', 'leftHip', 'rightHip')) {
         const midShoulder = mid(p('leftShoulder'), p('rightShoulder'));
@@ -1306,7 +1306,7 @@ function extractPoseAttributes(result, canvas) {
         arm_length        = ratio > 1.1 ? 'long' : ratio < 0.85 ? 'short' : 'average';
     }
 
-    // --- Estimated height (needs nose + ankles) ---
+
     let estimated_height = 'unknown';
     if (ok('nose', 'leftAnkle', 'rightAnkle')) {
         const midAnkle = mid(p('leftAnkle'), p('rightAnkle'));
@@ -1325,9 +1325,9 @@ function extractPoseAttributes(result, canvas) {
     };
 }
  
-// ─── 8. Derive body type from attrs ──────────────────────────────────────────
+
 function deriveBodyType(a) {
-    // If core body measurements are unknown, we can't determine body type
+
     if (a.shoulder_width === 'unknown' || a.hip_ratio === 'unknown') {
         return 'unknown';
     }
@@ -1351,7 +1351,7 @@ function derivePresence(a) {
   return 'balanced';
 }
  
-// ─── 9. Angle recommendations ─────────────────────────────────────────────────
+
 function recommendAngles(a) {
   const angles = [];
   if (['oval','diamond'].includes(a.face_shape)) angles.push('three_quarter');
@@ -1370,7 +1370,7 @@ function avoidAngles(a) {
   return avoid.slice(0, 2);
 }
  
-// ─── 10. Client-side pose hints (fallback if PHP unreachable) ────────────────
+
 function derivePoseHintsClient(a) {
   const hints = [];
   const bodyMap = {
@@ -1401,7 +1401,7 @@ function derivePoseHintsClient(a) {
   return hints;
 }
  
-// ─── 11. Default attrs (for when face or pose is partially missing) ───────────
+
 function defaultAttrs() {
     return {
         body_type:          'unknown',
@@ -1413,26 +1413,26 @@ function defaultAttrs() {
         leg_proportion:     'unknown',
         arm_length:         'unknown',
         posture:            'unknown',
-        face_shape:         'unknown',   // was 'oval'
-        face_symmetry:      'unknown',   // was 'medium'
-        jawline:            'unknown',   // was 'soft'
-        forehead:           'unknown',   // was 'medium'
+        face_shape:         'unknown',   
+        face_symmetry:      'unknown',   
+        jawline:            'unknown',   
+        forehead:           'unknown',   
         skin_tone:          'unknown',
         hair_length:        'unknown',
         hair_texture:       'unknown',
         overall_presence:   'unknown',
-        recommended_angles: [],          // was ['eye_level'] — only add if we have data
+        recommended_angles: [],          
         avoid_angles:       [],
-        confidence:         'low',       // was 'medium' — unknown defaults = low confidence
+        confidence:         'low',       
     };
 }
  
-// ─── 12. Geometry helpers ─────────────────────────────────────────────────────
+
 function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function mid(a, b)  { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
  
-// ─── 13. UI helpers (reuse the existing renderAnalysisPanel / showAnalysisError
-//         functions already defined later in input-form.php) ───────────────────
+
+
 window.showAnalysisError = function(msg) {
   const spinner    = document.getElementById('analysis-spinner');
   const statusIcon = document.getElementById('analysis-status-icon');
@@ -1448,7 +1448,7 @@ window.showAnalysisError = function(msg) {
   statusSub.textContent  = '';
 };
 
-// ── Gender toggle UI ───────────────────────────────────────────────────────
+
 window.updateGenderUI = function() {
   const maleLabel   = document.getElementById('gender-male-label');
   const femaleLabel = document.getElementById('gender-female-label');
@@ -1461,7 +1461,7 @@ window.updateGenderUI = function() {
   femaleLabel.style.color      = !isMale ? '#3b82f6' : '#6b7280';
 }
 
-// Default to female
+
 document.getElementById('gender-female').checked = true;
 updateGenderUI();
 document.querySelectorAll('input[name="gender"]').forEach(el => {

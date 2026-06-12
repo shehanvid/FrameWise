@@ -10,7 +10,7 @@
     <div><?php include 'components/forms/advanced-form.php'; ?></div>
   </div>
 
-  <!-- Fixed bottom button -->
+  
 <div class="fixed bottom-0 left-0 right-0 z-50" style="
   padding: 80px 16px 16px;
   background: linear-gradient(to bottom, transparent 0%, rgba(20,22,27,0.13) 40%, rgba(20,22,27,0.92) 100%);
