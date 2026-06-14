@@ -417,7 +417,7 @@ function setStatus(msg, type) {
 }
 
 document.getElementById('signupForm').addEventListener('submit', function (e) {
-    if (!emailVerified) emailInput.classList.add('field-error'); {
+    if (!emailVerified) {
         e.preventDefault();
         if (otpField.classList.contains('visible')) {
             setStatus('Please verify your email before creating your account.', 'fail');

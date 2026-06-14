@@ -40,13 +40,13 @@ function pwdMathch($pwd, $pwdRepeat){
 }
 
 function uidExists($conn, $username){
-    $sql ="SELECT * FROM users WHERE usersUid = ?";
+    $sql = "SELECT * FROM users WHERE usersUid = ? OR usersEmail = ?";
     $stmt = mysqli_stmt_init($conn);
     if (!mysqli_stmt_prepare($stmt, $sql)){
         header("Location:../signup.php?error=stmtfailed");
         exit();
     }
-    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_bind_param($stmt, "ss", $username, $username);
     mysqli_stmt_execute($stmt);
     $resultData = mysqli_stmt_get_result($stmt);
 
