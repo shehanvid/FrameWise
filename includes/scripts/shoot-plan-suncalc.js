@@ -94,52 +94,76 @@
     ring.setAttribute('stroke-dashoffset', circ - (circ * overall / 100));
     ring.setAttribute('stroke', ringColor);
 
-
     const times       = SunCalc.getTimes(dt, lat, lng);
     const fmt         = t => t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const now         = dt.getTime();
-    const goldenStart = times.goldenHour;
-    const goldenEnd   = times.goldenHourEnd || times.sunsetStart;
-    const blueStart   = times.sunsetStart   || times.goldenHourEnd;
-    const blueEnd     = times.sunset;
-    const isGolden    = now >= goldenStart.getTime() && now <= goldenEnd.getTime();
-    const isBlue      = now >= blueStart.getTime()   && now <= blueEnd.getTime();
+    const solarNoon   = times.solarNoon.getTime();
+    const isMorning   = now < solarNoon;
+
+    let goldenStart, goldenEnd, blueStart, blueEnd, sunsetLabel, sunsetTime;
+
+    if (isMorning) {
+        blueStart   = times.nightEnd  || times.dawn;
+        blueEnd     = times.dawn;
+        goldenStart = times.dawn;
+        goldenEnd   = times.goldenHourEnd;
+        sunsetLabel = 'Sunrise';
+        sunsetTime  = times.sunrise;
+    } else {
+        goldenStart = times.goldenHour;
+        goldenEnd   = times.sunset;
+        blueStart   = times.sunset;
+        blueEnd     = times.dusk || times.sunsetStart;
+        sunsetLabel = 'Sunset';
+        sunsetTime  = times.sunset;
+    }
+
+    const isGolden = now >= goldenStart.getTime() && now <= goldenEnd.getTime();
+    const isBlue   = now >= blueStart.getTime()   && now <= blueEnd.getTime();
 
     function hourBadge(label, bg, col) {
         return `<div class="sp-hour-badge" style="background:${bg};color:${col};border:0.5px solid ${col}44;">${label}</div>`;
     }
 
+    const tlStart = isMorning ? blueStart : goldenStart;
+    const tlEnd   = isMorning ? goldenEnd : blueEnd;
     const windowPct = Math.min(100, Math.max(0,
-        Math.round(((now - goldenStart.getTime()) / (blueEnd.getTime() - goldenStart.getTime())) * 100)
+        Math.round(((now - tlStart.getTime()) / (tlEnd.getTime() - tlStart.getTime())) * 100)
     ));
 
     if (!CONDITIONS_SAVED) {
-        document.getElementById('golden-body').innerHTML = `
+        const goldenRow = `
             <div class="sp-hour-row">
                 <div class="sp-hour-dot" style="background:#fb923c;box-shadow:0 0 5px #fb923c66;"></div>
                 <div class="sp-hour-name">Golden Hour</div>
                 <div class="sp-hour-time">${fmt(goldenStart)} – ${fmt(goldenEnd)}</div>
-                ${isGolden ? hourBadge('Now', '#1e0f00', '#fb923c') : ''}
-            </div>
+                ${isGolden ? hourBadge('Now', '#1e0f00', '#fb923c') : (!isBlue && now < goldenStart.getTime() ? hourBadge('Soon', '#1e0f00', '#fb923c') : '')}
+            </div>`;
+        const blueRow = `
             <div class="sp-hour-row">
                 <div class="sp-hour-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa66;"></div>
                 <div class="sp-hour-name">Blue Hour</div>
                 <div class="sp-hour-time">${fmt(blueStart)} – ${fmt(blueEnd)}</div>
                 ${isBlue ? hourBadge('Now', '#0c1a2e', '#60a5fa') : (!isGolden && now < blueStart.getTime() ? hourBadge('Soon', '#0c1a2e', '#60a5fa') : '')}
-            </div>
+            </div>`;
+            
+        const orderedRows = isMorning ? (blueRow + goldenRow) : (goldenRow + blueRow);
+
+        document.getElementById('golden-body').innerHTML = `
+            ${orderedRows}
             <div class="sp-hour-row">
                 <div class="sp-hour-dot" style="background:#6b7280;"></div>
-                <div class="sp-hour-name">Sunset</div>
-                <div class="sp-hour-time">${fmt(times.sunset)}</div>
+                <div class="sp-hour-name">${sunsetLabel}</div>
+                <div class="sp-hour-time">${fmt(sunsetTime)}</div>
                 <div></div>
             </div>
             <div class="sp-tl-track">
                 <div class="sp-tl-fill" style="width:${windowPct}%;background:linear-gradient(90deg,#fb923c,#fbbf24);"></div>
             </div>
             <div class="sp-tl-labels">
-                <span class="sp-tl-label">${fmt(goldenStart)}</span>
+                <span class="sp-tl-label">${fmt(tlStart)}</span>
                 <span class="sp-tl-label" style="color:#fb923c;font-weight:500;">${isGolden || isBlue ? 'NOW →' : 'SHOOT →'}</span>
-                <span class="sp-tl-label">${fmt(blueEnd)}</span>
+                <span class="sp-tl-label">${fmt(tlEnd)}</span>
             </div>
         `;
     }
@@ -209,6 +233,9 @@
                 golden_hour_end:   fmt(goldenEnd),
                 blue_hour_start:   fmt(blueStart),
                 blue_hour_end:     fmt(blueEnd),
+                sunset_label:      sunsetLabel,
+                sunset_time:       fmt(sunsetTime),
+                is_morning:        isMorning ? 1 : 0,
                 is_golden_hour:    isGolden ? 1 : 0,
                 is_blue_hour:      isBlue   ? 1 : 0,
             }),
