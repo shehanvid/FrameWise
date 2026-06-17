@@ -16,6 +16,9 @@ $fields = [
     'golden_hour_end'    => 's',
     'blue_hour_start'    => 's',
     'blue_hour_end'      => 's',
+    'sunset_label'       => 's',
+    'sunset_time'        => 's',
+    'is_morning'         => 'i',
     'is_golden_hour'     => 'i',
     'is_blue_hour'       => 'i',
     'weather_temp'       => 'd',
@@ -25,7 +28,7 @@ $fields = [
     'weather_clouds'     => 'd',
     'weather_rain_chance'=> 'd',
     'weather_score'      => 'd',
-    'color_harmony'      => 's', 
+    'color_harmony'      => 's',
     'director_tips'      => 's',
 ];
 

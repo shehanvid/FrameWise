@@ -219,45 +219,52 @@ include 'header.php';
                 $gh_e = $row['golden_hour_end'];
                 $bh_s = $row['blue_hour_start'];
                 $bh_e = $row['blue_hour_end'];
-                $shoot_ts     = strtotime($row['shoot_datetime']);
-                $golden_start = strtotime(date('Y-m-d ') . $gh_s);
-                $blue_end     = strtotime(date('Y-m-d ') . $bh_e);
-                $window       = max(1, $blue_end - $golden_start);
-                $window_pct   = min(100, max(0, round(($shoot_ts - $golden_start) / $window * 100)));
+                $sunset_label = $row['sunset_label'] ?? 'Sunset';
+                $sunset_time  = $row['sunset_time']  ?? $gh_e;
+                $is_morning   = !empty($row['is_morning']);
+
+                $goldenRow = '
+                    <div class="sp-hour-row">
+                        <div class="sp-hour-dot" style="background:#fb923c;box-shadow:0 0 5px #fb923c66;"></div>
+                        <div class="sp-hour-name">Golden Hour</div>
+                        <div class="sp-hour-time">' . htmlspecialchars($gh_s) . ' – ' . htmlspecialchars($gh_e) . '</div>
+                        ' . ($row['is_golden_hour'] ? '<div class="sp-hour-badge" style="background:#1e0f00;color:#fb923c;border:0.5px solid #fb923c44;">At shoot</div>' : '') . '
+                    </div>';
+
+                $blueRow = '
+                    <div class="sp-hour-row">
+                        <div class="sp-hour-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa66;"></div>
+                        <div class="sp-hour-name">Blue Hour</div>
+                        <div class="sp-hour-time">' . htmlspecialchars($bh_s) . ' – ' . htmlspecialchars($bh_e) . '</div>
+                        ' . ($row['is_blue_hour'] ? '<div class="sp-hour-badge" style="background:#0c1a2e;color:#60a5fa;border:0.5px solid #60a5fa44;">At shoot</div>' : (!$row['is_golden_hour'] ? '<div class="sp-hour-badge" style="background:#0c1a2e;color:#60a5fa;border:0.5px solid #60a5fa44;">Soon</div>' : '')) . '
+                    </div>';
+
+                $tl_start_label = $is_morning ? $bh_s : $gh_s;
+                $tl_end_label   = $is_morning ? $gh_e : $bh_e;
+
+                $shoot_ts   = strtotime($row['shoot_datetime']);
+                $tl_start_ts = strtotime(date('Y-m-d ', $shoot_ts) . $tl_start_label);
+                $tl_end_ts   = strtotime(date('Y-m-d ', $shoot_ts) . $tl_end_label);
+                if ($tl_end_ts <= $tl_start_ts) { $tl_end_ts += 86400; } // handles overnight span
+                $window     = max(1, $tl_end_ts - $tl_start_ts);
+                $window_pct = min(100, max(0, round(($shoot_ts - $tl_start_ts) / $window * 100)));
                 ?>
-                <div class="sp-hour-row">
-                    <div class="sp-hour-dot" style="background:#fb923c;box-shadow:0 0 5px #fb923c66;"></div>
-                    <div class="sp-hour-name">Golden Hour</div>
-                    <div class="sp-hour-time"><?= htmlspecialchars($gh_s) ?> – <?= htmlspecialchars($gh_e) ?></div>
-                    <?php if ($row['is_golden_hour']): ?>
-                        <div class="sp-hour-badge" style="background:#1e0f00;color:#fb923c;border:0.5px solid #fb923c44;">At shoot</div>
-                    <?php endif; ?>
-                </div>
-                <div class="sp-hour-row">
-                    <div class="sp-hour-dot" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa66;"></div>
-                    <div class="sp-hour-name">Blue Hour</div>
-                    <div class="sp-hour-time"><?= htmlspecialchars($bh_s) ?> – <?= htmlspecialchars($bh_e) ?></div>
-                    <?php if ($row['is_blue_hour']): ?>
-                        <div class="sp-hour-badge" style="background:#0c1a2e;color:#60a5fa;border:0.5px solid #60a5fa44;">At shoot</div>
-                    <?php elseif (!$row['is_golden_hour']): ?>
-                        <div class="sp-hour-badge" style="background:#0c1a2e;color:#60a5fa;border:0.5px solid #60a5fa44;">Soon</div>
-                    <?php endif; ?>
-                </div>
+                <?= $is_morning ? ($blueRow . $goldenRow) : ($goldenRow . $blueRow) ?>
                 <div class="sp-hour-row">
                     <div class="sp-hour-dot" style="background:#6b7280;"></div>
-                    <div class="sp-hour-name">Sunset</div>
-                    <div class="sp-hour-time"><?= htmlspecialchars($gh_e) ?></div>
+                    <div class="sp-hour-name"><?= htmlspecialchars($sunset_label) ?></div>
+                    <div class="sp-hour-time"><?= htmlspecialchars($sunset_time) ?></div>
                     <div></div>
                 </div>
                 <div class="sp-tl-track">
                     <div class="sp-tl-fill" style="width:<?= $window_pct ?>%;background:linear-gradient(90deg,#fb923c,#fbbf24);"></div>
                 </div>
                 <div class="sp-tl-labels">
-                    <span class="sp-tl-label"><?= htmlspecialchars($gh_s) ?></span>
+                    <span class="sp-tl-label"><?= htmlspecialchars($tl_start_label) ?></span>
                     <span class="sp-tl-label" style="color:#fb923c;font-weight:500;">
                         <?= ($row['is_golden_hour'] || $row['is_blue_hour']) ? 'NOW →' : 'SHOOT →' ?>
                     </span>
-                    <span class="sp-tl-label"><?= htmlspecialchars($bh_e) ?></span>
+                    <span class="sp-tl-label"><?= htmlspecialchars($tl_end_label) ?></span>
                 </div>
             <?php else: ?>
                 <div style="color:#6b7280;font-size:12px;padding:12px 0;">Calculating sun times…</div>
