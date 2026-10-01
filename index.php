@@ -13,7 +13,7 @@ if (isset($_SESSION["username"]) && $_SESSION["isAdmin"] == 1) {
     </div>
 <?php
 } else {
-    include 'components/guest/welcome.php'; meka thama wenas kare
+    include 'components/guest/welcome.php';
 }
 ?>
 
